@@ -111,6 +111,10 @@ Each is fully parametric: width, depth, wall height, pitch or rise, overhang, ba
 count, ridge length. Add as many blocks as you like for L-shaped and multi-block
 massing; each block keeps its own roof type, material and downpipe count.
 
+Blocks must not overlap in plan, roof overhangs included — an overlap counts the
+same area twice in the catchment. The app detects it, names the two blocks, and
+flags them in the model tree and the status bar.
+
 ### Render styles
 Shaded · Hidden line · Wire · X-ray · **Catchment** (roofs coloured by yield
 coefficient) · **Flow** (arrows down each slope, to the gutters and downpipes).
@@ -127,8 +131,49 @@ coefficient) · **Flow** (arrows down each slope, to the gutters and downpipes).
 |---|---|
 | **Image (PNG)** | The 3D view at 3× resolution with a title block, key figures and the copyright line |
 | **Report sheet** | A3 landscape: 3D view, roof schedule, method, three charts, monthly table. Print or Save as PDF |
+| **Explain sheet** | The calculation walked step by step with your numbers — see below. Also printable |
 | **Monthly CSV** | Month-by-month rainfall, inflow, demand, supplied, store, spill and mains top-up, for Excel |
 | **Model JSON** | The full parametric model, re-openable |
+
+---
+
+## Which number is the answer?
+
+Seven figures on screen, and students reasonably ask which one they are meant to
+hand in. The app is explicit about it:
+
+| Figure | Role | What it is |
+|---|---|---|
+| Catchment, rainfall, Yc × Fc | **Input** | What you are working from |
+| Annual yield | **Harvest** | What the roof delivers to the tank, `A · R · Yc · Fc` |
+| Non-potable demand | **Need** | What the building wants |
+| **Store capacity** | **Deliverable** | **The answer.** The figure that goes on the drawing and into the specification |
+| Demand met % | **Justification** | Why that store size and not half or twice it. BS calls this the water saving efficiency |
+| Mains displaced | **Benefit** | The same water, counted as what you no longer buy |
+| Overflow | **Diagnostic** | What spilled, and therefore what is limiting the design |
+
+**Peak flow in litres/second is not a rainwater-harvesting result at all.** It
+answers a different question — how fast water leaves the roof in one heavy storm —
+and it sizes gutters and downpipes to BS EN 12056-3. It has no bearing on the tank.
+
+### The Explain sheet
+
+Press **Explain** in the toolbar, or click any of the seven result tiles, and the
+app opens a printable sheet that walks the whole calculation with *your* model's
+numbers — catchment → rainfall → losses → yield → demand → store → demand met, one
+card per step in plain English — then:
+
+- **"So which number is the answer?"** — the store capacity, stated as the
+  deliverable, with the other six figures placed in their roles.
+- **Sizing the store — three answers** — the BS simplified 5% rule, the
+  optimisation-curve knee, and whatever you set, side by side.
+- **What is limiting this design** — a diagnosis generated from your numbers:
+  *yield-limited* (even an unlimited tank could not meet the demand, so a bigger
+  tank cannot help), *store-limited* (naming the knee capacity and the percentage
+  it would reach), or *demand-limited* (the roof collects far more than the
+  building can use), with the single biggest lever called out.
+
+Clicking a tile opens the sheet at that step.
 
 ---
 
@@ -238,13 +283,21 @@ Four ways in:
    Then raise the occupancy and watch the overflow collapse.
 6. **Monthly vs daily.** Turn on the daily balance on any model and watch
    reliability drop. Ask why.
-7. **Save two variants** of the same building and compare them in Analysis mode.
+7. **Read the diagnosis.** Open **Explain** on `clim-arid`, `warehouse` and
+   `house` in turn. They come back yield-limited, store-limited-on-an-oversized-roof,
+   and store-limited. Ask what you would change in each case — and notice that in
+   Dubai a bigger tank is the *wrong* answer.
+8. **Save two variants** of the same building and compare them in Analysis mode.
 
 ### Assessment
 
 Have students hand in the **A3 report sheet** (Export → Report sheet →
 Print / Save as PDF). It carries the 3D view, the roof schedule, the method with
 their own numbers, three charts and the monthly table on one page.
+
+For a sizing exercise, ask for the **Explain sheet** alongside it: it forces them
+to state the store capacity as the deliverable and to say what is limiting their
+design, rather than quoting whichever number looks largest.
 
 ---
 
@@ -270,9 +323,27 @@ projection and a painter's algorithm over Canvas 2D. Not WebGL, deliberately —
 - **No context-loss, driver or sandbox failure modes** on classroom machines or
   inside an iframe.
 
-Painter's algorithm is exact for this geometry class because block footprints are
-prevented from overlapping in plan. Charts are hand-authored inline SVG for the
-same reasons — crisp at any size, print cleanly, no dependency.
+Ordering is the hard part of a painter's algorithm, and two things make it
+reliable here:
+
+- **Every face is tessellated** into triangles — ear-clipped, then bisected on the
+  longest edge until it is short relative to the block — before the depth sort. A
+  whole 12 × 8 m roof plane sorted on its centroid alone paints over the wall that
+  should occlude it; small triangles put each centroid close to its own local
+  depth. Edges are flagged so only real polygon boundaries get stroked, and
+  near-coplanar seams (the 18 strips of a barrel vault) are left unstroked, so
+  curved roofs read as smooth rather than faceted.
+- **Walls carry a small depth bias.** A wall meets the roof exactly along the
+  eaves, and on a vault along the whole arch of the gable end. Coincident surfaces
+  have no correct order, so walls are pushed fractionally further away, breaking
+  every one of those ties in the roof's favour while leaving genuine occlusion
+  untouched.
+
+Together these cut measured sorting artifacts by about 92% against a naive
+whole-face sort, at 8–25 ms per frame for the shipped models.
+
+Charts are hand-authored inline SVG for the same reasons as the renderer — crisp
+at any size, print cleanly, no dependency.
 
 Browser support: any browser from the last few years. Uses `ResizeObserver`,
 `pointer events`, `canvas.toBlob` and CSS Grid.
