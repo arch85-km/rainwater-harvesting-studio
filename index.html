@@ -2282,7 +2282,7 @@ const CHART = (() => {
     return g + monthAxis();
   }
 
-  /* --- 2. store behaviour: tank level against capacity ------------------ */
+  /* --- 2. storage behaviour: tank level against capacity ------------------ */
   function store(res) {
     const d = res.bal, cap = res.capacity;
     const yMax = niceMax(Math.max(cap, ...d.level, 1) * 1.12);
@@ -2608,7 +2608,7 @@ const APP = (() => {
              s:`${nf(res.annualRain, 0)} mm · Yc ${nf(geom.ycMean, 2)} · Fc ${nf(model.system.filterCoef, 2)}` }) +
       tile({ tag:"Need", k:"Non-potable demand", v:d.v, u:d.u, step:"demand",
              s:`${model.demand.occupants} people${model.demand.irrigArea > 0 ? " + irrigation" : ""}` }) +
-      tile({ tag:"Deliverable", k:"Store capacity", v:c.v, u:c.u, step:"store", key:true,
+      tile({ tag:"Deliverable", k:"Storage capacity", v:c.v, u:c.u, step:"store", key:true,
              s:`${nf(res.daysStorage, 0)} days · ${model.system.tankMode === "auto" ? "BS simplified" : "set manually"}` }) +
       tile({ tag:"Justification", k:"Demand met", v:fmtPct(res.bal.saving), u:"", step:"met",
              s:`${fmtPct(res.bal.reliability)} of ${model.system.daily ? "days" : "months"} fully supplied` }) +
@@ -2828,7 +2828,7 @@ const APP = (() => {
         fRange("Filter coefficient Fc", "system.filterCoef", 0.5, 1, 0.01, "", 2) +
         `<p class="rwc-note">BS EN 16941-1 requires the pre-tank treatment to be at least 90% efficient, so <b>0.90</b> is the standard value.</p>` +
         fRange("First flush diverted", "system.firstFlush", 0, 3, 0.1, "mm/event", 1) +
-        fSeg("Store capacity", "system.tankMode", [{ v: "auto", l: "BS simplified" }, { v: "manual", l: "Set manually" }]) +
+        fSeg("Storage capacity", "system.tankMode", [{ v: "auto", l: "BS simplified" }, { v: "manual", l: "Set manually" }]) +
         (S.tankMode === "manual" ? fRange("Tank capacity", "system.tank", 0, 200000, 100, "L", 0)
           : `<p class="rwc-note">Sized automatically at <b>${fmtVol(res.simple).v} ${fmtVol(res.simple).u}</b> — 5% of the lesser of annual yield and annual demand, about 18 days.</p>`) +
         fCheck("Daily balance (spread rain over wet days)", "system.daily") +
@@ -2861,7 +2861,7 @@ const APP = (() => {
           <dt>${model.system.daily ? "Days" : "Months"} fully supplied</dt><dd>${fmtPct(b.reliability)}</dd>
         </dl>
         <p class="rwc-note">Balance closes: inflow = supplied + overflow ± change in store (${nf(b.totalInflow - b.totalSupplied - b.totalOverflow, 0)} L residual).</p>`) +
-      grp("Store capacity", `
+      grp("Storage capacity", `
         <dl class="rwc-rep-kv" style="font-size:12px">
           <dt>BS simplified (5% rule)</dt><dd>${fmtVol(res.simple).v} ${fmtVol(res.simple).u}</dd>
           <dt>Profile-optimised (curve knee)</dt><dd>${fmtVol(res.knee).v} ${fmtVol(res.knee).u}</dd>
@@ -2892,7 +2892,7 @@ const APP = (() => {
       <td>${nf(b.inflow[i], 0)}</td><td>${nf(b.demand[i], 0)}</td><td>${nf(b.supplied[i], 0)}</td>
       <td>${nf(b.level[i], 0)}</td><td>${nf(b.overflow[i], 0)}</td><td>${nf(b.deficit[i], 0)}</td></tr>`;
     return `<div class="rwc-table-wrap"><table class="rwc-table">
-      <thead><tr><th>Month</th><th>Rain mm</th><th>Inflow L</th><th>Demand L</th><th>Supplied L</th><th>Store L</th><th>Spill L</th><th>Mains L</th></tr></thead>
+      <thead><tr><th>Month</th><th>Rain mm</th><th>Inflow L</th><th>Demand L</th><th>Supplied L</th><th>Stored L</th><th>Spill L</th><th>Mains L</th></tr></thead>
       <tbody>${MONTHS.map((_, i) => row(i)).join("")}</tbody>
       <tfoot><tr><td>Year</td><td>${nf(res.annualRain, 0)}</td><td>${nf(b.totalInflow, 0)}</td>
         <td>${nf(b.totalDemand, 0)}</td><td>${nf(b.totalSupplied, 0)}</td><td>—</td>
@@ -2931,7 +2931,7 @@ const APP = (() => {
         "How much of each month's demand the store actually supplies.",
         CHART.wrap(CHART.balance(res)),
         legend([{ c: "var(--series-1)", l: "Supplied from store" }, { c: "var(--series-2)", l: "Mains top-up" }, { c: "var(--series-3)", l: "Roof inflow" }]))}
-      ${card("Store behaviour",
+      ${card("Storage behaviour",
         "End-of-month volume against the tank capacity. The low point is what a dry spell has to bridge.",
         CHART.wrap(CHART.store(res)))}
       ${card("Capacity optimisation",
@@ -3084,9 +3084,9 @@ const APP = (() => {
       ["Model", model.name], ["Location", model.climate.label],
       ["Catchment m2", nf(geom.catchment, 2)], ["Roof surface m2", nf(geom.surface, 2)],
       ["Mean yield coefficient Yc", nf(geom.ycMean, 3)], ["Filter coefficient Fc", nf(model.system.filterCoef, 2)],
-      ["Store capacity L", nf(res.capacity, 0)], ["Balance step", model.system.daily ? "daily" : "monthly"],
+      ["Storage capacity L", nf(res.capacity, 0)], ["Balance step", model.system.daily ? "daily" : "monthly"],
       [],
-      ["Month", "Rainfall mm", "Wet days", "Roof inflow L", "Demand L", "Supplied L", "Store end L", "Overflow L", "Mains top-up L"]
+      ["Month", "Rainfall mm", "Wet days", "Roof inflow L", "Demand L", "Supplied L", "Stored end L", "Overflow L", "Mains top-up L"]
     ];
     for (let i = 0; i < 12; i++) rows.push([MONTHS[i],
       nf(model.climate.monthly[i], 1), res.wd[i], nf(b.inflow[i], 0), nf(b.demand[i], 0),
@@ -3178,7 +3178,7 @@ const APP = (() => {
         sub:`${model.demand.occupants} people` + (model.demand.irrigArea > 0 ? ` + ${nf(model.demand.irrigArea,0)} m² irrigated` : ""),
         note:`What the building wants for WC flushing, laundry and the other uses you switched on. Rainwater is only useful up to this figure — beyond it there is nowhere for the water to go.` },
 
-      { id:"store", tag:"Deliverable", title:"Store capacity  C", val:V(res.capacity), key:true,
+      { id:"store", tag:"Deliverable", title:"Storage capacity  C", val:V(res.capacity), key:true,
         sub:`${nf(res.daysStorage,0)} days of average demand`,
         note:`<b>This is the answer you put on the drawing.</b> The tank does not create water — it carries it from wet days to dry ones. Everything above sizes it; everything below justifies it.` },
 
@@ -3226,7 +3226,7 @@ const APP = (() => {
         d:`There is not enough water. Even with an <b>unlimited</b> tank, this roof under this rainfall could meet only <b>${fmtPct(res.maxSaving)}</b> of the demand — ${nf(res.annualRain,0)} mm a year across ${nf(geom.catchment,1)} m² simply does not add up to ${volSet([res.annualDemand])(res.annualDemand)}. A bigger tank cannot create water. <b>Biggest lever: more catchment area, a surface with a higher yield coefficient</b> (this roof is Yc ${nf(geom.ycMean,2)}; smooth metal is 0.90)<b>, or less demand.</b>` };
 
     if (res.capacity < res.knee * 0.92 && kneePt.saving > met + 0.03)
-      return { t: oversized ? "Store-limited, on an oversized roof" : "Store-limited", w:true,
+      return { t: oversized ? "Storage-limited, on an oversized roof" : "Storage-limited", w:true,
         d:`The tank is the binding constraint. At ${V(res.capacity)} it meets ${fmtPct(met)} of demand; the curve's knee at <b>${V(res.knee)}</b> would reach <b>${fmtPct(kneePt.saving)}</b> for the same roof and the same rainfall. <b>Biggest lever: increase the store to the knee.</b>` + oversized };
 
     if (spill > 0.40 && met > 0.80)
@@ -3280,7 +3280,7 @@ const APP = (() => {
         <div class="rwc-ex-box">
           <h2>So which number is the answer?</h2>
           <p class="rwc-ex-big">${cap.v} ${cap.u} store</p>
-          <p><b>The store capacity is the deliverable</b> — the figure that goes on the drawing and into the specification. Here it was ${esc(method)}.</p>
+          <p><b>The storage capacity is the deliverable</b> — the figure that goes on the drawing and into the specification. Here it was ${esc(method)}.</p>
           <p><b>Demand met (${fmtPct(b.saving)}) is what justifies that size</b>, not a separate answer. It is the number you quote when someone asks why the tank is this big rather than half or twice as big.</p>
           <p><b>Mains displaced (${nf(res.mainsSaved,1)} m³/yr) is the benefit</b> that follows from it — the same water, counted as what you no longer buy.</p>
           <p><b>Peak flow in litres/second is not a rainwater-harvesting result at all.</b> It answers a different question: how fast water leaves the roof in one heavy storm, which sizes the gutters and downpipes to BS EN 12056-3. It has no bearing on the tank.</p>
@@ -3386,7 +3386,7 @@ const APP = (() => {
             </div>
             <div class="rwc-rep-box" style="margin-top:12px"><h2>Monthly figures</h2>
               <table class="rwc-rep-table">
-                <thead><tr><th>Month</th><th>Rain mm</th><th>Inflow L</th><th>Demand L</th><th>Supplied L</th><th>Store L</th><th>Spill L</th><th>Mains L</th></tr></thead>
+                <thead><tr><th>Month</th><th>Rain mm</th><th>Inflow L</th><th>Demand L</th><th>Supplied L</th><th>Stored L</th><th>Spill L</th><th>Mains L</th></tr></thead>
                 <tbody>${MONTHS.map((m, i) => `<tr><td>${m}</td><td>${nf(model.climate.monthly[i],0)}</td>
                   <td>${nf(b.inflow[i],0)}</td><td>${nf(b.demand[i],0)}</td><td>${nf(b.supplied[i],0)}</td>
                   <td>${nf(b.level[i],0)}</td><td>${nf(b.overflow[i],0)}</td><td>${nf(b.deficit[i],0)}</td></tr>`).join("")}</tbody>
@@ -3407,7 +3407,7 @@ const APP = (() => {
                 ["Overflow to drain", fmtVol(b.totalOverflow).v + " " + fmtVol(b.totalOverflow).u],
                 ["Water saving efficiency", fmtPct(b.saving)],
                 [(model.system.daily ? "Days" : "Months") + " fully supplied", fmtPct(b.reliability)],
-                ["Store capacity", fmtVol(res.capacity).v + " " + fmtVol(res.capacity).u + " (" + nf(res.daysStorage,0) + " days)"],
+                ["Storage capacity", fmtVol(res.capacity).v + " " + fmtVol(res.capacity).u + " (" + nf(res.daysStorage,0) + " days)"],
                 ["BS simplified (5%)", fmtVol(res.simple).v + " " + fmtVol(res.simple).u],
                 ["Profile-optimised knee", fmtVol(res.knee).v + " " + fmtVol(res.knee).u],
                 ["Mains displaced", nf(res.mainsSaved,1) + " m³/yr"]
@@ -3419,7 +3419,7 @@ const APP = (() => {
             </div>
           </div>
           <div>
-            <div class="rwc-rep-box"><h2>Store behaviour</h2>${svgFix(CHART.wrap(CHART.store(res)))}</div>
+            <div class="rwc-rep-box"><h2>Storage behaviour</h2>${svgFix(CHART.wrap(CHART.store(res)))}</div>
             <div class="rwc-rep-box" style="margin-top:12px"><h2>Capacity optimisation</h2>${svgFix(CHART.wrap(CHART.sweep(res)))}</div>
           </div>
         </div>

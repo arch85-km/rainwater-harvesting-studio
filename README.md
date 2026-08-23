@@ -158,7 +158,7 @@ hand in. The app is explicit about it:
 | Catchment, rainfall, Yc × Fc | **Input** | What you are working from |
 | Annual yield | **Harvest** | What the roof delivers to the tank, `A · R · Yc · Fc` |
 | Non-potable demand | **Need** | What the building wants |
-| **Store capacity** | **Deliverable** | **The answer.** The figure that goes on the drawing and into the specification |
+| **Storage capacity** | **Deliverable** | **The answer.** The figure that goes on the drawing and into the specification |
 | Demand met % | **Justification** | Why that store size and not half or twice it. BS calls this the water saving efficiency |
 | Mains displaced | **Benefit** | The same water, counted as what you no longer buy |
 | Overflow | **Diagnostic** | What spilled, and therefore what is limiting the design |
@@ -180,7 +180,7 @@ card per step in plain English — then:
   optimisation-curve knee, and whatever you set, side by side.
 - **What is limiting this design** — a diagnosis generated from your numbers:
   *yield-limited* (even an unlimited tank could not meet the demand, so a bigger
-  tank cannot help), *store-limited* (naming the knee capacity and the percentage
+  tank cannot help), *storage-limited* (naming the knee capacity and the percentage
   it would reach), or *demand-limited* (the roof collects far more than the
   building can use), with the single biggest lever called out.
 
@@ -295,8 +295,8 @@ Four ways in:
 6. **Monthly vs daily.** Turn on the daily balance on any model and watch
    reliability drop. Ask why.
 7. **Read the diagnosis.** Open **Explain** on `clim-arid`, `warehouse` and
-   `house` in turn. They come back yield-limited, store-limited-on-an-oversized-roof,
-   and store-limited. Ask what you would change in each case — and notice that in
+   `house` in turn. They come back yield-limited, storage-limited-on-an-oversized-roof,
+   and storage-limited. Ask what you would change in each case — and notice that in
    Dubai a bigger tank is the *wrong* answer.
 8. **Save two variants** of the same building and compare them in Analysis mode.
 
