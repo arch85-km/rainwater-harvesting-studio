@@ -1,0 +1,3171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rainwater Collection 3D — Parametric Roof Harvesting</title>
+<meta name="description" content="Parametric 3D roof modeller that calculates rainwater harvesting yield, tank size and reliability to BS EN 16941-1. For architecture teaching.">
+<style>
+/* ==========================================================================
+   Rainwater Collection 3D
+   All styles scoped under #rwc-app so a host theme (WordPress) cannot bleed in.
+   ========================================================================== */
+
+#rwc-app, #rwc-app *, #rwc-app *::before, #rwc-app *::after { box-sizing: border-box; }
+
+#rwc-app {
+  /* --- surfaces & ink (light) --- */
+  --bg:            #f4f4f1;
+  --surface-1:     #fcfcfb;
+  --surface-2:     #f0efec;
+  --surface-3:     #e6e5e1;
+  --line:          #d7d6d1;
+  --line-strong:   #b9b8b2;
+  --ink:           #14140f;
+  --ink-2:         #52514e;
+  --ink-3:         #85847e;
+
+  /* --- categorical series (validated: slots 1-3, all-pairs, both modes) --- */
+  --series-1:      #2a78d6;   /* harvested rainwater */
+  --series-2:      #eb6834;   /* mains top-up / deficit */
+  --series-3:      #1baf7a;   /* overflow / spill */
+  --accent:        #2a78d6;
+  --accent-ink:    #ffffff;
+  --warn:          #b8541f;
+  --good:          #0f7a52;
+
+  /* --- sequential blue ramp (catchment map, magnitude) --- */
+  --seq-100:#cde2fb; --seq-200:#9ec5f4; --seq-300:#6da7ec; --seq-400:#3987e5;
+  --seq-500:#256abf; --seq-600:#184f95; --seq-700:#0d366b;
+
+  /* --- 3D scene --- */
+  --scene-bg-a:    #eceeef;
+  --scene-bg-b:    #dfe3e6;
+  --scene-grid:    #c8ccce;
+  --scene-grid-2:  #b0b5b8;
+  --scene-edge:    #1d2226;
+
+  --radius:  7px;
+  --radius-s:5px;
+  --pad:     12px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  color-scheme: light;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* dark values: declared under BOTH the OS media query and the explicit stamp,
+   so the in-app toggle wins in either direction. */
+@media (prefers-color-scheme: dark) {
+  #rwc-app:where(:not([data-theme="light"])) {
+    --bg:#131513; --surface-1:#1a1c1a; --surface-2:#232624; --surface-3:#2d312e;
+    --line:#383c39; --line-strong:#4d524e; --ink:#f2f3f1; --ink-2:#b9bcb7; --ink-3:#878a86;
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+    --accent:#3987e5; --accent-ink:#ffffff; --warn:#e08a5a; --good:#3fc596;
+    --scene-bg-a:#1b1f22; --scene-bg-b:#101315;
+    --scene-grid:#2c3236; --scene-grid-2:#3d4448; --scene-edge:#e8ecef;
+    color-scheme: dark;
+  }
+}
+#rwc-app[data-theme="dark"] {
+  --bg:#131513; --surface-1:#1a1c1a; --surface-2:#232624; --surface-3:#2d312e;
+  --line:#383c39; --line-strong:#4d524e; --ink:#f2f3f1; --ink-2:#b9bcb7; --ink-3:#878a86;
+  --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+  --accent:#3987e5; --accent-ink:#ffffff; --warn:#e08a5a; --good:#3fc596;
+  --scene-bg-a:#1b1f22; --scene-bg-b:#101315;
+  --scene-grid:#2c3236; --scene-grid-2:#3d4448; --scene-edge:#e8ecef;
+  color-scheme: dark;
+}
+
+/* ---------- page shell ---------- */
+html, body { margin:0; padding:0; }
+body.rwc-standalone { background: var(--bg); overflow: hidden; }
+
+#rwc-app {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  grid-template-columns: 232px minmax(0, 1fr) 320px;
+  grid-template-areas:
+    "bar   bar   bar"
+    "tree  view  props"
+    "kpi   kpi   kpi"
+    "foot  foot  foot";
+  height: 100dvh;
+  min-height: 480px;
+  width: 100%;
+  overflow: hidden;
+}
+#rwc-app.rwc-embed { height: 100%; }
+
+/* ---------- toolbar ---------- */
+.rwc-bar {
+  grid-area: bar;
+  min-width: 0;
+  display: flex; align-items: center; gap: 4px;
+  padding: 7px 10px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.rwc-bar::-webkit-scrollbar { height: 4px; }
+.rwc-bar::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 2px; }
+.rwc-brand {
+  display:flex; align-items:center; gap:8px;
+  padding-right: 12px; margin-right: 6px;
+  border-right: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+.rwc-brand-mark {
+  width: 26px; height: 26px; border-radius: 6px;
+  background: linear-gradient(150deg, var(--series-1), var(--seq-600));
+  display:grid; place-items:center; flex:0 0 auto;
+}
+.rwc-brand-mark svg { width:16px; height:16px; fill:#fff; }
+.rwc-brand-txt { line-height:1.1; }
+.rwc-brand-txt b { display:block; font-size:13px; letter-spacing:-.01em; }
+.rwc-brand-txt span { display:block; font-size:10px; color: var(--ink-3); letter-spacing:.04em; text-transform:uppercase; }
+
+.rwc-sep { width:1px; align-self:stretch; background: var(--line); margin: 0 6px; flex:0 0 auto; }
+.rwc-spacer { flex: 1 1 auto; min-width: 4px; }
+
+.rwc-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 6px 10px;
+  font: inherit; font-size: 12.5px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.rwc-btn:hover { background: var(--surface-2); border-color: var(--line); }
+.rwc-btn:active { background: var(--surface-3); }
+.rwc-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.rwc-btn[aria-expanded="true"] { background: var(--surface-3); border-color: var(--line-strong); }
+.rwc-btn.rwc-primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.rwc-btn.rwc-primary:hover { filter: brightness(1.08); background: var(--accent); }
+.rwc-btn svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; flex:0 0 auto; }
+.rwc-btn .rwc-caret { width:9px; height:9px; opacity:.6; stroke-width:2.2; }
+.rwc-icon-btn { padding:6px; }
+
+/* ---------- menus ---------- */
+.rwc-menu {
+  position: absolute; z-index: 60;
+  min-width: 210px; max-height: 70vh; overflow-y:auto;
+  padding: 5px;
+  background: var(--surface-1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0,0,0,.16), 0 2px 6px rgba(0,0,0,.08);
+}
+.rwc-menu[hidden] { display:none; }
+.rwc-menu-item {
+  display:flex; align-items:center; gap:9px; width:100%;
+  padding: 7px 9px; border:0; border-radius: var(--radius-s);
+  background:transparent; color:var(--ink); font: inherit; font-size:12.5px;
+  text-align:left; cursor:pointer;
+}
+.rwc-menu-item:hover { background: var(--surface-2); }
+.rwc-menu-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.rwc-menu-item small { display:block; color: var(--ink-3); font-size:11px; line-height:1.3; }
+.rwc-menu-item .rwc-mi-txt { flex:1 1 auto; min-width:0; }
+.rwc-menu-item[aria-checked="true"]::after { content:"✓"; color: var(--accent); font-weight:700; }
+.rwc-menu-head {
+  padding: 8px 9px 4px; font-size:10.5px; letter-spacing:.07em;
+  text-transform:uppercase; color: var(--ink-3); font-weight:600;
+}
+.rwc-menu-div { height:1px; background: var(--line); margin:5px 3px; }
+
+/* ---------- panels ---------- */
+.rwc-tree  { grid-area: tree;  border-right: 1px solid var(--line); }
+.rwc-props { grid-area: props; border-left: 1px solid var(--line); }
+.rwc-tree, .rwc-props {
+  background: var(--surface-1);
+  display:flex; flex-direction:column;
+  overflow: hidden;
+  min-height: 0; min-width: 0;
+}
+.rwc-panel-head {
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding: 9px 12px; flex:0 0 auto;
+  font-size:10.5px; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--line);
+}
+.rwc-panel-body { flex:1 1 auto; overflow-y:auto; overscroll-behavior: contain; }
+.rwc-panel-body::-webkit-scrollbar { width:8px; }
+.rwc-panel-body::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius:4px; }
+
+/* tabs */
+.rwc-tabs { display:flex; gap:1px; padding: 0 6px; background: var(--surface-2); border-bottom:1px solid var(--line); flex:0 0 auto; overflow-x:auto; scrollbar-width:none; }
+.rwc-tabs::-webkit-scrollbar { display:none; }
+.rwc-tab {
+  padding: 8px 9px; border:0; background:transparent; cursor:pointer;
+  font: inherit; font-size:11.5px; font-weight:500; color: var(--ink-3);
+  border-bottom: 2px solid transparent; white-space:nowrap;
+}
+.rwc-tab:hover { color: var(--ink); }
+.rwc-tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.rwc-tab:focus-visible { outline:2px solid var(--accent); outline-offset:-3px; }
+.rwc-tabpanel { padding: 12px; }
+.rwc-tabpanel[hidden] { display:none; }
+
+/* form controls */
+.rwc-group { margin-bottom: 16px; }
+.rwc-group:last-child { margin-bottom: 4px; }
+.rwc-group-title {
+  font-size:10.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  color: var(--ink-3); margin: 0 0 8px;
+  display:flex; align-items:center; gap:6px;
+}
+.rwc-group-title::after { content:""; flex:1 1 auto; height:1px; background: var(--line); }
+
+.rwc-field { margin-bottom: 10px; }
+.rwc-field-row { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:3px; }
+.rwc-label { font-size:12px; color: var(--ink-2); }
+.rwc-unit { font-size:11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.rwc-slider-row { display:flex; align-items:center; gap:8px; }
+
+#rwc-app input[type="range"] {
+  flex:1 1 auto; min-width:0; height: 18px; margin:0;
+  -webkit-appearance:none; appearance:none; background:transparent; cursor:pointer;
+}
+#rwc-app input[type="range"]::-webkit-slider-runnable-track { height:3px; border-radius:2px; background: var(--surface-3); }
+#rwc-app input[type="range"]::-moz-range-track { height:3px; border-radius:2px; background: var(--surface-3); }
+#rwc-app input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:14px; height:14px; border-radius:50%;
+  background: var(--accent); border:2px solid var(--surface-1); margin-top:-5.5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+#rwc-app input[type="range"]::-moz-range-thumb {
+  width:12px; height:12px; border-radius:50%; background: var(--accent);
+  border:2px solid var(--surface-1); box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+#rwc-app input[type="range"]:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+
+#rwc-app input[type="number"], #rwc-app input[type="text"], #rwc-app select {
+  font: inherit; font-size:12px; color: var(--ink);
+  background: var(--surface-2);
+  border:1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 5px 7px;
+  width: 100%;
+  min-width: 0;
+}
+#rwc-app input[type="number"] { width: 68px; flex:0 0 68px; text-align:right; font-variant-numeric: tabular-nums; }
+#rwc-app select { cursor:pointer; }
+#rwc-app input:focus-visible, #rwc-app select:focus-visible { outline:2px solid var(--accent); outline-offset:-1px; border-color: var(--accent); }
+#rwc-app input[type="checkbox"] { accent-color: var(--accent); width:15px; height:15px; margin:0; flex:0 0 auto; cursor:pointer; }
+
+.rwc-check { display:flex; align-items:center; gap:8px; padding:4px 0; cursor:pointer; font-size:12px; color: var(--ink-2); }
+.rwc-check:hover { color: var(--ink); }
+
+.rwc-seg { display:flex; gap:2px; padding:2px; background: var(--surface-2); border:1px solid var(--line); border-radius: var(--radius-s); }
+.rwc-seg button {
+  flex:1 1 0; padding:5px 4px; border:0; border-radius:3px; background:transparent;
+  font: inherit; font-size:11.5px; color: var(--ink-2); cursor:pointer; white-space:nowrap;
+}
+.rwc-seg button[aria-pressed="true"] { background: var(--surface-1); color: var(--ink); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.1); }
+.rwc-seg button:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+
+.rwc-note { font-size:11px; line-height:1.45; color: var(--ink-3); margin:6px 0 0; }
+.rwc-note b { color: var(--ink-2); font-weight:600; }
+.rwc-note.rwc-warn { color: var(--warn); }
+
+/* roof type picker */
+.rwc-roofgrid { display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; }
+.rwc-roofgrid button {
+  aspect-ratio: 1/.85; padding:4px 2px 3px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  border:1px solid var(--line); border-radius: var(--radius-s);
+  background: var(--surface-2); cursor:pointer; color: var(--ink-2);
+  font: inherit; font-size:9px; line-height:1;
+}
+.rwc-roofgrid button:hover { border-color: var(--line-strong); background: var(--surface-3); }
+.rwc-roofgrid button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface-1)); color: var(--ink); font-weight:600; }
+.rwc-roofgrid button:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+.rwc-roofgrid svg { width:100%; height:auto; max-height:26px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linejoin:round; stroke-linecap:round; }
+
+/* model tree */
+.rwc-tree-list { padding:6px; }
+.rwc-tree-item {
+  display:flex; align-items:center; gap:7px; width:100%;
+  padding:7px 8px; margin-bottom:2px;
+  border:1px solid transparent; border-radius: var(--radius-s);
+  background:transparent; color: var(--ink-2); font: inherit; font-size:12px;
+  text-align:left; cursor:pointer;
+}
+.rwc-tree-item:hover { background: var(--surface-2); }
+.rwc-tree-item[aria-current="true"] { background: color-mix(in srgb, var(--accent) 12%, var(--surface-1)); border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--ink); font-weight:600; }
+.rwc-tree-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.rwc-tree-item .rwc-ti-name { flex:1 1 auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rwc-tree-item .rwc-ti-meta { font-size:10.5px; color: var(--ink-3); font-variant-numeric:tabular-nums; font-weight:400; }
+.rwc-tree-item svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linejoin:round; flex:0 0 auto; opacity:.8; }
+.rwc-tree-del { padding:3px; border:0; background:transparent; color: var(--ink-3); cursor:pointer; border-radius:3px; display:grid; place-items:center; }
+.rwc-tree-del:hover { color: var(--warn); background: var(--surface-3); }
+.rwc-tree-del svg { width:13px; height:13px; }
+
+/* ---------- viewport ---------- */
+.rwc-view {
+  grid-area: view;
+  position: relative;
+  min-width: 0; min-height: 0;
+  background: linear-gradient(180deg, var(--scene-bg-a), var(--scene-bg-b));
+  overflow: hidden;
+  touch-action: none;
+}
+.rwc-canvas { display:block; width:100%; height:100%; cursor: grab; }
+.rwc-canvas.rwc-dragging { cursor: grabbing; }
+
+.rwc-vp-tools {
+  position:absolute; top:10px; left:10px; z-index:12;
+  display:flex; flex-direction:column; gap:6px; align-items:flex-start;
+  max-width: calc(100% - 20px);
+}
+.rwc-vp-tools-r { left:auto; right:10px; align-items:flex-end; }
+.rwc-chipbar {
+  display:flex; gap:2px; padding:3px;
+  background: color-mix(in srgb, var(--surface-1) 88%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border:1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0,0,0,.10);
+  flex-wrap: wrap;
+}
+.rwc-chip {
+  padding:5px 8px; border:0; border-radius:4px; background:transparent;
+  font: inherit; font-size:11px; color: var(--ink-2); cursor:pointer; white-space:nowrap;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.rwc-chip:hover { background: var(--surface-2); color: var(--ink); }
+.rwc-chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight:600; }
+.rwc-chip:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+.rwc-chip svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+
+.rwc-readout {
+  position:absolute; bottom:10px; right:10px; z-index:12;
+  padding:7px 10px; font-size:11px; line-height:1.5; color: var(--ink-2);
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--surface-1) 88%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border:1px solid var(--line); border-radius: var(--radius);
+  pointer-events:none; max-width: 60%;
+}
+.rwc-readout b { color: var(--ink); font-weight:600; }
+
+.rwc-toast {
+  position:absolute; bottom:62px; left:50%; transform:translateX(-50%) translateY(8px);
+  z-index:40; padding:9px 14px; border-radius:20px; font-size:12.5px;
+  background: var(--ink); color: var(--bg);
+  box-shadow:0 6px 20px rgba(0,0,0,.28);
+  opacity:0; transition: opacity .18s ease, transform .18s ease; pointer-events:none;
+  max-width: 80%; text-align:center;
+}
+.rwc-toast.rwc-on { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ---------- KPI strip + charts ---------- */
+.rwc-kpi {
+  grid-area: kpi;
+  background: var(--surface-1);
+  border-top: 1px solid var(--line);
+  display:flex; flex-direction:column;
+  max-height: 46vh;
+  min-width: 0;
+}
+.rwc-kpi-tiles {
+  display:flex; gap:0; overflow-x:auto; scrollbar-width:thin;
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.rwc-tile {
+  flex: 1 1 0; min-width: 132px;
+  padding: 9px 14px;
+  border-right: 1px solid var(--line);
+  display:flex; flex-direction:column; gap:1px;
+}
+.rwc-tile:last-child { border-right:0; }
+.rwc-tile-k { font-size:10px; letter-spacing:.05em; text-transform:uppercase; color: var(--ink-3); white-space:nowrap; }
+.rwc-tile-v { font-size:19px; font-weight:650; letter-spacing:-.02em; font-variant-numeric: tabular-nums; line-height:1.15; }
+.rwc-tile-v small { font-size:11px; font-weight:500; color: var(--ink-3); margin-left:2px; }
+.rwc-tile-s { font-size:10.5px; color: var(--ink-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rwc-tile.rwc-hl .rwc-tile-v { color: var(--accent); }
+
+.rwc-charts { display:none; }
+#rwc-app[data-mode="analysis"] .rwc-charts { display:block; }
+.rwc-charts { flex:1 1 auto; overflow-y:auto; padding: 12px 14px 16px; min-width: 0; }
+.rwc-chart-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(410px, 1fr)); gap:16px; }
+.rwc-card { background: var(--surface-1); border:1px solid var(--line); border-radius: var(--radius); padding:12px 14px 10px; min-width:0; }
+.rwc-card-title { font-size:12.5px; font-weight:650; margin:0 0 1px; letter-spacing:-.01em; }
+.rwc-card-sub { font-size:11px; color: var(--ink-3); margin:0 0 10px; }
+.rwc-card svg { display:block; width:100%; height:auto; overflow:visible; }
+
+.rwc-legend { display:flex; flex-wrap:wrap; gap:12px; margin:8px 0 0; font-size:11px; color: var(--ink-2); }
+.rwc-legend span { display:inline-flex; align-items:center; gap:5px; }
+.rwc-swatch { width:11px; height:11px; border-radius:2.5px; flex:0 0 auto; }
+
+.rwc-table { width:100%; border-collapse:collapse; font-size:11.5px; font-variant-numeric: tabular-nums; }
+.rwc-table th, .rwc-table td { padding:4px 7px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap; }
+.rwc-table th { color: var(--ink-3); font-weight:600; font-size:10.5px; letter-spacing:.03em; text-transform:uppercase; position:sticky; top:0; background: var(--surface-1); }
+.rwc-table th:first-child, .rwc-table td:first-child { text-align:left; }
+.rwc-table tfoot td { font-weight:650; border-top:2px solid var(--line-strong); border-bottom:0; }
+.rwc-table-wrap { overflow:auto; max-height: 320px; margin-top:4px; }
+
+.rwc-cmp-empty { font-size:11.5px; color: var(--ink-3); padding: 10px 0; }
+
+/* ---------- footer ---------- */
+.rwc-foot {
+  grid-area: foot;
+  min-width: 0;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding: 5px 14px;
+  background: var(--surface-1);
+  border-top: 1px solid var(--line);
+  font-size:11px; color: var(--ink-3);
+}
+.rwc-copy { font-weight:500; color: var(--ink-2); white-space:nowrap; }
+.rwc-foot-r { display:flex; gap:14px; align-items:center; overflow:hidden; }
+.rwc-foot-r span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ---------- modes ---------- */
+#rwc-app[data-mode="analysis"] { grid-template-columns: 0 minmax(0, 1fr) 320px; }
+#rwc-app[data-mode="analysis"] .rwc-tree { display:none; }
+#rwc-app[data-mode="analysis"] .rwc-kpi { max-height: 60vh; }
+#rwc-app[data-mode="analysis"] { grid-template-rows: auto minmax(180px, 1fr) minmax(240px, 1.35fr) auto; }
+
+#rwc-app[data-mode="present"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 1fr auto auto;
+  grid-template-areas: "view" "kpi" "foot";
+}
+#rwc-app[data-mode="present"] .rwc-bar,
+#rwc-app[data-mode="present"] .rwc-tree,
+#rwc-app[data-mode="present"] .rwc-props,
+#rwc-app[data-mode="present"] .rwc-vp-tools,
+#rwc-app[data-mode="present"] .rwc-readout { display:none; }
+#rwc-app[data-mode="present"] .rwc-tile-v { font-size: clamp(20px, 3.4vw, 40px); }
+#rwc-app[data-mode="present"] .rwc-tile-k { font-size:11px; }
+#rwc-app[data-mode="present"] .rwc-tile { padding: 14px 20px; }
+#rwc-app[data-mode="present"] .rwc-view { background: linear-gradient(180deg, var(--scene-bg-a), var(--scene-bg-b)); }
+.rwc-present-hud {
+  position:absolute; top:0; left:0; right:0; z-index:14;
+  display:none; align-items:flex-start; justify-content:space-between; gap:16px;
+  padding: 20px 24px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--scene-bg-a) 92%, transparent), transparent);
+  pointer-events:none;
+}
+#rwc-app[data-mode="present"] .rwc-present-hud { display:flex; }
+.rwc-present-title { font-size: clamp(16px, 2.4vw, 26px); font-weight:650; letter-spacing:-.02em; margin:0; color: var(--ink); }
+.rwc-present-sub { font-size: clamp(11px, 1.3vw, 14px); color: var(--ink-2); margin:3px 0 0; max-width: 60ch; }
+.rwc-present-nav { pointer-events:auto; display:flex; gap:6px; align-items:center; }
+.rwc-present-count { font-size:12px; color: var(--ink-3); font-variant-numeric:tabular-nums; padding:0 4px; }
+
+/* ---------- report sheet (print) ---------- */
+.rwc-report { display:none; }
+@media print {
+  @page { size: A3 landscape; margin: 10mm; }
+  html, body { background:#fff !important; height:auto !important; overflow:visible !important; }
+  body > *:not(.rwc-report) { display:none !important; }
+  .rwc-report { display:block !important; color:#000; font-family: var(--font); }
+}
+.rwc-report.rwc-preview { display:block; position:fixed; inset:0; z-index:200; background:#fff; color:#111; overflow:auto; padding:64px 22px 22px; }
+.rwc-rep-bar { position:fixed; top:12px; right:16px; z-index:210; display:flex; gap:8px; }
+@media print { .rwc-rep-bar { display:none !important; } }
+.rwc-rep-sheet { max-width: 1580px; margin:0 auto; }
+.rwc-rep-head { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:14px; }
+.rwc-rep-head h1 { font-size:20px; margin:0 0 2px; letter-spacing:-.02em; }
+.rwc-rep-head p { font-size:11.5px; margin:0; color:#555; }
+.rwc-rep-meta { font-size:11px; color:#555; text-align:right; line-height:1.5; }
+.rwc-rep-grid { display:grid; grid-template-columns: 1.35fr 1fr 1fr; gap:16px; align-items:start; }
+.rwc-rep-grid img { width:100%; height:auto; border:1px solid #ccc; border-radius:4px; display:block; }
+.rwc-rep-box { border:1px solid #ccc; border-radius:4px; padding:9px 11px; }
+.rwc-rep-box h2 { font-size:11px; text-transform:uppercase; letter-spacing:.06em; margin:0 0 7px; color:#555; }
+.rwc-rep-box svg { width:100%; height:auto; }
+.rwc-rep-kv { display:grid; grid-template-columns: 1fr auto; gap:2px 10px; font-size:11px; }
+.rwc-rep-kv dt { color:#555; }
+.rwc-rep-kv dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+.rwc-rep-table { width:100%; border-collapse:collapse; font-size:10px; font-variant-numeric:tabular-nums; }
+.rwc-rep-table th, .rwc-rep-table td { padding:2px 4px; text-align:right; border-bottom:1px solid #ddd; }
+.rwc-rep-table th:first-child, .rwc-rep-table td:first-child { text-align:left; }
+.rwc-rep-foot { display:flex; justify-content:space-between; font-size:10.5px; color:#555; border-top:1px solid #ccc; margin-top:14px; padding-top:7px; }
+
+
+/* ---------- mobile drawer + responsive ---------- */
+.rwc-mob-tabs { display:none; }
+
+@media (max-width: 1180px) {
+  #rwc-app { grid-template-columns: 56px minmax(0, 1fr) 300px; }
+  #rwc-app[data-mode="analysis"] { grid-template-columns: 0 minmax(0, 1fr) 300px; }
+  .rwc-tree .rwc-panel-head span, .rwc-tree-item .rwc-ti-name, .rwc-tree-item .rwc-ti-meta, .rwc-tree-del { display:none; }
+  .rwc-tree-item { justify-content:center; padding:9px 4px; }
+  .rwc-tree-list { padding:6px 4px; }
+  .rwc-brand-txt { display:none; }
+}
+
+@media (max-width: 860px) {
+  #rwc-app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(200px, 1fr) auto auto auto;
+    grid-template-areas: "bar" "view" "kpi" "props" "foot";
+    height: 100dvh;
+  }
+  #rwc-app[data-mode="analysis"] { grid-template-columns:minmax(0,1fr); grid-template-rows: auto minmax(180px,.8fr) minmax(240px,1.2fr) auto auto; grid-template-areas:"bar" "view" "kpi" "props" "foot"; }
+  .rwc-tree { display:none !important; }
+  .rwc-props { border-left:0; border-top:1px solid var(--line); max-height: 42dvh; }
+  .rwc-props .rwc-panel-head { display:none; }
+  .rwc-kpi { max-height: none; }
+  .rwc-kpi-tiles { border-top:0; }
+  .rwc-tile { min-width: 116px; padding:8px 12px; }
+  .rwc-tile-v { font-size:16px; }
+  .rwc-mob-tabs { display:flex; }
+  .rwc-readout { display:none; }
+  .rwc-chart-grid { grid-template-columns: 1fr; }
+  #rwc-app[data-mode="present"] { grid-template-rows: 1fr auto auto; grid-template-areas:"view" "kpi" "foot"; }
+  #rwc-app[data-mode="present"] .rwc-props { display:none; }
+}
+
+@media (max-width: 560px) {
+  #rwc-app { font-size: 13px; }
+  .rwc-bar { padding: 6px; gap:2px; }
+  .rwc-btn span.rwc-btn-label { display:none; }
+  .rwc-btn.rwc-keep-label span.rwc-btn-label { display:inline; }
+  .rwc-brand { padding-right:8px; margin-right:2px; }
+  .rwc-foot-r { display:none; }
+  .rwc-roofgrid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #rwc-app *, #rwc-app *::before, #rwc-app *::after { transition-duration:.01ms !important; animation-duration:.01ms !important; }
+}
+#rwc-app .rwc-sr { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+</style>
+</head>
+<body class="rwc-standalone">
+
+<div id="rwc-app" data-mode="design">
+
+  <!-- ══════════════════════════ TOOLBAR ══════════════════════════ -->
+  <header class="rwc-bar" role="toolbar" aria-label="Main toolbar">
+    <div class="rwc-brand">
+      <div class="rwc-brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 2.5 5.5 12.2a7.6 7.6 0 1 0 13 0Z"/></svg>
+      </div>
+      <div class="rwc-brand-txt">
+        <b>Rainwater Collection 3D</b>
+        <span>Parametric roof harvesting</span>
+      </div>
+    </div>
+
+    <button class="rwc-btn" id="rwc-new" title="New model (Ctrl+N)">
+      <svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>
+      <span class="rwc-btn-label">New</span>
+    </button>
+    <button class="rwc-btn" id="rwc-open" title="Open model .json (Ctrl+O)">
+      <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
+      <span class="rwc-btn-label">Open</span>
+    </button>
+    <button class="rwc-btn" id="rwc-save" title="Save model .json (Ctrl+S)">
+      <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+      <span class="rwc-btn-label">Save</span>
+    </button>
+    <input type="file" id="rwc-file" accept=".json,application/json" class="rwc-sr" tabindex="-1">
+
+    <span class="rwc-sep"></span>
+
+    <button class="rwc-btn" id="rwc-models-btn" aria-haspopup="menu" aria-expanded="false" title="Demo model library">
+      <svg viewBox="0 0 24 24"><path d="M12 2.8 21 7.4 12 12 3 7.4Z"/><path d="M3 12.2 12 16.8l9-4.6M3 16.8 12 21.4l9-4.6"/></svg>
+      <span class="rwc-btn-label">Models</span><svg class="rwc-caret" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+
+    <button class="rwc-btn" id="rwc-add-btn">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      <span class="rwc-btn-label">Add block</span>
+    </button>
+
+    <span class="rwc-sep"></span>
+
+    <button class="rwc-btn rwc-icon-btn" id="rwc-undo" title="Undo (Ctrl+Z)" aria-label="Undo">
+      <svg viewBox="0 0 24 24"><path d="M3 8h11a6 6 0 0 1 0 12H8"/><path d="m7 4-4 4 4 4"/></svg>
+    </button>
+    <button class="rwc-btn rwc-icon-btn" id="rwc-redo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">
+      <svg viewBox="0 0 24 24"><path d="M21 8H10a6 6 0 0 0 0 12h6"/><path d="m17 4 4 4-4 4"/></svg>
+    </button>
+
+    <span class="rwc-spacer"></span>
+
+    <button class="rwc-btn" id="rwc-export-btn" aria-haspopup="menu" aria-expanded="false" title="Export">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+      <span class="rwc-btn-label">Export</span><svg class="rwc-caret" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+
+    <button class="rwc-btn" id="rwc-mode-btn" aria-haspopup="menu" aria-expanded="false" title="Workspace mode">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="rwc-btn-label" id="rwc-mode-label">Design</span><svg class="rwc-caret" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+
+    <button class="rwc-btn rwc-icon-btn" id="rwc-theme" title="Toggle light / dark" aria-label="Toggle light or dark theme">
+      <svg viewBox="0 0 24 24" id="rwc-theme-icon"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
+    </button>
+    <button class="rwc-btn rwc-icon-btn" id="rwc-help" title="Help &amp; method" aria-label="Help and method">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/><path d="M12 17h.01"/></svg>
+    </button>
+  </header>
+
+  <!-- ══════════════════════════ MODEL TREE ══════════════════════════ -->
+  <aside class="rwc-tree" aria-label="Model tree">
+    <div class="rwc-panel-head"><span>Model</span></div>
+    <div class="rwc-panel-body">
+      <div class="rwc-tree-list" id="rwc-tree-list" role="listbox" aria-label="Building blocks"></div>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════ MODEL SPACE ══════════════════════════ -->
+  <main class="rwc-view" id="rwc-view">
+    <canvas class="rwc-canvas" id="rwc-canvas" tabindex="0"
+            aria-label="3D model space. Drag to orbit, scroll to zoom, arrow keys to rotate."></canvas>
+
+    <div class="rwc-vp-tools">
+      <div class="rwc-chipbar" role="group" aria-label="View direction">
+        <button class="rwc-chip" data-view="iso" aria-pressed="true">Iso</button>
+        <button class="rwc-chip" data-view="top">Plan</button>
+        <button class="rwc-chip" data-view="front">S</button>
+        <button class="rwc-chip" data-view="right">E</button>
+        <button class="rwc-chip" data-view="back">N</button>
+        <button class="rwc-chip" data-view="left">W</button>
+        <button class="rwc-chip" id="rwc-fit" title="Zoom to fit (F)">
+          <svg viewBox="0 0 24 24"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15"/></svg>
+        </button>
+      </div>
+      <div class="rwc-chipbar" role="group" aria-label="Render style">
+        <button class="rwc-chip" data-style="shaded" aria-pressed="true">Shaded</button>
+        <button class="rwc-chip" data-style="hidden">Hidden line</button>
+        <button class="rwc-chip" data-style="wire">Wire</button>
+        <button class="rwc-chip" data-style="xray">X-ray</button>
+        <button class="rwc-chip" data-style="catchment">Catchment</button>
+        <button class="rwc-chip" data-style="flow">Flow</button>
+      </div>
+    </div>
+
+    <div class="rwc-vp-tools rwc-vp-tools-r">
+      <div class="rwc-chipbar" role="group" aria-label="Scene options">
+        <button class="rwc-chip" id="rwc-t-grid" aria-pressed="true" title="Ground grid">Grid</button>
+        <button class="rwc-chip" id="rwc-t-tank" aria-pressed="true" title="Show tank, gutters and downpipes">System</button>
+        <button class="rwc-chip" id="rwc-t-dims" aria-pressed="true" title="Dimensions and scale figure">Dims</button>
+      </div>
+    </div>
+
+    <div class="rwc-present-hud">
+      <div>
+        <h2 class="rwc-present-title" id="rwc-p-title">—</h2>
+        <p class="rwc-present-sub" id="rwc-p-sub"></p>
+      </div>
+      <div class="rwc-present-nav">
+        <button class="rwc-chip" id="rwc-p-prev" aria-label="Previous model">◀</button>
+        <span class="rwc-present-count" id="rwc-p-count"></span>
+        <button class="rwc-chip" id="rwc-p-next" aria-label="Next model">▶</button>
+        <button class="rwc-chip" id="rwc-p-exit" aria-label="Exit presentation mode" title="Exit presentation (Esc)">Exit</button>
+      </div>
+    </div>
+
+    <div class="rwc-readout" id="rwc-readout"></div>
+    <div class="rwc-toast" id="rwc-toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <!-- ══════════════════════════ PROPERTIES ══════════════════════════ -->
+  <aside class="rwc-props" aria-label="Parameters">
+    <div class="rwc-panel-head"><span>Parameters</span></div>
+    <div class="rwc-tabs" role="tablist" aria-label="Parameter groups">
+      <button class="rwc-tab" role="tab" aria-selected="true"  data-tab="geom"    id="tab-geom">Geometry</button>
+      <button class="rwc-tab" role="tab" aria-selected="false" data-tab="roof"    id="tab-roof">Roof</button>
+      <button class="rwc-tab" role="tab" aria-selected="false" data-tab="climate" id="tab-climate">Climate</button>
+      <button class="rwc-tab" role="tab" aria-selected="false" data-tab="demand"  id="tab-demand">Demand</button>
+      <button class="rwc-tab" role="tab" aria-selected="false" data-tab="results" id="tab-results">Results</button>
+    </div>
+    <div class="rwc-panel-body">
+      <div class="rwc-tabpanel" role="tabpanel" aria-labelledby="tab-geom"    id="panel-geom"></div>
+      <div class="rwc-tabpanel" role="tabpanel" aria-labelledby="tab-roof"    id="panel-roof"    hidden></div>
+      <div class="rwc-tabpanel" role="tabpanel" aria-labelledby="tab-climate" id="panel-climate" hidden></div>
+      <div class="rwc-tabpanel" role="tabpanel" aria-labelledby="tab-demand"  id="panel-demand"  hidden></div>
+      <div class="rwc-tabpanel" role="tabpanel" aria-labelledby="tab-results" id="panel-results" hidden></div>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════ RESULTS STRIP ══════════════════════════ -->
+  <section class="rwc-kpi" aria-label="Results">
+    <div class="rwc-kpi-tiles" id="rwc-tiles"></div>
+    <div class="rwc-charts" id="rwc-charts"></div>
+  </section>
+
+  <footer class="rwc-foot">
+    <span class="rwc-copy">© Karam Al-Obaidi</span>
+    <div class="rwc-foot-r">
+      <span id="rwc-foot-method">BS EN 16941-1 : 2024</span>
+      <span id="rwc-foot-status"></span>
+    </div>
+  </footer>
+</div>
+
+<div class="rwc-report" id="rwc-report" aria-hidden="true"></div>
+<script>
+"use strict";
+/* ==========================================================================
+   Rainwater Collection 3D  —  Karam Al-Obaidi
+   Single-file parametric roof harvesting modeller. No dependencies.
+
+   Modules, in dependency order:
+     DATA    constants: materials, roof types, climate library, demo models
+     GEO     parametric geometry — blocks -> faces with projected/surface areas
+     HYD     hydrology — BS EN 16941-1 yield, YAS water balance, tank sizing
+     R3D     3D renderer — Canvas 2D, orbit camera, painter's algorithm
+     CHART   inline SVG charts
+     UI      panels, toolbars, modes
+     IO      new / save / open / PNG / CSV / report
+   ========================================================================== */
+
+/* ═══════════════════════════ DATA ═══════════════════════════ */
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
+
+/* Yield (run-off) coefficients — BS EN 16941-1:2024 Table 2 */
+const MATERIALS = {
+  tile:     { label:"Pitched tile / slate",   yc:0.80, col:"#a8593f" },
+  metal:    { label:"Smooth metal sheet",     yc:0.90, col:"#8f97a0" },
+  felt:     { label:"Flat roof, smooth felt", yc:0.50, col:"#4d5257" },
+  concrete: { label:"Concrete / asphalt",     yc:0.75, col:"#96938c" },
+  green:    { label:"Green roof (extensive)", yc:0.40, col:"#5c8a4a" },
+  gravel:   { label:"Gravel-ballasted flat",  yc:0.60, col:"#a19a8c" }
+};
+const MATERIAL_ORDER = ["tile","metal","felt","concrete","green","gravel"];
+
+/* Roof types. `profile:true` = extruded along X from a (z,y) profile.
+   `radial:true` = four-sided (hip / pyramid). */
+const ROOFS = {
+  flat:      { label:"Flat",      profile:true,  icon:"M4 20h32M4 20v-3h32v3", tip:"Parapet + shallow fall. Catchment = footprint." },
+  gable:     { label:"Gable",     profile:true,  icon:"M4 22 20 8l16 14M4 22h32", tip:"Two planes to a ridge. Two eaves gutters." },
+  hip:       { label:"Hip",       radial:true,   icon:"M4 22 12 9h16l8 13Zm8-13 8 0", tip:"Four planes. Flow splits four ways." },
+  shed:      { label:"Shed",      profile:true,  icon:"M4 22 36 9v13Z", tip:"Monopitch. All flow to one low eave." },
+  butterfly: { label:"Butterfly", profile:true,  icon:"M4 9 20 20 36 9M4 9v13h32V9", tip:"Inverted V. Central valley gutter." },
+  sawtooth:  { label:"Sawtooth",  profile:true,  icon:"M4 22V14l8-6v8m0-8 8 6v-8l8 6v8m0-8 8 6", tip:"North-light bays. Flow concentrates in valleys." },
+  vault:     { label:"Vault",     profile:true,  icon:"M4 22a16 13 0 0 1 32 0Z", tip:"Barrel vault. Surface ≫ catchment." },
+  pyramid:   { label:"Pyramid",   radial:true,   icon:"M4 22 20 7l16 15ZM20 7 12 22M20 7l8 15", tip:"Square apex. Four hip planes." }
+};
+const ROOF_ORDER = ["flat","gable","hip","shed","butterfly","sawtooth","vault","pyramid"];
+
+/* Climate library. `r` = 12 monthly normals (mm). `dpd` = typical depth per
+   wet day (mm), used to derive wet-day counts for the daily balance mode. */
+const CITIES = [
+  {id:"kul", name:"Kuala Lumpur, MY",  zone:"Tropical",    dpd:14, r:[165,200,260,290,225,130,145,175,215,260,310,225]},
+  {id:"sin", name:"Singapore, SG",     zone:"Tropical",    dpd:13, r:[240,165,185,180,170,130,160,175,170,195,255,290]},
+  {id:"kch", name:"Kuching, MY",       zone:"Tropical",    dpd:16, r:[680,510,340,290,250,210,200,230,260,330,360,460]},
+  {id:"jkt", name:"Jakarta, ID",       zone:"Tropical",    dpd:15, r:[385,310,215,150,115,100,65,45,65,140,175,205]},
+  {id:"mnl", name:"Manila, PH",        zone:"Tropical",    dpd:18, r:[20,12,15,25,130,255,420,430,355,235,140,75]},
+  {id:"bom", name:"Mumbai, IN",        zone:"Monsoon",     dpd:24, r:[1,1,0,1,11,537,719,483,324,74,16,5]},
+  {id:"los", name:"Lagos, NG",         zone:"Tropical",    dpd:16, r:[28,46,102,150,269,460,279,64,140,206,69,25]},
+  {id:"nbo", name:"Nairobi, KE",       zone:"Highland",    dpd:9,  r:[64,57,92,219,177,35,18,24,31,56,155,80]},
+  {id:"lon", name:"London, UK",        zone:"Temperate",   dpd:5,  r:[55,41,42,44,49,45,45,50,49,69,59,55]},
+  {id:"dub", name:"Dublin, IE",        zone:"Temperate",   dpd:5,  r:[69,51,54,54,60,67,56,74,67,80,73,74]},
+  {id:"ber", name:"Berlin, DE",        zone:"Temperate",   dpd:6,  r:[43,35,39,38,55,71,55,58,46,37,45,48]},
+  {id:"sea", name:"Seattle, US",       zone:"Temperate",   dpd:7,  r:[143,98,90,70,50,40,18,24,39,89,166,144]},
+  {id:"yyz", name:"Toronto, CA",       zone:"Continental", dpd:8,  r:[61,55,53,68,74,71,76,79,74,65,76,62]},
+  {id:"akl", name:"Auckland, NZ",      zone:"Temperate",   dpd:8,  r:[74,84,89,97,117,137,145,118,105,100,90,89]},
+  {id:"syd", name:"Sydney, AU",        zone:"Subtropical", dpd:11, r:[102,117,130,127,101,133,97,81,69,77,84,78]},
+  {id:"mel", name:"Melbourne, AU",     zone:"Temperate",   dpd:6,  r:[47,48,50,57,56,49,48,50,58,67,60,59]},
+  {id:"ist", name:"Istanbul, TR",      zone:"Mediterranean",dpd:9, r:[105,80,69,46,35,35,35,41,60,87,106,126]},
+  {id:"ath", name:"Athens, GR",        zone:"Mediterranean",dpd:9, r:[57,47,41,29,20,11,6,6,14,53,60,69]},
+  {id:"cmn", name:"Casablanca, MA",    zone:"Mediterranean",dpd:9, r:[68,55,46,39,18,4,0,1,6,33,76,77]},
+  {id:"amm", name:"Amman, JO",         zone:"Semi-arid",   dpd:10, r:[64,55,40,15,4,0,0,0,0,7,30,55]},
+  {id:"bgw", name:"Baghdad, IQ",       zone:"Arid",        dpd:9,  r:[26,28,26,22,7,0,0,0,0,8,21,26]},
+  {id:"cai", name:"Cairo, EG",         zone:"Arid",        dpd:5,  r:[5,4,4,1,0,0,0,0,0,1,4,6]},
+  {id:"dxb", name:"Dubai, AE",         zone:"Arid",        dpd:12, r:[19,25,21,9,1,0,1,0,0,1,3,16]},
+  {id:"doh", name:"Doha, QA",          zone:"Arid",        dpd:10, r:[13,17,16,9,4,0,0,0,0,1,4,11]},
+  {id:"ruh", name:"Riyadh, SA",        zone:"Arid",        dpd:11, r:[13,8,22,25,9,0,0,0,0,1,12,14]},
+  {id:"phx", name:"Phoenix, US",       zone:"Arid",        dpd:8,  r:[21,22,25,9,3,1,26,25,18,16,15,22]},
+  {id:"bog", name:"Bogota, CO",        zone:"Highland",    dpd:8,  r:[40,55,85,125,110,60,45,45,70,130,110,60]},
+  {id:"scl", name:"Santiago, CL",      zone:"Mediterranean",dpd:11,r:[1,2,4,11,50,77,75,55,22,14,8,6]}
+];
+const CITY_BY_ID = Object.fromEntries(CITIES.map(c => [c.id, c]));
+
+/* End-use demand presets (litres per person per day) */
+const ENDUSES = [
+  {id:"wc",       label:"WC flushing",   lpd:25, on:true},
+  {id:"laundry",  label:"Laundry",       lpd:15, on:true},
+  {id:"cleaning", label:"Cleaning",      lpd:5,  on:false},
+  {id:"vehicle",  label:"Vehicle wash",  lpd:2,  on:false}
+];
+
+const CLONE = o => JSON.parse(JSON.stringify(o));
+const clamp = (v,a,b) => v < a ? a : v > b ? b : v;
+const sum = a => a.reduce((s,v) => s + v, 0);
+const D2R = Math.PI / 180;
+
+let _uid = 0;
+const uid = () => "b" + (++_uid) + Math.random().toString(36).slice(2, 6);
+
+/* ---- model factories ---- */
+
+function newBlock(over) {
+  return Object.assign({
+    id: uid(), name: "Block",
+    x: 0, z: 0,                 // plan centre (m)
+    w: 12, d: 8,                // width (X) and depth (Z) at wall face (m)
+    wallH: 6,                   // eaves / wall height (m)
+    roof: {
+      type: "gable",
+      pitch: 30,                // degrees
+      overhang: 0.5,            // m, all round
+      parapet: 0.6,             // m, flat roof only
+      bays: 4,                  // sawtooth
+      rise: 3,                  // m, vault
+      ridgeRatio: 1             // hip
+    },
+    material: "tile",
+    downpipes: 2
+  }, over || {});
+}
+
+function newModel(over) {
+  const m = {
+    schema: 2,
+    name: "Untitled model",
+    note: "",
+    blocks: [newBlock({ name: "Block 1" })],
+    climate: {
+      mode: "preset",           // preset | manual | annual
+      cityId: "lon",
+      monthly: CITY_BY_ID.lon.r.slice(),
+      dpd: CITY_BY_ID.lon.dpd,
+      annual: 603,
+      label: "London, UK",
+      lat: 51.5, lon: -0.13
+    },
+    demand: {
+      occupants: 4,
+      uses: ENDUSES.map(u => ({ id:u.id, lpd:u.lpd, on:u.on })),
+      irrigArea: 0,             // m2
+      irrigMM: 15,              // mm per week in season
+      irrigFrom: 3, irrigTo: 8  // month indices inclusive
+    },
+    system: {
+      filterCoef: 0.90,
+      firstFlush: 0,            // mm diverted per rain event
+      tankMode: "auto",         // auto (BS simplified) | manual
+      tank: 3000,               // litres, used when manual
+      daily: false,             // daily (wet-day) balance instead of monthly
+      tariff: 2.20              // currency per m3 of mains water displaced
+    },
+    view: { style: "shaded", grid: true, system: true, dims: true }
+  };
+  return Object.assign(m, over || {});
+}
+
+/* ═══════════════════════════ GEO ═══════════════════════════
+   Turns a block into planar faces. Two families:
+     profile roofs  — a (z,y) polyline extruded along X
+     radial roofs   — hip and pyramid, built on the expanded footprint
+   Every face carries its own projected (plan) area and true surface area,
+   because the difference between the two is the whole point of the app.
+   ========================================================================== */
+
+const GEO = (() => {
+
+  /* --- generic planar-polygon measures ------------------------------- */
+
+  function newell(pts) {                       // area vector (Newell's method)
+    let nx = 0, ny = 0, nz = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      nx += (a[1] - b[1]) * (a[2] + b[2]);
+      ny += (a[2] - b[2]) * (a[0] + b[0]);
+      nz += (a[0] - b[0]) * (a[1] + b[1]);
+    }
+    return [nx / 2, ny / 2, nz / 2];
+  }
+  const surfaceArea  = pts => { const n = newell(pts); return Math.hypot(n[0], n[1], n[2]); };
+  const projectedArea = pts => Math.abs(newell(pts)[1]);   // |y| of the area vector = plan area
+
+  function unit(v) { const L = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0]/L, v[1]/L, v[2]/L]; }
+  function centroid(pts) {
+    let x=0,y=0,z=0; for (const p of pts) { x+=p[0]; y+=p[1]; z+=p[2]; }
+    return [x/pts.length, y/pts.length, z/pts.length];
+  }
+
+  function face(pts, kind, block) {
+    const n = newell(pts);
+    return {
+      pts, kind, block: block.id, material: block.material,
+      normal: unit(n),
+      surfaceArea: Math.hypot(n[0], n[1], n[2]),
+      projArea: kind === "roof" ? Math.abs(n[1]) : 0,
+      centroid: centroid(pts)
+    };
+  }
+
+  /* --- the (z,y) profile ---------------------------------------------- */
+
+  function profile(b) {
+    const R = b.roof, h = b.wallH, D = b.d / 2, O = Math.max(0, R.overhang);
+    const t = Math.tan(clamp(R.pitch, 1, 75) * D2R);
+    const p = [];
+
+    switch (R.type) {
+      case "flat":
+        p.push([-D - O, h], [D + O, h]);
+        break;
+
+      case "gable":
+        p.push([-D - O, h - O * t], [0, h + D * t], [D + O, h - O * t]);
+        break;
+
+      case "shed": {                       // low eave at +z, high eave at -z
+        const y = z => h + t * (D - z);
+        p.push([-D - O, y(-D - O)], [D + O, y(D + O)]);
+        break;
+      }
+
+      case "butterfly":
+        p.push([-D - O, h + t * (D + O)], [0, h], [D + O, h + t * (D + O)]);
+        break;
+
+      case "sawtooth": {
+        const n = clamp(Math.round(R.bays), 1, 12), bd = (2 * D) / n;
+        p.push([-D - O, h - t * O]);
+        for (let i = 0; i < n; i++) {
+          const z0 = -D + i * bd, z1 = z0 + bd;
+          p.push([z0, h], [z1, h + t * bd], [z1, h]);   // slope, then vertical glazing
+        }
+        p.splice(1, 1);                                  // first [z0,h] duplicates the overhang start
+        break;
+      }
+
+      case "vault": {
+        const rise = clamp(R.rise, 0.3, D * 3);
+        const Rad = (D * D + rise * rise) / (2 * rise);
+        const cy = h + rise - Rad;
+        const y = z => cy + Math.sqrt(Math.max(0, Rad * Rad - z * z));
+        const slope = D / Math.sqrt(Math.max(1e-6, Rad * Rad - D * D)); // |dy/dz| at the springing
+        if (O > 0) p.push([-D - O, y(-D) - O * slope]);
+        const N = 18;
+        for (let i = 0; i <= N; i++) { const z = -D + (2 * D * i) / N; p.push([z, y(z)]); }
+        if (O > 0) p.push([D + O, y(D) - O * slope]);
+        break;
+      }
+    }
+    return p;
+  }
+
+  /* --- faces for one block --------------------------------------------- */
+
+  function blockFaces(b) {
+    const out = [];
+    const h = b.wallH, W = b.w / 2, D = b.d / 2;
+    const R = b.roof, O = Math.max(0, R.overhang);
+    const t = Math.tan(clamp(R.pitch, 1, 75) * D2R);
+    const ox = b.x, oz = b.z;
+    const P = (x, y, z) => [x + ox, y, z + oz];
+
+    /* walls */
+    out.push(face([P(-W,0,D),  P(W,0,D),  P(W,h,D),  P(-W,h,D)],  "wall", b));
+    out.push(face([P(W,0,-D),  P(-W,0,-D),P(-W,h,-D),P(W,h,-D)],  "wall", b));
+    out.push(face([P(W,0,D),   P(W,0,-D), P(W,h,-D), P(W,h,D)],   "wall", b));
+    out.push(face([P(-W,0,-D), P(-W,0,D), P(-W,h,D), P(-W,h,-D)], "wall", b));
+
+    if (ROOFS[R.type].radial) {
+      /* ---- hip / pyramid ---- */
+      const W2 = W + O, D2 = D + O, ye = h - O * t;
+      const c = [P(-W2,ye,-D2), P(W2,ye,-D2), P(W2,ye,D2), P(-W2,ye,D2)];
+      if (R.type === "pyramid") {
+        const apex = P(0, ye + t * Math.min(W2, D2), 0);
+        for (let i = 0; i < 4; i++) out.push(face([c[i], c[(i+1)%4], apex], "roof", b));
+      } else {
+        const rl = clamp(R.ridgeRatio, 0, 1) * Math.max(0, 2*W2 - 2*D2);
+        const ry = ye + t * D2;
+        const r0 = P(-rl/2, ry, 0), r1 = P(rl/2, ry, 0);
+        out.push(face([c[3], c[2], r1, r0], "roof", b));   // +z plane
+        out.push(face([c[1], c[0], r0, r1], "roof", b));   // -z plane
+        out.push(face([c[0], c[3], r0], "roof", b));       // -x hip end
+        out.push(face([c[2], c[1], r1], "roof", b));       // +x hip end
+      }
+    } else {
+      /* ---- extruded profile ---- */
+      const p = profile(b), X = W + O;
+      for (let i = 0; i < p.length - 1; i++) {
+        const [z1, y1] = p[i], [z2, y2] = p[i + 1];
+        if (Math.abs(z2 - z1) < 1e-9 && Math.abs(y2 - y1) < 1e-9) continue;
+        const vertical = Math.abs(z2 - z1) < 1e-6;
+        out.push(face(
+          [P(-X,y1,z1), P(X,y1,z1), P(X,y2,z2), P(-X,y2,z2)],
+          vertical ? "glazing" : "roof", b));
+      }
+
+      /* roof height at a given z, used to close the walls under the roof */
+      const yAt = z => {
+        for (let i = 0; i < p.length - 1; i++) {
+          const a = p[i], c2 = p[i + 1];
+          if (z >= Math.min(a[0], c2[0]) - 1e-6 && z <= Math.max(a[0], c2[0]) + 1e-6) {
+            if (Math.abs(c2[0] - a[0]) < 1e-9) return Math.max(a[1], c2[1]);
+            return a[1] + (c2[1] - a[1]) * (z - a[0]) / (c2[0] - a[0]);
+          }
+        }
+        return h;
+      };
+
+      /* gable-end infill at x = ±W: the profile clipped to the wall footprint,
+         closed back along the wall head. Clip rather than filter, so a roof whose
+         only profile points sit outside ±D (shed, vault) still gets its infill. */
+      const inner = [
+        [-D, yAt(-D)],
+        ...p.filter(q => q[0] > -D + 1e-6 && q[0] < D - 1e-6).map(q => [q[0], q[1]]),
+        [D, yAt(D)]
+      ];
+      if (inner.some(q => q[1] > h + 1e-4)) {
+        const poly = [[-D, h], ...inner, [D, h]];
+        const dedup = poly.filter((q, i) => i === 0 || Math.hypot(q[0]-poly[i-1][0], q[1]-poly[i-1][1]) > 1e-6);
+        if (dedup.length >= 3 && surfaceArea(dedup.map(q => [0, q[1], q[0]])) > 1e-4) {
+          out.push(face(dedup.map(q => P( W, q[1], q[0])), "wall", b));
+          out.push(face(dedup.slice().reverse().map(q => P(-W, q[1], q[0])), "wall", b));
+        }
+      }
+
+      /* infill at z = ±D where the profile rises above the wall head */
+      for (const s of [-1, 1]) {
+        const yTop = yAt(s * D);
+        if (yTop > h + 1e-4) {
+          const pts = s > 0
+            ? [P(-W,h,D),  P(W,h,D),  P(W,yTop,D),  P(-W,yTop,D)]
+            : [P(W,h,-D),  P(-W,h,-D),P(-W,yTop,-D),P(W,yTop,-D)];
+          out.push(face(pts, "wall", b));
+        }
+      }
+
+      /* parapet on flat roofs */
+      if (R.type === "flat" && R.parapet > 0.02) {
+        const pp = R.parapet;
+        out.push(face([P(-W,h,D),  P(W,h,D),  P(W,h+pp,D),  P(-W,h+pp,D)],  "parapet", b));
+        out.push(face([P(W,h,-D),  P(-W,h,-D),P(-W,h+pp,-D),P(W,h+pp,-D)],  "parapet", b));
+        out.push(face([P(W,h,D),   P(W,h,-D), P(W,h+pp,-D), P(W,h+pp,D)],   "parapet", b));
+        out.push(face([P(-W,h,-D), P(-W,h,D), P(-W,h+pp,D), P(-W,h+pp,-D)], "parapet", b));
+      }
+    }
+    return out;
+  }
+
+  /* --- gutters and downpipes, derived from the roof faces -------------- */
+
+  function drainage(faces, blocks) {
+    const roofs = faces.filter(f => f.kind === "roof");
+
+    /* count how often each edge is used by a roof face: an edge shared by two
+       roof planes is an internal seam (a vault's tessellation, a valley), not
+       an eave, so it must not carry a gutter. */
+    const key = (a, c) => {
+      const r = v => v.map(n => Math.round(n * 1000) / 1000).join(",");
+      const ka = r(a), kc = r(c);
+      return ka < kc ? ka + "|" + kc : kc + "|" + ka;
+    };
+    const shared = new Map();
+    for (const f of roofs)
+      for (let i = 0; i < f.pts.length; i++) {
+        const k = key(f.pts[i], f.pts[(i + 1) % f.pts.length]);
+        shared.set(k, (shared.get(k) || 0) + 1);
+      }
+
+    const gutters = [];
+    for (const f of roofs) {
+      const flat = Math.abs(f.normal[1]) > 0.999;
+      let best = null;
+      for (let i = 0; i < f.pts.length; i++) {
+        const a = f.pts[i], c = f.pts[(i + 1) % f.pts.length];
+        if (Math.abs(a[1] - c[1]) > 1e-4) continue;               // not level -> not an eave
+        const len = Math.hypot(a[0] - c[0], a[2] - c[2]);
+        if (len < 1e-4) continue;
+        if ((shared.get(key(a, c)) || 0) > 1) continue;            // internal seam
+        /* a dead-flat plane has no low side, so drain it to +z by convention */
+        const rank = flat ? (a[2] + c[2]) / 2 : -(a[1] + c[1]) / 2;
+        if (!best || rank > best.rank + 1e-6 || (Math.abs(rank - best.rank) < 1e-6 && len > best.len))
+          best = { a, c, rank, len };
+      }
+      if (best) gutters.push({ a: best.a, b: best.c, blk: f.block, len: best.len });
+    }
+
+    /* downpipes: spread each block's stated count evenly along its own gutters */
+    const pipes = [];
+    for (const b of (blocks || [])) {
+      const g = gutters.filter(x => x.blk === b.id);
+      const total = sum(g.map(x => x.len));
+      const n = clamp(Math.round(b.downpipes || 1), 1, 24);
+      if (!g.length || total <= 0) continue;
+      for (let i = 0; i < n; i++) {
+        let s = ((i + 0.5) / n) * total;
+        for (const seg of g) {
+          if (s <= seg.len || seg === g[g.length - 1]) {
+            const u = clamp(seg.len > 0 ? s / seg.len : 0, 0, 1);
+            pipes.push({
+              x: seg.a[0] + (seg.b[0] - seg.a[0]) * u,
+              z: seg.a[2] + (seg.b[2] - seg.a[2]) * u,
+              top: seg.a[1] + (seg.b[1] - seg.a[1]) * u
+            });
+            break;
+          }
+          s -= seg.len;
+        }
+      }
+    }
+    return { gutters, pipes };
+  }
+
+  /* --- whole model ------------------------------------------------------ */
+
+  function build(model) {
+    const faces = [];
+    for (const b of model.blocks) faces.push(...blockFaces(b));
+
+    const per = model.blocks.map(b => {
+      const bf = faces.filter(f => f.block === b.id && f.kind === "roof");
+      const proj = sum(bf.map(f => f.projArea));
+      const surf = sum(bf.map(f => f.surfaceArea));
+      return { id: b.id, name: b.name, proj, surf, yc: MATERIALS[b.material].yc, material: b.material };
+    });
+
+    const bounds = { min: [ 1e9, 1e9, 1e9], max: [-1e9,-1e9,-1e9] };
+    for (const f of faces) for (const p of f.pts) for (let i = 0; i < 3; i++) {
+      if (p[i] < bounds.min[i]) bounds.min[i] = p[i];
+      if (p[i] > bounds.max[i]) bounds.max[i] = p[i];
+    }
+
+    return {
+      faces, per, bounds,
+      catchment: sum(per.map(p => p.proj)),
+      surface:   sum(per.map(p => p.surf)),
+      /* area-weighted mean yield coefficient across mixed materials */
+      ycMean: sum(per.map(p => p.proj)) > 0
+        ? sum(per.map(p => p.proj * p.yc)) / sum(per.map(p => p.proj)) : 0,
+      drain: drainage(faces, model.blocks),
+      footprint: sum(model.blocks.map(b => b.w * b.d))
+    };
+  }
+
+  return { build, blockFaces, profile, surfaceArea, projectedArea };
+})();
+
+/* ═══════════════════════════ HYD ═══════════════════════════
+   Hydrology. Yield to BS EN 16941-1:2024 (which superseded BS 8515:2009):
+
+       Y = A · R · Yc · Fc          litres, with A in m² and R in mm
+                                    (1 mm falling on 1 m² = 1 litre)
+
+   The store is then operated with the YAS (Yield After Spillage) rule, which is
+   the conservative convention: demand is met from what was in the tank at the
+   end of the previous step, before this step's inflow is added.
+   ========================================================================== */
+
+const HYD = (() => {
+
+  /* wet days per month, derived from the monthly depth and the location's
+     typical depth per wet day. Used for first-flush losses and daily stepping. */
+  function wetDays(model) {
+    const dpd = Math.max(2, model.climate.dpd || 8);
+    return model.climate.monthly.map((mm, i) =>
+      mm <= 0 ? 0 : clamp(Math.round(mm / dpd), 1, DAYS_IN_MONTH[i]));
+  }
+
+  function demandMonthly(model) {
+    const D = model.demand;
+    const perPerson = sum(D.uses.filter(u => u.on).map(u => u.lpd));
+    const daily = perPerson * Math.max(0, D.occupants);
+    const from = Math.min(D.irrigFrom, D.irrigTo), to = Math.max(D.irrigFrom, D.irrigTo);
+    return DAYS_IN_MONTH.map((days, i) => {
+      let v = daily * days;
+      if (D.irrigArea > 0 && i >= from && i <= to) v += D.irrigArea * D.irrigMM * (days / 7);
+      return v;
+    });
+  }
+
+  function inflowMonthly(model, geom) {
+    const wd = wetDays(model);
+    const ff = Math.max(0, model.system.firstFlush);
+    const fc = clamp(model.system.filterCoef, 0, 1);
+    return model.climate.monthly.map((mm, i) => {
+      const effective = Math.max(0, mm - ff * wd[i]);      // first flush diverted per event
+      /* per-block so mixed roof materials keep their own yield coefficient */
+      return sum(geom.per.map(p => p.proj * effective * p.yc * fc));
+    });
+  }
+
+  /* YAS water balance. Returns end-of-step series plus totals.
+     Three warm-up cycles run first so the answer does not depend on the
+     assumed starting level. */
+  function balance(model, inflow, demand, capacity, wd) {
+    const cap = Math.max(0, capacity);
+    let level = 0;
+    const daily = model.system.daily;
+    const out = { level:[], yield:[], overflow:[], deficit:[], inflow:inflow.slice(), demand:demand.slice(), dryDays:0, steps:0 };
+
+    for (let cycle = 0; cycle < 4; cycle++) {
+      const last = cycle === 3;
+      if (last) { out.level.length = 0; out.yield.length = 0; out.overflow.length = 0; out.deficit.length = 0; out.dryDays = 0; out.steps = 0; }
+      for (let m = 0; m < 12; m++) {
+        const n = daily ? DAYS_IN_MONTH[m] : 1;
+        const perStepDemand = demand[m] / n;
+        /* spread the month's inflow over its wet days, evenly spaced.
+           Every step's inflow is placed exactly once, so volume is conserved. */
+        const q = new Array(n).fill(0);
+        if (daily) {
+          const wet = clamp(wd[m], inflow[m] > 0 ? 1 : 0, n);
+          if (wet > 0) {
+            const perWet = inflow[m] / wet, stride = n / wet;
+            for (let k = 0; k < wet; k++) q[Math.min(n - 1, Math.floor(k * stride))] += perWet;
+          }
+        } else q[0] = inflow[m];
+
+        let mY = 0, mO = 0, mD = 0;
+        for (let s = 0; s < n; s++) {
+          const y = Math.min(perStepDemand, level);
+          level -= y;
+          level += q[s];
+          const over = Math.max(0, level - cap);
+          level -= over;
+          mY += y; mO += over; mD += perStepDemand - y;
+          if (last && perStepDemand > 0 && y < perStepDemand - 1e-9) out.dryDays++;
+          if (last) out.steps++;
+        }
+        if (last) { out.level.push(level); out.yield.push(mY); out.overflow.push(mO); out.deficit.push(mD); }
+      }
+    }
+    out.totalYield    = sum(out.yield);
+    out.totalOverflow = sum(out.overflow);
+    out.totalDeficit  = sum(out.deficit);
+    out.totalDemand   = sum(demand);
+    out.totalInflow   = sum(inflow);
+    out.saving = out.totalDemand > 0 ? out.totalYield / out.totalDemand : 0;
+    out.reliability = out.steps > 0 ? 1 - out.dryDays / out.steps : 0;
+    return out;
+  }
+
+  /* indicative gutter / downpipe check (NOT a substitute for BS EN 12056-3) */
+  const PIPE_CAP = [[63,1.7],[75,2.6],[90,4.3],[100,5.6],[110,7.2],[125,10.5],[150,16.0]];
+  function drainageCheck(model, geom, intensity) {
+    const i = intensity || 75;                       // mm/h design storm
+    const Q = geom.catchment * i / 3600;             // litres/second
+    const n = Math.max(1, sum(model.blocks.map(b => Math.max(1, b.downpipes))));
+    const per = Q / n;
+    const pick = PIPE_CAP.find(p => p[1] >= per) || PIPE_CAP[PIPE_CAP.length - 1];
+    return { intensity: i, Q, n, per, dia: pick[0], ok: pick[1] >= per };
+  }
+
+  function compute(model, geom) {
+    const wd = wetDays(model);
+    const demand = demandMonthly(model);
+    const inflow = inflowMonthly(model, geom);
+    const annualRain = sum(model.climate.monthly);
+    const annualInflow = sum(inflow);
+    const annualDemand = sum(demand);
+
+    /* BS simplified store: the lesser of 5% of annual yield and 5% of annual demand */
+    const simple = Math.min(annualInflow, annualDemand) * 0.05;
+
+    /* optimisation sweep: water-saving efficiency against capacity */
+    const capMax = Math.max(simple * 6, annualDemand / 365 * 60, 1000);
+    const sweep = [];
+    const STEPS = 36;
+    for (let k = 0; k <= STEPS; k++) {
+      const cap = (capMax * k) / STEPS;
+      sweep.push({ cap, saving: balance(model, inflow, demand, cap, wd).saving });
+    }
+    const best = sweep[sweep.length - 1].saving;
+    const knee = (sweep.find(s => s.saving >= best * 0.95) || sweep[sweep.length - 1]).cap;
+
+    const capacity = model.system.tankMode === "auto" ? simple : Math.max(0, model.system.tank);
+    const bal = balance(model, inflow, demand, capacity, wd);
+
+    const mainsSaved = bal.totalYield / 1000;                    // m3
+    return {
+      wd, demand, inflow, annualRain, annualInflow, annualDemand,
+      simple, knee, sweep, capacity, bal,
+      maxSaving: best,
+      daysStorage: annualDemand > 0 ? capacity / (annualDemand / 365) : 0,
+      mainsSaved, costSaved: mainsSaved * model.system.tariff,
+      drain: drainageCheck(model, geom, 75),
+      ycMean: geom.ycMean
+    };
+  }
+
+  return { compute, balance, demandMonthly, inflowMonthly, wetDays };
+})();
+
+/* ═══════════════════════════ R3D ═══════════════════════════
+   Canvas 2D renderer. Deliberately not WebGL:
+     · vector output, so PNG and the A3 report re-render the same scene at 3-4x
+       device scale instead of upscaling a screen-resolution framebuffer;
+     · hidden-line and x-ray styles fall out of the painter's algorithm;
+     · no context-loss or sandbox failure modes on classroom machines.
+   Painter's algorithm is exact for this geometry class because block footprints
+   are prevented from overlapping in plan.
+   ========================================================================== */
+
+const R3D = (() => {
+
+  const cam = { az: -37 * D2R, el: 24 * D2R, dist: 46, target: [0, 3, 0], fov: 36 * D2R };
+  const LIGHT = (() => { const v = [-0.42, 0.84, 0.34]; const L = Math.hypot(...v); return v.map(c => c / L); })();
+
+  let theme = null;
+  function palette(force) {
+    if (theme && !force) return theme;
+    const cs = getComputedStyle(document.getElementById("rwc-app"));
+    const g = n => cs.getPropertyValue(n).trim();
+    theme = {
+      grid: g("--scene-grid"), grid2: g("--scene-grid-2"), edge: g("--scene-edge"),
+      ink: g("--ink"), ink2: g("--ink-2"), ink3: g("--ink-3"),
+      surface: g("--surface-1"), line: g("--line"), accent: g("--accent"),
+      s1: g("--series-1"), s2: g("--series-2"), s3: g("--series-3"),
+      bg1: g("--scene-bg-a"), bg2: g("--scene-bg-b"),
+      seq: [g("--seq-100"), g("--seq-200"), g("--seq-300"), g("--seq-400"), g("--seq-500"), g("--seq-600"), g("--seq-700")]
+    };
+    return theme;
+  }
+  const invalidateTheme = () => { theme = null; };
+
+  /* --- camera ---------------------------------------------------------- */
+
+  function basis() {
+    const ce = Math.cos(cam.el), se = Math.sin(cam.el);
+    const dir = [ce * Math.sin(cam.az), se, ce * Math.cos(cam.az)];
+    const eye = [cam.target[0] + dir[0] * cam.dist, cam.target[1] + dir[1] * cam.dist, cam.target[2] + dir[2] * cam.dist];
+    const fwd = [-dir[0], -dir[1], -dir[2]];
+    let right = [-fwd[2], 0, fwd[0]];            // fwd × worldUp
+    const rl = Math.hypot(right[0], right[2]) || 1;
+    right = [right[0] / rl, 0, right[2] / rl];
+    const up = [
+      right[1] * fwd[2] - right[2] * fwd[1],
+      right[2] * fwd[0] - right[0] * fwd[2],
+      right[0] * fwd[1] - right[1] * fwd[0]
+    ];
+    return { eye, fwd, right, up };
+  }
+
+  function makeProjector(W, H) {
+    const b = basis();
+    const f = (H / 2) / Math.tan(cam.fov / 2);
+    const cx = W / 2, cy = H / 2;
+    return p => {
+      const dx = p[0] - b.eye[0], dy = p[1] - b.eye[1], dz = p[2] - b.eye[2];
+      const z = dx * b.fwd[0] + dy * b.fwd[1] + dz * b.fwd[2];
+      if (z < 0.15) return null;
+      const x = dx * b.right[0] + dy * b.right[1] + dz * b.right[2];
+      const y = dx * b.up[0] + dy * b.up[1] + dz * b.up[2];
+      return [cx + (f * x) / z, cy - (f * y) / z, z];
+    };
+  }
+
+  function fit(bounds, W, H) {
+    const c = [0, 1, 2].map(i => (bounds.min[i] + bounds.max[i]) / 2);
+    const size = [0, 1, 2].map(i => bounds.max[i] - bounds.min[i]);
+    const r = Math.max(1.5, Math.hypot(size[0], size[1], size[2]) / 2);
+    cam.target = [c[0], c[1], c[2]];
+    const aspect = Math.max(0.35, W / Math.max(1, H));
+    const vfov = cam.fov, hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
+    cam.dist = clamp(r / Math.sin(Math.min(vfov, hfov) / 2) * 1.16, 4, 4000);
+  }
+
+  const VIEWS = {
+    iso:   { az: -37 * D2R, el:  24 * D2R },
+    top:   { az:   0 * D2R, el:  89 * D2R },
+    front: { az:   0 * D2R, el:   6 * D2R },
+    back:  { az: 180 * D2R, el:   6 * D2R },
+    right: { az:  90 * D2R, el:   6 * D2R },
+    left:  { az: -90 * D2R, el:   6 * D2R }
+  };
+  function setView(k) { const v = VIEWS[k]; if (v) { cam.az = v.az; cam.el = v.el; } }
+
+  /* --- small solid helpers --------------------------------------------- */
+
+  function boxFaces(cx, cy, cz, sx, sy, sz, kind, col) {
+    const X = sx / 2, Y = sy / 2, Z = sz / 2;
+    const v = [
+      [cx-X,cy-Y,cz-Z],[cx+X,cy-Y,cz-Z],[cx+X,cy-Y,cz+Z],[cx-X,cy-Y,cz+Z],
+      [cx-X,cy+Y,cz-Z],[cx+X,cy+Y,cz-Z],[cx+X,cy+Y,cz+Z],[cx-X,cy+Y,cz+Z]
+    ];
+    const q = [[0,1,2,3],[4,7,6,5],[0,4,5,1],[3,2,6,7],[0,3,7,4],[1,5,6,2]];
+    return q.map(ix => {
+      const pts = ix.map(i => v[i]);
+      let nx=0,ny=0,nz=0;
+      for (let i=0;i<pts.length;i++){const a=pts[i],b2=pts[(i+1)%pts.length];
+        nx+=(a[1]-b2[1])*(a[2]+b2[2]); ny+=(a[2]-b2[2])*(a[0]+b2[0]); nz+=(a[0]-b2[0])*(a[1]+b2[1]);}
+      const L = Math.hypot(nx,ny,nz)||1;
+      return { pts, kind, col, normal:[nx/L,ny/L,nz/L],
+               centroid:[(pts[0][0]+pts[2][0])/2,(pts[0][1]+pts[2][1])/2,(pts[0][2]+pts[2][2])/2] };
+    });
+  }
+
+  function segBox(a, b, w, h, kind, col) {
+    const dx = b[0]-a[0], dz = b[2]-a[2], L = Math.hypot(dx,dz);
+    if (L < 1e-4) return [];
+    const cx = (a[0]+b[0])/2, cz = (a[2]+b[2])/2, cy = (a[1]+b[1])/2;
+    if (Math.abs(dx) >= Math.abs(dz)) return boxFaces(cx, cy, cz, L, h, w, kind, col);
+    return boxFaces(cx, cy, cz, w, h, L, kind, col);
+  }
+
+  /* --- colour selection ------------------------------------------------ */
+
+  function shadeHex(hex, k) {
+    const h = hex.replace("#",""); const n = parseInt(h.length===3 ? h.split("").map(c=>c+c).join("") : h, 16);
+    const r = clamp(Math.round(((n>>16)&255)*k),0,255), g = clamp(Math.round(((n>>8)&255)*k),0,255), b = clamp(Math.round((n&255)*k),0,255);
+    return "rgb(" + r + "," + g + "," + b + ")";
+  }
+  function withAlpha(hex, a) {
+    const h = hex.replace("#",""); const n = parseInt(h.length===3 ? h.split("").map(c=>c+c).join("") : h, 16);
+    return "rgba(" + ((n>>16)&255) + "," + ((n>>8)&255) + "," + (n&255) + "," + a + ")";
+  }
+  const WALL_COL = "#c9c6bd", PARAPET_COL = "#bab7ae", GLAZE_COL = "#9fc4d8";
+
+  function faceColour(f, style, P, selected) {
+    const mat = MATERIALS[f.material];
+    let base = f.col || (f.kind === "roof" ? (mat ? mat.col : "#a8593f")
+              : f.kind === "glazing" ? GLAZE_COL
+              : f.kind === "parapet" ? PARAPET_COL : WALL_COL);
+    if (style === "catchment") {
+      if (f.kind === "roof" && mat) {
+        const t = clamp((mat.yc - 0.35) / 0.6, 0, 1);
+        base = P.seq[clamp(Math.round(1 + t * 5), 0, 6)];
+        return { fill: base, stroke: withAlpha(P.edge, 0.35), lw: 0.8 };
+      }
+      return { fill: withAlpha(P.ink3, 0.16), stroke: withAlpha(P.ink3, 0.35), lw: 0.7 };
+    }
+    const ndl = Math.abs(f.normal[0]*LIGHT[0] + f.normal[1]*LIGHT[1] + f.normal[2]*LIGHT[2]);
+    const k = 0.46 + 0.54 * ndl;
+    if (style === "wire")   return { fill: null, stroke: withAlpha(P.edge, 0.55), lw: 0.9 };
+    if (style === "hidden") return { fill: P.surface, stroke: P.edge, lw: 1.0 };
+    if (style === "xray")   return { fill: withAlpha(base, 0.16), stroke: withAlpha(P.edge, 0.5), lw: 0.8 };
+    const fill = shadeHex(base, k);
+    return {
+      fill, lw: selected ? 1.5 : 0.85,
+      stroke: selected ? P.accent : withAlpha(P.edge, style === "flow" ? 0.22 : 0.3)
+    };
+  }
+
+  /* --- the render ------------------------------------------------------ */
+
+  function render(ctx, W, H, model, geom, res, opts) {
+    opts = opts || {};
+    const P = palette();
+    const style = model.view.style;
+    const proj = makeProjector(W, H);
+    const b = basis();
+    const scale = opts.scale || 1;
+    const selected = opts.selected;
+    let tankLabel = null;
+
+    /* backdrop */
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, opts.bg1 || P.bg1);
+    grad.addColorStop(1, opts.bg2 || P.bg2);
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+    /* ground grid, drawn first: nothing in the scene goes below y = 0 */
+    if (model.view.grid) {
+      const ext = Math.max(24, Math.ceil(Math.max(
+        geom.bounds.max[0] - geom.bounds.min[0], geom.bounds.max[2] - geom.bounds.min[2]) * 0.9) + 10);
+      const cx = Math.round((geom.bounds.min[0] + geom.bounds.max[0]) / 2);
+      const cz = Math.round((geom.bounds.min[2] + geom.bounds.max[2]) / 2);
+      ctx.lineWidth = 1 * scale;
+      for (let i = -ext; i <= ext; i++) {
+        const major = i % 5 === 0;
+        ctx.strokeStyle = major ? P.grid2 : P.grid;
+        ctx.globalAlpha = major ? 0.75 : 0.4;
+        for (const axis of [0, 1]) {
+          const a = axis ? proj([cx - ext, 0, cz + i]) : proj([cx + i, 0, cz - ext]);
+          const c = axis ? proj([cx + ext, 0, cz + i]) : proj([cx + i, 0, cz + ext]);
+          if (!a || !c) continue;
+          ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(c[0], c[1]); ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    /* collect drawables */
+    let items = geom.faces.slice();
+
+    if (model.view.system) {
+      const tankCol = P.s1;
+      for (const g of geom.drain.gutters) items.push(...segBox(g.a, g.b, 0.26, 0.20, "sys", tankCol));
+      for (const p of geom.drain.pipes)
+        items.push(...boxFaces(p.x, p.top / 2, p.z, 0.16, p.top, 0.16, "sys", tankCol));
+      if (res && res.capacity > 0) {
+        const vol = res.capacity / 1000;                       // m3
+        const hT = clamp(Math.cbrt(vol) * 1.15, 1.0, 4.0);
+        const side = Math.sqrt(Math.max(0.4, vol / hT));
+        const tx = geom.bounds.max[0] + side / 2 + 2.0;
+        const tz = geom.bounds.max[2] + side / 2 + 2.0;
+        items.push(...boxFaces(tx, hT / 2, tz, side, hT, side, "tank", tankCol));
+        tankLabel = { p: [tx, hT + 0.35, tz], v: vol, side, h: hT };
+      }
+    }
+
+    /* painter's algorithm */
+    const eye = b.eye;
+    for (const f of items) {
+      const c = f.centroid;
+      f._d = (c[0]-eye[0])**2 + (c[1]-eye[1])**2 + (c[2]-eye[2])**2;
+    }
+    items.sort((a, z) => z._d - a._d);
+
+    for (const f of items) {
+      const sp = f.pts.map(proj);
+      if (sp.some(q => q === null)) continue;
+      const col = f.kind === "sys" || f.kind === "tank"
+        ? (() => {
+            const ndl = Math.abs(f.normal[0]*LIGHT[0] + f.normal[1]*LIGHT[1] + f.normal[2]*LIGHT[2]);
+            return { fill: shadeHex(f.col, 0.5 + 0.5 * ndl), stroke: withAlpha(P.edge, 0.35), lw: 0.8 };
+          })()
+        : faceColour(f, style, P, selected && f.block === selected);
+      ctx.beginPath();
+      ctx.moveTo(sp[0][0], sp[0][1]);
+      for (let i = 1; i < sp.length; i++) ctx.lineTo(sp[i][0], sp[i][1]);
+      ctx.closePath();
+      if (col.fill) { ctx.fillStyle = col.fill; ctx.fill(); }
+      if (col.stroke) { ctx.strokeStyle = col.stroke; ctx.lineWidth = col.lw * scale; ctx.lineJoin = "round"; ctx.stroke(); }
+
+      /* flow arrows down the slope of each roof plane */
+      if (style === "flow" && f.kind === "roof") {
+        /* on the plane n.p = const, dy/ds along a horizontal unit d is
+           -(nx*dx + nz*dz)/ny. With n flipped upward, +(nx,nz) is downhill. */
+        const n = f.normal[1] < 0 ? [-f.normal[0], -f.normal[1], -f.normal[2]] : f.normal;
+        let d = [n[0], 0, n[2]];
+        let L = Math.hypot(d[0], d[2]);
+        if (L < 1e-4) { d = [0, 0, 1]; L = 1; }       // dead flat: fall to +z
+        d = [d[0]/L, 0, d[2]/L];
+        const len = Math.min(3.2, Math.sqrt(f.surfaceArea) * 0.42);
+        const c = f.centroid;
+        const drop = -(n[0]*d[0] + n[2]*d[2]) / (n[1] || 1);
+        const a0 = proj([c[0] - d[0]*len/2, c[1] - drop*len/2, c[2] - d[2]*len/2]);
+        const a1 = proj([c[0] + d[0]*len/2, c[1] + drop*len/2, c[2] + d[2]*len/2]);
+        if (a0 && a1) {
+          ctx.strokeStyle = P.s1; ctx.lineWidth = 2 * scale; ctx.lineCap = "round";
+          ctx.beginPath(); ctx.moveTo(a0[0], a0[1]); ctx.lineTo(a1[0], a1[1]); ctx.stroke();
+          const ang = Math.atan2(a1[1]-a0[1], a1[0]-a0[0]), hl = 7 * scale;
+          ctx.beginPath();
+          ctx.moveTo(a1[0], a1[1]);
+          ctx.lineTo(a1[0] - hl*Math.cos(ang-0.42), a1[1] - hl*Math.sin(ang-0.42));
+          ctx.moveTo(a1[0], a1[1]);
+          ctx.lineTo(a1[0] - hl*Math.cos(ang+0.42), a1[1] - hl*Math.sin(ang+0.42));
+          ctx.stroke();
+        }
+      }
+    }
+
+    /* scale figure + tank label + annotations */
+    ctx.font = (11 * scale) + "px " + "-apple-system, Segoe UI, Roboto, sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+
+    if (model.view.dims) {
+      const fx = geom.bounds.min[0] - 2.2, fz = geom.bounds.max[2] + 1.2;
+      const fb = proj([fx, 0, fz]), ft = proj([fx, 1.75, fz]);
+      if (fb && ft) {
+        const hpx = Math.abs(fb[1] - ft[1]);
+        if (hpx > 6) {
+          ctx.strokeStyle = withAlpha(P.ink2, 0.75);
+          ctx.fillStyle = withAlpha(P.ink2, 0.75);
+          ctx.lineWidth = Math.max(1, hpx * 0.055);
+          const w2 = hpx * 0.16;
+          ctx.beginPath(); ctx.arc(fb[0], ft[1] + hpx*0.09, hpx*0.09, 0, 6.284); ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(fb[0], ft[1] + hpx*0.19); ctx.lineTo(fb[0], ft[1] + hpx*0.60);
+          ctx.moveTo(fb[0]-w2, ft[1]+hpx*0.30); ctx.lineTo(fb[0]+w2, ft[1]+hpx*0.30);
+          ctx.moveTo(fb[0], ft[1]+hpx*0.60); ctx.lineTo(fb[0]-w2*0.8, fb[1]);
+          ctx.moveTo(fb[0], ft[1]+hpx*0.60); ctx.lineTo(fb[0]+w2*0.8, fb[1]);
+          ctx.stroke();
+        }
+      }
+    }
+
+    if (tankLabel) {
+      const t = tankLabel, sp = proj(t.p);
+      if (sp) {
+        const txt = t.v >= 10 ? t.v.toFixed(0) + " m³ tank" : (t.v * 1000).toFixed(0) + " L tank";
+        ctx.font = "600 " + (11.5 * scale) + "px -apple-system, Segoe UI, Roboto, sans-serif";
+        const w = ctx.measureText(txt).width + 12 * scale;
+        ctx.fillStyle = withAlpha(P.surface, 0.92);
+        ctx.strokeStyle = withAlpha(P.edge, 0.25); ctx.lineWidth = 1 * scale;
+        roundRect(ctx, sp[0]-w/2, sp[1]-11*scale, w, 19*scale, 5*scale); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = P.ink; ctx.fillText(txt, sp[0], sp[1] - 1.5*scale);
+      }
+    }
+
+    /* north arrow + scale bar, screen space */
+    if (model.view.dims) drawCompass(ctx, W, H, scale, P, proj, geom, b);
+    return { proj, basis: b };
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+  }
+
+  function drawCompass(ctx, W, H, scale, P, proj, geom, b) {
+    /* scale bar: 5 m measured along the camera's right vector, so it stays
+       across the screen in plan and in every elevation */
+    const c = [(geom.bounds.min[0]+geom.bounds.max[0])/2, 0, (geom.bounds.min[2]+geom.bounds.max[2])/2];
+    const a = proj(c), bpt = proj([c[0]+b.right[0]*5, c[1]+b.right[1]*5, c[2]+b.right[2]*5]);
+    const x0 = 16 * scale, y0 = H - 22 * scale;
+    if (a && bpt) {
+      const px = Math.hypot(bpt[0]-a[0], bpt[1]-a[1]) || 1;
+      let metres = 5, len = px;
+      while (len > W * 0.28) { metres /= 2; len = px * metres / 5; }
+      while (len < W * 0.07 && metres < 500) { metres *= 2; len = px * metres / 5; }
+      ctx.strokeStyle = withAlpha(P.ink2, 0.85); ctx.fillStyle = withAlpha(P.ink2, 0.85);
+      ctx.lineWidth = 1.4 * scale;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0-4*scale); ctx.lineTo(x0, y0); ctx.lineTo(x0+len, y0); ctx.lineTo(x0+len, y0-4*scale);
+      ctx.moveTo(x0+len/2, y0); ctx.lineTo(x0+len/2, y0-3*scale);
+      ctx.stroke();
+      ctx.font = (10.5*scale)+"px -apple-system, Segoe UI, Roboto, sans-serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "top";
+      ctx.fillText("0", x0-1*scale, y0+3*scale);
+      ctx.textAlign = "right";
+      ctx.fillText(metres + " m", x0+len+1*scale, y0+3*scale);
+    }
+    /* north arrow: north is -Z */
+    const nc = [x0 + 14*scale, y0 - 40*scale];
+    const o = proj([c[0], 0, c[2]]), n = proj([c[0], 0, c[2]-5]);
+    if (o && n) {
+      let dx = n[0]-o[0], dy = n[1]-o[1];
+      const L = Math.hypot(dx, dy);
+      if (L < 3 * scale) return;                  // north is edge-on: no readable needle
+      dx/=L; dy/=L;
+      const r = 13*scale;
+      ctx.strokeStyle = withAlpha(P.ink2, 0.6); ctx.lineWidth = 1.2*scale;
+      ctx.beginPath(); ctx.arc(nc[0], nc[1], r, 0, 6.284); ctx.stroke();
+      ctx.fillStyle = withAlpha(P.ink, 0.85);
+      ctx.beginPath();
+      ctx.moveTo(nc[0]+dx*r*0.85, nc[1]+dy*r*0.85);
+      ctx.lineTo(nc[0]-dy*r*0.34-dx*r*0.3, nc[1]+dx*r*0.34-dy*r*0.3);
+      ctx.lineTo(nc[0]+dy*r*0.34-dx*r*0.3, nc[1]-dx*r*0.34-dy*r*0.3);
+      ctx.closePath(); ctx.fill();
+      ctx.font = "700 " + (9.5*scale) + "px -apple-system, Segoe UI, Roboto, sans-serif";
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillText("N", nc[0]+dx*r*1.62, nc[1]+dy*r*1.62);
+    }
+  }
+
+  /* --- picking ---------------------------------------------------------- */
+
+  function pick(px, py, W, H, geom) {
+    const proj = makeProjector(W, H);
+    const b = basis();
+    const list = geom.faces.map(f => {
+      const c = f.centroid;
+      return { f, d: (c[0]-b.eye[0])**2 + (c[1]-b.eye[1])**2 + (c[2]-b.eye[2])**2 };
+    }).sort((a, z) => a.d - z.d);
+    for (const it of list) {
+      const sp = it.f.pts.map(proj);
+      if (sp.some(q => q === null)) continue;
+      if (pointInPoly(px, py, sp)) return it.f.block;
+    }
+    return null;
+  }
+  function pointInPoly(x, y, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+    }
+    return inside;
+  }
+
+  return { cam, render, fit, setView, pick, palette, invalidateTheme, makeProjector, VIEWS };
+})();
+
+/* ═══════════════════════════ FORMAT ═══════════════════════════ */
+
+const nf = (v, d) => (isFinite(v) ? v : 0).toLocaleString(undefined, { minimumFractionDigits: d|0, maximumFractionDigits: d|0 });
+function fmtVol(litres) {                       // litres -> L or m³, with a unit
+  const v = isFinite(litres) ? litres : 0;
+  if (Math.abs(v) >= 100000) return { v: nf(v/1000, 0), u: "m³" };
+  if (Math.abs(v) >= 10000)  return { v: nf(v/1000, 1), u: "m³" };
+  return { v: nf(v, 0), u: "L" };
+}
+const fmtPct = f => nf(clamp(f, 0, 1) * 100, 0) + "%";
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+/* ═══════════════════════════ CHART ═══════════════════════════
+   Hand-authored inline SVG: crisp at any size, prints cleanly, no dependency.
+   Every chart carries a legend when it has 2+ series, direct labels on the
+   points that matter, and a hover tooltip. The monthly table under the charts
+   is the required relief for the series colours that sit below 3:1 on the
+   light surface.
+   ========================================================================== */
+
+const CHART = (() => {
+  const W = 520, H = 216, ML = 58, MR = 16, MT = 28, MB = 30;
+  const PW = W - ML - MR, PH = H - MT - MB;
+
+  function niceMax(v) {
+    if (v <= 0) return 1;
+    const e = Math.pow(10, Math.floor(Math.log10(v)));
+    const m = v / e;
+    return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * e;
+  }
+  const axisLabel = v => Math.abs(v) >= 1000 ? nf(v/1000, v/1000 >= 10 ? 0 : 1) + "k" : nf(v, 0);
+
+  function frame(yMax, yTitle, ticks) {
+    ticks = ticks || 4;
+    let g = "";
+    for (let i = 0; i <= ticks; i++) {
+      const y = MT + PH - (PH * i) / ticks;
+      g += `<line x1="${ML}" y1="${y.toFixed(1)}" x2="${ML+PW}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1"${i?' stroke-dasharray="2 3"':''}/>`;
+      g += `<text x="${ML-7}" y="${(y+3.5).toFixed(1)}" text-anchor="end" font-size="13" fill="var(--ink-3)">${axisLabel((yMax*i)/ticks)}</text>`;
+    }
+    g += `<text x="0" y="${MT-11}" text-anchor="start" font-size="12" fill="var(--ink-3)">${esc(yTitle)}</text>`;
+    return g;
+  }
+  function monthAxis() {
+    let g = "";
+    const bw = PW / 12;
+    for (let i = 0; i < 12; i++)
+      g += `<text x="${(ML + bw*i + bw/2).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="12" fill="var(--ink-3)">${MONTHS[i][0]}</text>`;
+    return g;
+  }
+  const tip = t => ` data-tip="${esc(t)}" tabindex="0"`;
+
+  /* rounded top on a bar: 4px radius on the data end only, baseline square */
+  function bar(x, y, w, h, fill, r, extra) {
+    if (h <= 0.4) return "";
+    const rr = Math.min(r === undefined ? 4 : r, w / 2, h);
+    return `<path d="M${x.toFixed(1)},${(y+h).toFixed(1)} L${x.toFixed(1)},${(y+rr).toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${(x+rr).toFixed(1)},${y.toFixed(1)} L${(x+w-rr).toFixed(1)},${y.toFixed(1)} Q${(x+w).toFixed(1)},${y.toFixed(1)} ${(x+w).toFixed(1)},${(y+rr).toFixed(1)} L${(x+w).toFixed(1)},${(y+h).toFixed(1)} Z" fill="${fill}"${extra||""}/>`;
+  }
+
+  /* --- 1. monthly water balance: harvested + mains top-up, with inflow --- */
+  function balance(res) {
+    const d = res.bal;
+    const yMax = niceMax(Math.max(...d.demand, ...d.inflow, 1) * 1.05);
+    const bw = PW / 12, gap = Math.min(9, bw * 0.30), w = bw - gap;
+    const Y = v => MT + PH - (v / yMax) * PH;
+    let g = frame(yMax, "litres / month");
+
+    for (let i = 0; i < 12; i++) {
+      const x = ML + bw*i + gap/2;
+      const hv = (d.yield[i] / yMax) * PH, df = (d.deficit[i] / yMax) * PH;
+      /* harvested at the baseline, mains stacked above, 2px surface gap between */
+      g += bar(x, MT+PH-hv, w, hv, "var(--series-1)", df > 2 ? 0 : 4,
+               tip(MONTHS[i] + " · harvested " + fmtVol(d.yield[i]).v + " " + fmtVol(d.yield[i]).u));
+      if (df > 0.4)
+        g += bar(x, MT+PH-hv-df-(hv>2?2:0), w, Math.max(0, df-(hv>2?2:0)), "var(--series-2)", 4,
+                 tip(MONTHS[i] + " · mains top-up " + fmtVol(d.deficit[i]).v + " " + fmtVol(d.deficit[i]).u));
+    }
+    /* rainfall inflow as a line over the bars */
+    let pts = [];
+    for (let i = 0; i < 12; i++) pts.push([ML + bw*i + bw/2, Y(d.inflow[i])]);
+    g += `<polyline points="${pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}" fill="none" stroke="var(--surface-1)" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>`;
+    g += `<polyline points="${pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}" fill="none" stroke="var(--series-3)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    let peak = 0; for (let i = 1; i < 12; i++) if (d.inflow[i] > d.inflow[peak]) peak = i;
+    for (let i = 0; i < 12; i++)
+      g += `<circle cx="${pts[i][0].toFixed(1)}" cy="${pts[i][1].toFixed(1)}" r="${i===peak?4.5:3}" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"${tip(MONTHS[i] + " · roof inflow " + fmtVol(d.inflow[i]).v + " " + fmtVol(d.inflow[i]).u)}/>`;
+    g += `<text x="${clamp(pts[peak][0], ML+22, ML+PW-22).toFixed(1)}" y="${Math.max(MT+9, pts[peak][1]-9).toFixed(1)}" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink-2)" stroke="var(--surface-1)" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round">${fmtVol(d.inflow[peak]).v} ${fmtVol(d.inflow[peak]).u}</text>`;
+    return g + monthAxis();
+  }
+
+  /* --- 2. store behaviour: tank level against capacity ------------------ */
+  function store(res) {
+    const d = res.bal, cap = res.capacity;
+    const yMax = niceMax(Math.max(cap, ...d.level, 1) * 1.12);
+    const bw = PW / 12;
+    const Y = v => MT + PH - (v / yMax) * PH;
+    let g = frame(yMax, "litres stored");
+    const pts = d.level.map((v, i) => [ML + bw*i + bw/2, Y(v)]);
+    g += `<path d="M${pts[0][0].toFixed(1)},${(MT+PH).toFixed(1)} ${pts.map(p=>"L"+p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")} L${pts[11][0].toFixed(1)},${(MT+PH).toFixed(1)} Z" fill="var(--series-1)" opacity=".14"/>`;
+    g += `<polyline points="${pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round"/>`;
+    const cy = Y(cap);
+    g += `<line x1="${ML}" y1="${cy.toFixed(1)}" x2="${ML+PW}" y2="${cy.toFixed(1)}" stroke="var(--ink-2)" stroke-width="1.4" stroke-dasharray="5 4"/>`;
+    g += `<text x="${ML+PW}" y="${(cy-5).toFixed(1)}" text-anchor="end" font-size="12.5" font-weight="600" fill="var(--ink-2)" stroke="var(--surface-1)" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round">capacity ${fmtVol(cap).v} ${fmtVol(cap).u}</text>`;
+    let lo = 0; for (let i = 1; i < 12; i++) if (d.level[i] < d.level[lo]) lo = i;
+    for (let i = 0; i < 12; i++)
+      g += `<circle cx="${pts[i][0].toFixed(1)}" cy="${pts[i][1].toFixed(1)}" r="${i===lo?4.5:3}" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"${tip(MONTHS[i] + " · end of month " + fmtVol(d.level[i]).v + " " + fmtVol(d.level[i]).u)}/>`;
+    g += `<text x="${clamp(pts[lo][0], ML+20, ML+PW-20).toFixed(1)}" y="${Math.min(MT+PH-6, pts[lo][1]+15).toFixed(1)}" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink-2)" stroke="var(--surface-1)" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round">low ${fmtVol(d.level[lo]).v} ${fmtVol(d.level[lo]).u}</text>`;
+    return g + monthAxis();
+  }
+
+  /* --- 3. capacity optimisation curve ---------------------------------- */
+  function sweep(res) {
+    const s = res.sweep;
+    const xMax = s[s.length-1].cap || 1;
+    const yMax = 1;
+    const X = v => ML + (v / xMax) * PW;
+    const Y = v => MT + PH - (v / yMax) * PH;
+    let g = "";
+    for (let i = 0; i <= 4; i++) {
+      const y = MT + PH - (PH*i)/4;
+      g += `<line x1="${ML}" y1="${y}" x2="${ML+PW}" y2="${y}" stroke="var(--line)" stroke-width="1"${i?' stroke-dasharray="2 3"':''}/>`;
+      g += `<text x="${ML-7}" y="${y+3.5}" text-anchor="end" font-size="13" fill="var(--ink-3)">${i*25}%</text>`;
+    }
+    g += `<text x="0" y="${MT-11}" text-anchor="start" font-size="12" fill="var(--ink-3)">demand met</text>`;
+    g += `<polyline points="${s.map(p => X(p.cap).toFixed(1)+","+Y(p.saving).toFixed(1)).join(" ")}" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round"/>`;
+    const placed = [];
+    for (const mk of [
+      { cap: res.knee,     col: "var(--series-3)", lab: "knee (95% of max)" },
+      { cap: res.capacity, col: "var(--series-2)", lab: "this design" }
+    ]) {
+      if (!(mk.cap > 0) || mk.cap > xMax) continue;
+      const near = s.reduce((a, p) => Math.abs(p.cap-mk.cap) < Math.abs(a.cap-mk.cap) ? p : a, s[0]);
+      const x = X(mk.cap), y = Y(near.saving);
+      g += `<line x1="${x.toFixed(1)}" y1="${MT+PH}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${mk.col}" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+      g += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${mk.col}" stroke="var(--surface-1)" stroke-width="2"${tip(mk.lab + " · " + fmtVol(mk.cap).v + " " + fmtVol(mk.cap).u + " → " + fmtPct(near.saving))}/>`;
+      /* stagger the label when the two markers land close together */
+      const lx = clamp(x, ML + 34, ML + PW - 34);
+      const clash = placed.some(q => Math.abs(q - lx) < 70);
+      const ly = clamp(y - (clash ? 26 : 11), MT + 12, MT + PH - 6);
+      placed.push(lx);
+      g += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="12.5" font-weight="600" fill="${mk.col}" stroke="var(--surface-1)" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round">${esc(mk.lab.split(" ")[0])} ${fmtVol(mk.cap).v}${fmtVol(mk.cap).u}</text>`;
+    }
+    for (let i = 0; i <= 4; i++) {
+      const v = (xMax*i)/4;
+      g += `<text x="${X(v).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="12" fill="var(--ink-3)">${axisLabel(v)}</text>`;
+    }
+    g += `<text x="${ML+PW}" y="${H-9}" text-anchor="end" font-size="12" fill="var(--ink-3)" opacity="0">L</text>`;
+    return g;
+  }
+
+  /* --- 4. monthly rainfall (single series, no legend needed) ------------ */
+  function rainfall(monthly) {
+    const yMax = niceMax(Math.max(...monthly, 1) * 1.08);
+    const bw = PW / 12, gap = Math.min(9, bw*0.32), w = bw - gap;
+    let g = frame(yMax, "mm");
+    for (let i = 0; i < 12; i++) {
+      const h = (monthly[i] / yMax) * PH;
+      g += bar(ML + bw*i + gap/2, MT+PH-h, w, h, "var(--series-1)", 4, tip(MONTHS[i] + " · " + nf(monthly[i],0) + " mm"));
+    }
+    return g + monthAxis();
+  }
+
+  const wrap = inner => `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img">${inner}</svg>`;
+  return { balance, store, sweep, rainfall, wrap, W, H };
+})();
+
+/* ═══════════════════════════ DEMO LIBRARY ═══════════════════════════
+   Starting points, not fixed demos — every parameter stays editable once
+   loaded. Each carries the one thing it is there to show.
+   ========================================================================== */
+
+const DEMOS = [
+{ group:"Roof form", id:"forms", name:"Six roofs, one footprint",
+  caption:"Every block is 12 × 8 m with a 0.5 m overhang. The roof surfaces differ by up to 40%, the catchment areas are identical — because rain falls vertically, catchment is the plan-projected area.",
+  make(){ const m = newModel({ name:"Six roofs, one footprint" });
+    m.blocks = ["flat","gable","hip","shed","butterfly","vault"]
+      .map((t,i)=>newBlock({ name:ROOFS[t].label, x:(i%3)*17-17, z:Math.floor(i/3)*13-6.5,
+        w:12, d:8, wallH:5, material:"tile",
+        roof:{type:t, pitch:30, overhang:0.5, parapet:0.6, bays:4, rise:3, ridgeRatio:1} }));
+    m.climate = climateFor("lon"); m.demand.occupants = 24; return m; } },
+
+{ group:"Typology", id:"house", name:"Detached house",
+  caption:"A four-person house on a gable roof. With WC and laundry demand only, note how small the BS simplified store is — about 18 days of the lesser of yield and demand.",
+  make(){ const m = newModel({ name:"Detached house" });
+    m.blocks=[newBlock({name:"House", w:11, d:8, wallH:5.2, material:"tile",
+      roof:{type:"gable",pitch:35,overhang:0.6,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:2})];
+    m.climate = climateFor("lon"); m.demand.occupants=4; m.demand.irrigArea=60; return m; } },
+
+{ group:"Typology", id:"school", name:"School block",
+  caption:"An L-shaped two-storey school with a flat main roof and a monopitch hall. High daytime occupancy, so demand and rainfall rarely coincide — watch the store empty in summer.",
+  make(){ const m = newModel({ name:"School block" });
+    m.blocks=[
+      newBlock({name:"Teaching wing", x:0,z:0,w:42,d:12,wallH:8, material:"felt",
+        roof:{type:"flat",pitch:2,overhang:0.4,parapet:0.9,bays:4,rise:3,ridgeRatio:1}, downpipes:6}),
+      newBlock({name:"Hall", x:-12,z:16,w:18,d:20,wallH:7, material:"metal",
+        roof:{type:"shed",pitch:12,overhang:0.6,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:4})];
+    m.climate = climateFor("mel"); m.demand.occupants=180;
+    m.demand.uses=[{id:"wc",lpd:12,on:true},{id:"laundry",lpd:0,on:false},{id:"cleaning",lpd:2,on:true},{id:"vehicle",lpd:0,on:false}];
+    m.demand.irrigArea=400; m.system.tankMode="manual"; m.system.tank=45000; return m; } },
+
+{ group:"Typology", id:"warehouse", name:"Warehouse / shed",
+  caption:"A large smooth-metal roof (Yc 0.90) with almost no on-site demand. Nearly everything collected spills — the classic case where the constraint is demand, not catchment.",
+  make(){ const m = newModel({ name:"Warehouse / shed" });
+    m.blocks=[newBlock({name:"Warehouse", w:60, d:32, wallH:9, material:"metal",
+      roof:{type:"gable",pitch:8,overhang:0.8,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:10})];
+    m.climate = climateFor("syd"); m.demand.occupants=15; m.demand.irrigArea=200; return m; } },
+
+{ group:"Typology", id:"mosque", name:"Mosque with courtyard",
+  caption:"A pyramidal prayer-hall roof over a flat-roofed riwaq, in an arid climate. Ablution demand is high and constant while rainfall is concentrated in a few winter weeks.",
+  make(){ const m = newModel({ name:"Mosque with courtyard" });
+    m.blocks=[
+      newBlock({name:"Prayer hall", x:0,z:0,w:24,d:24,wallH:9, material:"concrete",
+        roof:{type:"pyramid",pitch:28,overhang:0.9,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:4}),
+      newBlock({name:"Riwaq north", x:0,z:-19,w:24,d:10,wallH:5.5, material:"concrete",
+        roof:{type:"flat",pitch:2,overhang:0.5,parapet:0.8,bays:4,rise:3,ridgeRatio:1}, downpipes:3})];
+    m.climate = climateFor("amm"); m.demand.occupants=120;
+    m.demand.uses=[{id:"wc",lpd:10,on:true},{id:"laundry",lpd:0,on:false},{id:"cleaning",lpd:8,on:true},{id:"vehicle",lpd:0,on:false}];
+    m.system.tankMode="manual"; m.system.tank=40000; return m; } },
+
+{ group:"Typology", id:"terrace", name:"Terraced housing row",
+  caption:"Five houses sharing one continuous gable. A shared store serves five times the demand from five times the catchment — the ratio is unchanged, but the store gets proportionally smaller per house.",
+  make(){ const m = newModel({ name:"Terraced housing row" });
+    m.blocks=[0,1,2,3,4].map(i=>newBlock({name:"House "+(i+1), x:i*6.2-12.4, z:0, w:6, d:9, wallH:6,
+      material:"tile", roof:{type:"gable",pitch:38,overhang:0.35,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:2}));
+    m.climate = climateFor("dub"); m.demand.occupants=18; return m; } },
+
+{ group:"Climate", id:"clim-trop", name:"Tropical — Kuala Lumpur",
+  caption:"2 600 mm a year, wet in every month. The store never has to bridge a long dry spell, so a small tank reaches high reliability.",
+  make(){ return climateStudy("kul", "Tropical — Kuala Lumpur"); } },
+
+{ group:"Climate", id:"clim-arid", name:"Arid — Dubai",
+  caption:"About 100 mm a year, all of it between November and March. Same building, same demand: the yield collapses and no tank size can rescue it.",
+  make(){ return climateStudy("dxb", "Arid — Dubai"); } },
+
+{ group:"Climate", id:"clim-temp", name:"Temperate — London",
+  caption:"600 mm spread evenly. Modest yield, but the even distribution means a small store performs well — distribution matters as much as the annual total.",
+  make(){ return climateStudy("lon", "Temperate — London"); } },
+
+{ group:"Material", id:"green", name:"Green vs hard roof",
+  caption:"Identical massing, three surfaces: extensive green roof (Yc 0.40), pitched tile (0.80), smooth metal (0.90). A green roof more than halves the harvest — a real trade-off against its runoff-attenuation and biodiversity benefits.",
+  make(){ const m = newModel({ name:"Green vs hard roof" });
+    m.blocks=[["green",-15],["tile",0],["metal",15]].map(([mat,x])=>newBlock({
+      name:MATERIALS[mat].label, x, z:0, w:12, d:9, wallH:5.5, material:mat,
+      roof:{type:"gable",pitch:25,overhang:0.5,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:2}));
+    m.climate = climateFor("lon"); m.demand.occupants=12; return m; } }
+];
+
+function climateFor(id) {
+  const c = CITY_BY_ID[id];
+  return { mode:"preset", cityId:id, monthly:c.r.slice(), dpd:c.dpd,
+           annual:sum(c.r), label:c.name, lat:0, lon:0 };
+}
+function climateStudy(cityId, name) {
+  const m = newModel({ name });
+  m.blocks=[newBlock({name:"Study block", w:16, d:10, wallH:6.5, material:"tile",
+    roof:{type:"gable",pitch:30,overhang:0.5,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:2})];
+  m.climate = climateFor(cityId);
+  m.demand.occupants = 8; m.demand.irrigArea = 80;
+  return m;
+}
+const DEMO_BY_ID = Object.fromEntries(DEMOS.map(d => [d.id, d]));
+
+/* ═══════════════════════════ APP ═══════════════════════════ */
+
+const APP = (() => {
+
+  const $  = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const root   = $("#rwc-app");
+  const canvas = $("#rwc-canvas");
+  const ctx    = canvas.getContext("2d");
+
+  let model = newModel();
+  let geom, res;
+  let selectedId = model.blocks[0].id;
+  let tab = "geom";
+  let mode = "design";
+  let present = { index: -1, saved: null };
+  let history = [], hIndex = -1;
+  let raf = 0, needsPanels = true;
+
+  const LS_KEY = "rwc3d.autosave.v2";
+
+  /* --- model access ----------------------------------------------------- */
+
+  const block = () => model.blocks.find(b => b.id === selectedId) || model.blocks[0];
+
+  function resolve(path) {
+    const parts = path.split(".");
+    let obj = parts[0] === "b" ? block() : model;
+    if (parts[0] === "b") parts.shift();
+    for (let i = 0; i < parts.length - 1; i++) obj = obj[parts[i]];
+    return { obj, key: parts[parts.length - 1] };
+  }
+  const getPath = p => { const r = resolve(p); return r.obj ? r.obj[r.key] : undefined; };
+  const setPath = (p, v) => { const r = resolve(p); if (r.obj) r.obj[r.key] = v; };
+
+  /* --- history ---------------------------------------------------------- */
+
+  function snapshot() {
+    const s = JSON.stringify({ model, selectedId });
+    if (history[hIndex] === s) return;
+    history = history.slice(0, hIndex + 1);
+    history.push(s);
+    if (history.length > 60) history.shift();
+    hIndex = history.length - 1;
+    updateUndo();
+  }
+  function restore(i) {
+    if (i < 0 || i >= history.length) return;
+    const s = JSON.parse(history[i]);
+    model = s.model; selectedId = s.selectedId; hIndex = i;
+    updateUndo(); refresh(true);
+  }
+  const undo = () => restore(hIndex - 1);
+  const redo = () => restore(hIndex + 1);
+  function updateUndo() {
+    $("#rwc-undo").disabled = hIndex <= 0;
+    $("#rwc-redo").disabled = hIndex >= history.length - 1;
+    $("#rwc-undo").style.opacity = hIndex <= 0 ? .35 : 1;
+    $("#rwc-redo").style.opacity = hIndex >= history.length - 1 ? .35 : 1;
+  }
+
+  /* --- refresh cycle ---------------------------------------------------- */
+
+  function refresh(structural) {
+    if (structural) needsPanels = true;
+    geom = GEO.build(model);
+    res  = HYD.compute(model, geom);
+    if (!raf) raf = requestAnimationFrame(() => {
+      raf = 0;
+      draw();
+      tiles();
+      if (needsPanels) { panels(); tree(); needsPanels = false; }
+      if (mode === "analysis") charts();
+      readout();
+      autosave();
+    });
+  }
+
+  let saveTimer = 0;
+  function autosave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(model)); }
+      catch (e) { /* private mode or quota — the app works without it */ }
+    }, 700);
+  }
+
+  /* --- canvas ----------------------------------------------------------- */
+
+  let cw = 800, ch = 500;
+  function sizeCanvas() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+    cw = Math.max(80, r.width); ch = Math.max(80, r.height);
+    canvas.width  = Math.round(cw * dpr);
+    canvas.height = Math.round(ch * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function draw() {
+    if (!geom) return;
+    sizeCanvas();
+    R3D.render(ctx, cw, ch, model, geom, res, { selected: selectedId, scale: 1 });
+  }
+
+  function readout() {
+    const b = block();
+    const p = geom.per.find(x => x.id === (b && b.id)) || { proj: 0, surf: 0 };
+    const ratio = p.proj > 0 ? p.surf / p.proj : 1;
+    $("#rwc-readout").innerHTML =
+      `<b>${esc(b ? b.name : "—")}</b> · ${ROOFS[b.roof.type].label}<br>` +
+      `catchment <b>${nf(p.proj, 1)} m²</b> · surface ${nf(p.surf, 1)} m² (×${nf(ratio, 2)})<br>` +
+      `model total <b>${nf(geom.catchment, 1)} m²</b> · Yc ${nf(geom.ycMean, 2)}`;
+    $("#rwc-foot-status").textContent =
+      `${model.blocks.length} block${model.blocks.length === 1 ? "" : "s"} · ${esc(model.climate.label)} · ${nf(res.annualRain, 0)} mm/yr`;
+  }
+
+  /* --- KPI tiles -------------------------------------------------------- */
+
+  function tile(k, v, u, s, hl) {
+    return `<div class="rwc-tile${hl ? " rwc-hl" : ""}">
+      <span class="rwc-tile-k">${esc(k)}</span>
+      <span class="rwc-tile-v">${v}${u ? `<small>${esc(u)}</small>` : ""}</span>
+      <span class="rwc-tile-s">${esc(s)}</span></div>`;
+  }
+  function tiles() {
+    const y = fmtVol(res.bal.totalYield), d = fmtVol(res.annualDemand);
+    const c = fmtVol(res.capacity), o = fmtVol(res.bal.totalOverflow);
+    $("#rwc-tiles").innerHTML =
+      tile("Catchment", nf(geom.catchment, 1), "m²", `roof surface ${nf(geom.surface, 0)} m²`) +
+      tile("Annual yield", y.v, y.u, `${nf(res.annualRain, 0)} mm · Yc ${nf(geom.ycMean, 2)} · Fc ${nf(model.system.filterCoef, 2)}`) +
+      tile("Non-potable demand", d.v, d.u, `${model.demand.occupants} people${model.demand.irrigArea > 0 ? " + irrigation" : ""}`) +
+      tile("Demand met", fmtPct(res.bal.saving), "", `${fmtPct(res.bal.reliability)} of ${model.system.daily ? "days" : "months"} fully supplied`, true) +
+      tile("Store", c.v, c.u, `${nf(res.daysStorage, 0)} days · ${model.system.tankMode === "auto" ? "BS simplified" : "manual"}`) +
+      tile("Overflow", o.v, o.u, `${fmtPct(res.annualInflow > 0 ? res.bal.totalOverflow / res.annualInflow : 0)} of yield spilled`) +
+      tile("Mains displaced", nf(res.mainsSaved, 1), "m³/yr", `≈ ${nf(res.costSaved, 0)} per year at ${nf(model.system.tariff, 2)}/m³`);
+  }
+
+  /* --- model tree ------------------------------------------------------- */
+
+  function tree() {
+    const list = $("#rwc-tree-list");
+    list.innerHTML = model.blocks.map(b => {
+      const p = geom.per.find(x => x.id === b.id) || { proj: 0 };
+      return `<button class="rwc-tree-item" role="option" data-block="${b.id}" aria-current="${b.id === selectedId}">
+        <svg viewBox="0 0 24 24"><path d="M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/></svg>
+        <span class="rwc-ti-name" title="${esc(b.name)}">${esc(b.name)}</span>
+        <span class="rwc-ti-meta">${nf(p.proj, 0)} m²</span>
+        ${model.blocks.length > 1 ? `<span class="rwc-tree-del" role="button" tabindex="0" data-del="${b.id}" title="Delete block" aria-label="Delete ${esc(b.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></span>` : ""}
+      </button>`;
+    }).join("") +
+    `<button class="rwc-tree-item" id="rwc-tree-add" style="color:var(--accent)">
+       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="rwc-ti-name">Add block</span></button>`;
+  }
+
+  /* --- toast ------------------------------------------------------------ */
+
+  let toastT = 0;
+  function toast(msg) {
+    const t = $("#rwc-toast");
+    t.textContent = msg; t.classList.add("rwc-on");
+    clearTimeout(toastT);
+    toastT = setTimeout(() => t.classList.remove("rwc-on"), 2600);
+  }
+
+  /* ═══════════════ parameter panels ═══════════════ */
+
+  function fRange(label, path, min, max, step, unit, dp) {
+    const v = getPath(path);
+    return `<div class="rwc-field">
+      <div class="rwc-field-row"><span class="rwc-label">${esc(label)}</span>
+        <span class="rwc-unit" data-out="${path}">${nf(v, dp)}${unit ? " " + unit : ""}</span></div>
+      <div class="rwc-slider-row">
+        <input type="range" data-path="${path}" data-dp="${dp}" data-unit="${esc(unit || "")}"
+               min="${min}" max="${max}" step="${step}" value="${v}" aria-label="${esc(label)}">
+        <input type="number" data-path="${path}" data-dp="${dp}" data-unit="${esc(unit || "")}"
+               min="${min}" max="${max}" step="${step}" value="${nf(v, dp).replace(/,/g, "")}" aria-label="${esc(label)} value">
+      </div></div>`;
+  }
+  function fSelect(label, path, opts) {
+    const v = getPath(path);
+    return `<div class="rwc-field">
+      <div class="rwc-field-row"><span class="rwc-label">${esc(label)}</span></div>
+      <select data-path="${path}" data-struct="1" aria-label="${esc(label)}">
+        ${opts.map(o => `<option value="${esc(o.v)}"${o.v === v ? " selected" : ""}>${esc(o.l)}</option>`).join("")}
+      </select></div>`;
+  }
+  function fCheck(label, path) {
+    return `<label class="rwc-check"><input type="checkbox" data-path="${path}" data-struct="1"${getPath(path) ? " checked" : ""}> ${esc(label)}</label>`;
+  }
+  function fSeg(label, path, opts) {
+    const v = getPath(path);
+    return `<div class="rwc-field">
+      <div class="rwc-field-row"><span class="rwc-label">${esc(label)}</span></div>
+      <div class="rwc-seg" role="group" aria-label="${esc(label)}">
+        ${opts.map(o => `<button type="button" data-path="${path}" data-val="${esc(o.v)}" data-struct="1" aria-pressed="${o.v === v}">${esc(o.l)}</button>`).join("")}
+      </div></div>`;
+  }
+  const grp = (title, body) => `<div class="rwc-group"><h3 class="rwc-group-title">${esc(title)}</h3>${body}</div>`;
+
+  function panels() {
+    const b = block();
+    if (!b) return;
+    panelGeom(b); panelRoof(b); panelClimate(); panelDemand(); panelResults();
+    $$(".rwc-tab").forEach(t => {
+      const on = t.dataset.tab === tab;
+      t.setAttribute("aria-selected", on);
+      $("#panel-" + t.dataset.tab).hidden = !on;
+    });
+  }
+
+  function panelGeom(b) {
+    $("#panel-geom").innerHTML =
+      grp("Block", `
+        <div class="rwc-field">
+          <div class="rwc-field-row"><span class="rwc-label">Name</span></div>
+          <input type="text" data-path="b.name" data-struct="1" value="${esc(b.name)}" aria-label="Block name">
+        </div>` +
+        fRange("Width (X)", "b.w", 2, 120, 0.5, "m", 1) +
+        fRange("Depth (Z)", "b.d", 2, 120, 0.5, "m", 1) +
+        fRange("Wall / eaves height", "b.wallH", 2, 40, 0.25, "m", 2)) +
+      grp("Position in plan",
+        fRange("Offset X", "b.x", -120, 120, 0.5, "m", 1) +
+        fRange("Offset Z", "b.z", -120, 120, 0.5, "m", 1) +
+        `<p class="rwc-note">Blocks must not overlap in plan — overlapping footprints double-count catchment and confuse the depth sorting in the model space.</p>`) +
+      grp("Rainwater outlets",
+        fRange("Downpipes on this block", "b.downpipes", 1, 24, 1, "", 0)) +
+      grp("Block actions",
+        `<div style="display:flex;gap:6px">
+          <button class="rwc-btn" id="rwc-dup" style="flex:1;justify-content:center;border-color:var(--line);background:var(--surface-2)">Duplicate</button>
+          <button class="rwc-btn" id="rwc-del" style="flex:1;justify-content:center;border-color:var(--line);background:var(--surface-2)"${model.blocks.length < 2 ? " disabled" : ""}>Delete</button>
+        </div>`);
+  }
+
+  function panelRoof(b) {
+    const R = b.roof, mat = MATERIALS[b.material];
+    const per = geom.per.find(x => x.id === b.id) || { proj: 0, surf: 0 };
+    const ratio = per.proj > 0 ? per.surf / per.proj : 1;
+
+    let params = fRange("Pitch", "b.roof.pitch", 1, 60, 0.5, "°", 1);
+    if (R.type === "flat")      params = fRange("Fall", "b.roof.pitch", 1, 10, 0.5, "°", 1) + fRange("Parapet height", "b.roof.parapet", 0, 2, 0.05, "m", 2);
+    if (R.type === "vault")     params = fRange("Rise at crown", "b.roof.rise", 0.5, 20, 0.25, "m", 2);
+    if (R.type === "sawtooth")  params = fRange("Pitch", "b.roof.pitch", 5, 60, 0.5, "°", 1) + fRange("Number of bays", "b.roof.bays", 1, 12, 1, "", 0);
+    if (R.type === "hip")       params = fRange("Pitch", "b.roof.pitch", 5, 60, 0.5, "°", 1) + fRange("Ridge length", "b.roof.ridgeRatio", 0, 1, 0.05, "× max", 2);
+    params += fRange("Eaves overhang", "b.roof.overhang", 0, 3, 0.05, "m", 2);
+
+    $("#panel-roof").innerHTML =
+      grp("Roof form",
+        `<div class="rwc-roofgrid" role="group" aria-label="Roof type">
+          ${ROOF_ORDER.map(t => `<button type="button" data-roof="${t}" aria-pressed="${t === R.type}" title="${esc(ROOFS[t].tip)}">
+            <svg viewBox="0 0 40 26">${`<path d="${ROOFS[t].icon}"/>`}</svg>${esc(ROOFS[t].label)}</button>`).join("")}
+        </div>
+        <p class="rwc-note" style="margin-top:8px"><b>${esc(ROOFS[R.type].label)}.</b> ${esc(ROOFS[R.type].tip)}</p>`) +
+      grp("Roof parameters", params) +
+      grp("Surface", fSelect("Roof material", "b.material", MATERIAL_ORDER.map(k => ({ v: k, l: `${MATERIALS[k].label} — Yc ${MATERIALS[k].yc.toFixed(2)}` }))) +
+        `<p class="rwc-note">Yield coefficient <b>${mat.yc.toFixed(2)}</b> per BS EN 16941-1 Table 2. It scales the harvest, not the catchment area.</p>`) +
+      grp("Catchment vs surface", `
+        <dl class="rwc-rep-kv" style="font-size:12px">
+          <dt>Projected catchment</dt><dd>${nf(per.proj, 1)} m²</dd>
+          <dt>True roof surface</dt><dd>${nf(per.surf, 1)} m²</dd>
+          <dt>Surface / catchment</dt><dd>× ${nf(ratio, 3)}</dd>
+        </dl>
+        <p class="rwc-note">${ratio > 1.01
+          ? `This roof has <b>${nf((ratio - 1) * 100, 0)}% more surface</b> than catchment. Rain falls vertically, so only the plan-projected area collects — the extra surface adds material cost and nothing else to the harvest.`
+          : `Catchment equals surface: this roof is horizontal in projection.`}</p>`);
+  }
+
+  function panelClimate() {
+    const C = model.climate;
+    const zones = {};
+    for (const c of CITIES) (zones[c.zone] = zones[c.zone] || []).push(c);
+    let body = fSeg("Rainfall input", "climate.mode", [
+      { v: "preset", l: "Preset" }, { v: "manual", l: "Monthly" }, { v: "annual", l: "Annual" }]);
+
+    if (C.mode === "preset") {
+      body += `<div class="rwc-field">
+        <div class="rwc-field-row"><span class="rwc-label">Location</span></div>
+        <select id="rwc-city" aria-label="Location">
+          ${Object.keys(zones).sort().map(z => `<optgroup label="${esc(z)}">${zones[z].map(c =>
+            `<option value="${c.id}"${c.id === C.cityId ? " selected" : ""}>${esc(c.name)} — ${sum(c.r)} mm</option>`).join("")}</optgroup>`).join("")}
+        </select></div>`;
+    } else if (C.mode === "annual") {
+      body += fRange("Annual rainfall", "climate.annual", 0, 5000, 10, "mm", 0) +
+        `<p class="rwc-note">Distributed using the monthly <em>shape</em> of ${esc(C.label)}, scaled to this total. Same annual depth, different distribution, gives a very different tank size — that is the point of the climate comparison models.</p>`;
+    } else {
+      body += `<div class="rwc-field"><div class="rwc-field-row"><span class="rwc-label">Monthly rainfall</span><span class="rwc-unit">${nf(sum(C.monthly), 0)} mm/yr</span></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px">
+          ${MONTHS.map((mn, i) => `<label style="font-size:10.5px;color:var(--ink-3)">${mn}
+            <input type="number" data-month="${i}" min="0" max="2000" step="1" value="${nf(C.monthly[i], 0)}" style="width:100%;text-align:right" aria-label="${mn} rainfall in mm"></label>`).join("")}
+        </div></div>`;
+    }
+
+    body += `<div class="rwc-card" style="padding:8px 6px 2px;margin-top:6px">${CHART.wrap(CHART.rainfall(C.monthly))}</div>`;
+    body += fRange("Typical depth per wet day", "climate.dpd", 2, 30, 1, "mm", 0);
+    body += `<p class="rwc-note">Sets how many rain days each month has. It drives first-flush losses and the daily balance option; it does not change the annual yield.</p>`;
+
+    $("#panel-climate").innerHTML =
+      grp("Rainfall", body) +
+      grp("Fetch from Open-Meteo", `
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <input type="number" id="rwc-lat" step="0.01" min="-90" max="90" value="${C.lat}" placeholder="lat" aria-label="Latitude" style="flex:1;width:auto;text-align:right">
+          <input type="number" id="rwc-lon" step="0.01" min="-180" max="180" value="${C.lon}" placeholder="lon" aria-label="Longitude" style="flex:1;width:auto;text-align:right">
+        </div>
+        <button class="rwc-btn" id="rwc-fetch" style="width:100%;justify-content:center;border-color:var(--line);background:var(--surface-2)">Fetch 10-year monthly normals</button>
+        <p class="rwc-note" id="rwc-fetch-note">Optional and needs internet. Classroom networks, offline use and a strict WordPress content policy will all block it — the presets and the monthly table always work. Fetched values land in the editable table so you can correct them.</p>`);
+  }
+
+  function panelDemand() {
+    const D = model.demand, S = model.system;
+    const perPerson = sum(D.uses.filter(u => u.on).map(u => u.lpd));
+    $("#panel-demand").innerHTML =
+      grp("Occupancy & end uses",
+        fRange("Occupants", "demand.occupants", 0, 2000, 1, "people", 0) +
+        D.uses.map((u, i) => {
+          const meta = ENDUSES.find(e => e.id === u.id) || { label: u.id };
+          return `<div class="rwc-field" style="margin-bottom:6px"><div class="rwc-slider-row">
+            <input type="checkbox" data-use="${i}" data-field="on" data-struct="1"${u.on ? " checked" : ""} aria-label="Use ${esc(meta.label)}">
+            <span class="rwc-label" style="flex:1">${esc(meta.label)}</span>
+            <input type="number" data-use="${i}" data-field="lpd" min="0" max="300" step="1" value="${u.lpd}" aria-label="${esc(meta.label)} litres per person per day">
+            <span class="rwc-unit">l/p/d</span></div></div>`;
+        }).join("") +
+        `<p class="rwc-note">Non-potable demand = <b>${nf(perPerson, 0)} l/person/day × ${D.occupants} = ${nf(perPerson * D.occupants, 0)} litres/day</b>.</p>`) +
+      grp("Irrigation",
+        fRange("Irrigated area", "demand.irrigArea", 0, 5000, 10, "m²", 0) +
+        (D.irrigArea > 0 ? fRange("Application rate", "demand.irrigMM", 0, 60, 1, "mm/week", 0) +
+          fSelect("Season starts", "demand.irrigFrom", MONTHS.map((m, i) => ({ v: i, l: m }))) +
+          fSelect("Season ends", "demand.irrigTo", MONTHS.map((m, i) => ({ v: i, l: m }))) : "")) +
+      grp("System",
+        fRange("Filter coefficient Fc", "system.filterCoef", 0.5, 1, 0.01, "", 2) +
+        `<p class="rwc-note">BS EN 16941-1 requires the pre-tank treatment to be at least 90% efficient, so <b>0.90</b> is the standard value.</p>` +
+        fRange("First flush diverted", "system.firstFlush", 0, 3, 0.1, "mm/event", 1) +
+        fSeg("Store capacity", "system.tankMode", [{ v: "auto", l: "BS simplified" }, { v: "manual", l: "Set manually" }]) +
+        (S.tankMode === "manual" ? fRange("Tank capacity", "system.tank", 0, 200000, 100, "L", 0)
+          : `<p class="rwc-note">Sized automatically at <b>${fmtVol(res.simple).v} ${fmtVol(res.simple).u}</b> — 5% of the lesser of annual yield and annual demand, about 18 days.</p>`) +
+        fCheck("Daily balance (spread rain over wet days)", "system.daily") +
+        `<p class="rwc-note">Monthly stepping assumes rain falls evenly all month, which flatters reliability. The daily option spreads each month's depth over its wet days — this is why storage exists at all.</p>` +
+        fRange("Mains water tariff", "system.tariff", 0, 20, 0.05, "/m³", 2));
+  }
+
+  let variants = [];
+
+  function panelResults() {
+    const b = res.bal;
+    const y = fmtVol(res.annualInflow);
+    const eq = `${nf(geom.catchment, 1)} m² × ${nf(res.annualRain, 0)} mm × ${nf(geom.ycMean, 2)} × ${nf(model.system.filterCoef, 2)}`;
+
+    $("#panel-results").innerHTML =
+      grp("Method — BS EN 16941-1", `
+        <p class="rwc-note" style="font-size:11.5px;line-height:1.5">
+          <b>Y = A · R · Yc · Fc</b><br>
+          ${esc(eq)} = <b>${y.v} ${y.u}/yr</b><br>
+          <span style="color:var(--ink-3)">A projected catchment · R annual depth · Yc yield coefficient · Fc filter coefficient. 1 mm on 1 m² = 1 litre.</span>
+        </p>`) +
+      grp("Annual balance", `
+        <dl class="rwc-rep-kv" style="font-size:12px">
+          <dt>Rainfall on the catchment</dt><dd>${fmtVol(res.annualInflow).v} ${fmtVol(res.annualInflow).u}</dd>
+          <dt>Non-potable demand</dt><dd>${fmtVol(res.annualDemand).v} ${fmtVol(res.annualDemand).u}</dd>
+          <dt>Supplied from the store</dt><dd>${fmtVol(b.totalYield).v} ${fmtVol(b.totalYield).u}</dd>
+          <dt>Mains top-up</dt><dd>${fmtVol(b.totalDeficit).v} ${fmtVol(b.totalDeficit).u}</dd>
+          <dt>Overflow to drain</dt><dd>${fmtVol(b.totalOverflow).v} ${fmtVol(b.totalOverflow).u}</dd>
+          <dt>Water saving efficiency</dt><dd>${fmtPct(b.saving)}</dd>
+          <dt>${model.system.daily ? "Days" : "Months"} fully supplied</dt><dd>${fmtPct(b.reliability)}</dd>
+        </dl>
+        <p class="rwc-note">Balance closes: inflow = supplied + overflow ± change in store (${nf(b.totalInflow - b.totalYield - b.totalOverflow, 0)} L residual).</p>`) +
+      grp("Store capacity", `
+        <dl class="rwc-rep-kv" style="font-size:12px">
+          <dt>BS simplified (5% rule)</dt><dd>${fmtVol(res.simple).v} ${fmtVol(res.simple).u}</dd>
+          <dt>Profile-optimised (curve knee)</dt><dd>${fmtVol(res.knee).v} ${fmtVol(res.knee).u}</dd>
+          <dt>In this design</dt><dd>${fmtVol(res.capacity).v} ${fmtVol(res.capacity).u}</dd>
+          <dt>Days of average demand</dt><dd>${nf(res.daysStorage, 0)}</dd>
+        </dl>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="rwc-btn" data-apply-cap="${res.simple.toFixed(0)}" style="flex:1;justify-content:center;border-color:var(--line);background:var(--surface-2)">Use 5% rule</button>
+          <button class="rwc-btn" data-apply-cap="${res.knee.toFixed(0)}" style="flex:1;justify-content:center;border-color:var(--line);background:var(--surface-2)">Use knee</button>
+        </div>
+        <p class="rwc-note">The knee is the smallest capacity reaching 95% of the best achievable saving. Beyond it, more tank buys almost nothing.</p>`) +
+      grp("Gutters & downpipes", `
+        <dl class="rwc-rep-kv" style="font-size:12px">
+          <dt>Design storm</dt><dd>${nf(res.drain.intensity, 0)} mm/h</dd>
+          <dt>Peak roof flow</dt><dd>${nf(res.drain.Q, 1)} l/s</dd>
+          <dt>Downpipes on the model</dt><dd>${res.drain.n}</dd>
+          <dt>Flow per downpipe</dt><dd>${nf(res.drain.per, 2)} l/s</dd>
+          <dt>Suggested diameter</dt><dd>${res.drain.dia} mm</dd>
+        </dl>
+        <p class="rwc-note rwc-warn">Indicative only — a real design follows BS EN 12056-3 with the local design storm and the actual gutter profile.</p>`) +
+      grp("Monthly results", monthTable()) +
+      grp("Compare variants", variantPanel());
+  }
+
+  function monthTable() {
+    const b = res.bal;
+    const row = (i) => `<tr><td>${MONTHS[i]}</td><td>${nf(model.climate.monthly[i], 0)}</td>
+      <td>${nf(b.inflow[i], 0)}</td><td>${nf(b.demand[i], 0)}</td><td>${nf(b.yield[i], 0)}</td>
+      <td>${nf(b.level[i], 0)}</td><td>${nf(b.overflow[i], 0)}</td><td>${nf(b.deficit[i], 0)}</td></tr>`;
+    return `<div class="rwc-table-wrap"><table class="rwc-table">
+      <thead><tr><th>Month</th><th>Rain mm</th><th>Inflow L</th><th>Demand L</th><th>Supplied L</th><th>Store L</th><th>Spill L</th><th>Mains L</th></tr></thead>
+      <tbody>${MONTHS.map((_, i) => row(i)).join("")}</tbody>
+      <tfoot><tr><td>Year</td><td>${nf(res.annualRain, 0)}</td><td>${nf(b.totalInflow, 0)}</td>
+        <td>${nf(b.totalDemand, 0)}</td><td>${nf(b.totalYield, 0)}</td><td>—</td>
+        <td>${nf(b.totalOverflow, 0)}</td><td>${nf(b.totalDeficit, 0)}</td></tr></tfoot>
+    </table></div>`;
+  }
+
+  function variantPanel() {
+    let h = `<button class="rwc-btn" id="rwc-var-add" style="width:100%;justify-content:center;border-color:var(--line);background:var(--surface-2)">Save this design as a variant</button>`;
+    if (!variants.length) return h + `<p class="rwc-cmp-empty">Save two or more designs to compare them side by side. Change a roof form, save again, and the table shows what actually moved.</p>`;
+    h += `<div class="rwc-table-wrap" style="margin-top:8px"><table class="rwc-table">
+      <thead><tr><th>Variant</th><th>Catch. m²</th><th>Yield</th><th>Met</th><th>Tank</th><th></th></tr></thead><tbody>` +
+      variants.map((v, i) => `<tr><td title="${esc(v.name)}" style="max-width:110px;overflow:hidden;text-overflow:ellipsis">${esc(v.name)}</td>
+        <td>${nf(v.s.catchment, 0)}</td><td>${fmtVol(v.s.yield).v}${fmtVol(v.s.yield).u}</td>
+        <td>${fmtPct(v.s.saving)}</td><td>${fmtVol(v.s.cap).v}${fmtVol(v.s.cap).u}</td>
+        <td><button class="rwc-btn" data-var-load="${i}" style="padding:2px 6px;font-size:11px">Load</button>
+            <button class="rwc-btn" data-var-del="${i}" style="padding:2px 6px;font-size:11px">×</button></td></tr>`).join("") +
+      `</tbody></table></div>`;
+    return h;
+  }
+
+  /* ═══════════════ analysis-mode charts ═══════════════ */
+
+  function legend(items) {
+    return `<div class="rwc-legend">${items.map(i =>
+      `<span><span class="rwc-swatch" style="background:${i.c}"></span>${esc(i.l)}</span>`).join("")}</div>`;
+  }
+  function card(title, sub, svg, leg) {
+    return `<div class="rwc-card"><h3 class="rwc-card-title">${esc(title)}</h3>
+      <p class="rwc-card-sub">${esc(sub)}</p>${svg}${leg || ""}</div>`;
+  }
+
+  function charts() {
+    $("#rwc-charts").innerHTML = `<div class="rwc-chart-grid">
+      ${card("Monthly water balance",
+        "How much of each month's demand the store actually supplies.",
+        CHART.wrap(CHART.balance(res)),
+        legend([{ c: "var(--series-1)", l: "Supplied from store" }, { c: "var(--series-2)", l: "Mains top-up" }, { c: "var(--series-3)", l: "Roof inflow" }]))}
+      ${card("Store behaviour",
+        "End-of-month volume against the tank capacity. The low point is what a dry spell has to bridge.",
+        CHART.wrap(CHART.store(res)))}
+      ${card("Capacity optimisation",
+        "Demand met against tank capacity. Past the knee, more tank buys almost nothing.",
+        CHART.wrap(CHART.sweep(res)),
+        legend([{ c: "var(--series-3)", l: "Knee — 95% of best" }, { c: "var(--series-2)", l: "This design" }]))}
+      <div class="rwc-card" style="grid-column:1/-1"><h3 class="rwc-card-title">Monthly figures</h3>
+        <p class="rwc-card-sub">The same data as the charts, for anyone reading by number rather than by colour.</p>
+        ${monthTable()}</div>
+      <div class="rwc-card" style="grid-column:1/-1"><h3 class="rwc-card-title">Roof breakdown</h3>
+        <p class="rwc-card-sub">Catchment is the plan-projected area. Surface is what you would have to build and pay for.</p>
+        <div class="rwc-table-wrap"><table class="rwc-table">
+          <thead><tr><th>Block</th><th>Roof</th><th>Material</th><th>Yc</th><th>Catch. m²</th><th>Surface m²</th><th>Ratio</th></tr></thead>
+          <tbody>${geom.per.map(p => {
+            const bl = model.blocks.find(x => x.id === p.id) || {};
+            return `<tr><td>${esc(p.name)}</td><td>${esc(ROOFS[(bl.roof || {}).type] ? ROOFS[bl.roof.type].label : "—")}</td>
+              <td>${esc(MATERIALS[p.material].label)}</td><td>${p.yc.toFixed(2)}</td>
+              <td>${nf(p.proj, 1)}</td><td>${nf(p.surf, 1)}</td><td>×${nf(p.proj > 0 ? p.surf / p.proj : 1, 2)}</td></tr>`;
+          }).join("")}</tbody>
+          <tfoot><tr><td>Total</td><td></td><td></td><td>${nf(geom.ycMean, 2)}</td>
+            <td>${nf(geom.catchment, 1)}</td><td>${nf(geom.surface, 1)}</td>
+            <td>×${nf(geom.catchment > 0 ? geom.surface / geom.catchment : 1, 2)}</td></tr></tfoot>
+        </table></div></div>
+      <div class="rwc-card"><h3 class="rwc-card-title">Compare variants</h3>
+        <p class="rwc-card-sub">Save a design, change something, save again.</p>${variantPanel()}</div>
+    </div>`;
+  }
+
+  /* ═══════════════ climate helpers ═══════════════ */
+
+  function applyCity(id) {
+    const c = CITY_BY_ID[id]; if (!c) return;
+    model.climate.cityId = id;
+    model.climate.monthly = c.r.slice();
+    model.climate.dpd = c.dpd;
+    model.climate.label = c.name;
+    model.climate.annual = sum(c.r);
+  }
+  function applyAnnual() {
+    const c = CITY_BY_ID[model.climate.cityId] || CITY_BY_ID.lon;
+    const base = sum(c.r) || 1;
+    const target = Math.max(0, model.climate.annual);
+    model.climate.monthly = c.r.map(v => (v / base) * target);
+    model.climate.label = "Annual " + nf(target, 0) + " mm (" + c.name.split(",")[0] + " shape)";
+  }
+
+  /* ═══════════════ menus ═══════════════ */
+
+  let openMenuEl = null;
+  function closeMenu() {
+    if (openMenuEl) { openMenuEl.remove(); openMenuEl = null; }
+    $$("[aria-haspopup='menu']").forEach(b => b.setAttribute("aria-expanded", "false"));
+  }
+  function menu(btn, html) {
+    const wasOpen = btn.getAttribute("aria-expanded") === "true";
+    closeMenu();
+    if (wasOpen) return;
+    btn.setAttribute("aria-expanded", "true");
+    const el = document.createElement("div");
+    el.className = "rwc-menu"; el.setAttribute("role", "menu");
+    el.innerHTML = html;
+    document.body.appendChild(el);
+    const r = btn.getBoundingClientRect();
+    el.style.top = (r.bottom + 5) + "px";
+    el.style.left = Math.max(6, Math.min(r.left, window.innerWidth - el.offsetWidth - 8)) + "px";
+    openMenuEl = el;
+    const first = el.querySelector(".rwc-menu-item"); if (first) first.focus();
+  }
+  const mItem = (attr, label, sub) =>
+    `<button class="rwc-menu-item" role="menuitem" ${attr}><span class="rwc-mi-txt">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ""}</span></button>`;
+
+  document.addEventListener("click", e => {
+    if (openMenuEl && !openMenuEl.contains(e.target) && !e.target.closest("[aria-haspopup='menu']")) closeMenu();
+  });
+
+  /* ═══════════════ IO ═══════════════ */
+
+  function download(filename, blob) {
+    let url;
+    try {
+      url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 8000);
+      toast("Exported " + filename);
+    } catch (err) {
+      try { window.open(url, "_blank"); toast("Download blocked here — opened in a new tab"); }
+      catch (e2) { toast("Export blocked by the page's sandbox. Open the file directly instead."); }
+    }
+  }
+
+  /* render the scene offscreen at print scale, with a title block */
+  function renderPlate(wPx, hPx, scale) {
+    const c = document.createElement("canvas");
+    c.width = Math.round(wPx * scale); c.height = Math.round(hPx * scale);
+    const g = c.getContext("2d");
+    g.setTransform(scale, 0, 0, scale, 0, 0);
+    R3D.render(g, wPx, hPx, model, geom, res, { selected: null, scale: 1 });
+
+    const P = R3D.palette();
+    const pad = 14, barH = 46;
+    g.fillStyle = P.surface; g.globalAlpha = .93;
+    g.fillRect(0, hPx - barH, wPx, barH);
+    g.globalAlpha = 1;
+    g.strokeStyle = P.line; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, hPx - barH); g.lineTo(wPx, hPx - barH); g.stroke();
+
+    g.textBaseline = "alphabetic"; g.textAlign = "left";
+    g.fillStyle = P.ink;
+    g.font = "600 14px -apple-system, Segoe UI, Roboto, sans-serif";
+    g.fillText(model.name, pad, hPx - barH + 19);
+    g.fillStyle = P.ink3;
+    g.font = "11px -apple-system, Segoe UI, Roboto, sans-serif";
+    const line = `${nf(geom.catchment,1)} m² catchment · ${esc(model.climate.label)} ${nf(res.annualRain,0)} mm/yr · `
+      + `${fmtVol(res.annualInflow).v} ${fmtVol(res.annualInflow).u}/yr · ${fmtPct(res.bal.saving)} of demand met · `
+      + `${fmtVol(res.capacity).v} ${fmtVol(res.capacity).u} store`;
+    g.fillText(line, pad, hPx - barH + 35);
+
+    g.textAlign = "right"; g.fillStyle = P.ink2;
+    g.font = "600 11px -apple-system, Segoe UI, Roboto, sans-serif";
+    g.fillText("© Karam Al-Obaidi", wPx - pad, hPx - barH + 19);
+    g.fillStyle = P.ink3; g.font = "10px -apple-system, Segoe UI, Roboto, sans-serif";
+    g.fillText("Rainwater Collection 3D · BS EN 16941-1", wPx - pad, hPx - barH + 34);
+    return c;
+  }
+
+  function exportPNG() {
+    const w = Math.max(1000, Math.round(cw)), h = Math.max(650, Math.round(ch));
+    const c = renderPlate(w, h, 3);
+    const name = model.name.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").toLowerCase() || "model";
+    if (c.toBlob) c.toBlob(b => b ? download(name + ".png", b) : toast("Image export failed"), "image/png");
+    else download(name + ".png", dataURLtoBlob(c.toDataURL("image/png")));
+  }
+  function dataURLtoBlob(u) {
+    const parts = u.split(","), bin = atob(parts[1]), arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: "image/png" });
+  }
+
+  function exportCSV() {
+    const b = res.bal;
+    const rows = [
+      ["Rainwater Collection 3D — monthly results"],
+      ["Model", model.name], ["Location", model.climate.label],
+      ["Catchment m2", nf(geom.catchment, 2)], ["Roof surface m2", nf(geom.surface, 2)],
+      ["Mean yield coefficient Yc", nf(geom.ycMean, 3)], ["Filter coefficient Fc", nf(model.system.filterCoef, 2)],
+      ["Store capacity L", nf(res.capacity, 0)], ["Balance step", model.system.daily ? "daily" : "monthly"],
+      [],
+      ["Month", "Rainfall mm", "Wet days", "Roof inflow L", "Demand L", "Supplied L", "Store end L", "Overflow L", "Mains top-up L"]
+    ];
+    for (let i = 0; i < 12; i++) rows.push([MONTHS[i],
+      nf(model.climate.monthly[i], 1), res.wd[i], nf(b.inflow[i], 0), nf(b.demand[i], 0),
+      nf(b.yield[i], 0), nf(b.level[i], 0), nf(b.overflow[i], 0), nf(b.deficit[i], 0)]);
+    rows.push(["Year", nf(res.annualRain, 1), sum(res.wd), nf(b.totalInflow, 0), nf(b.totalDemand, 0),
+      nf(b.totalYield, 0), "", nf(b.totalOverflow, 0), nf(b.totalDeficit, 0)]);
+    rows.push([], ["(c) Karam Al-Obaidi — method BS EN 16941-1:2024"]);
+    const csv = rows.map(r => r.map(c => {
+      const s = String(c == null ? "" : c);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(",")).join("\r\n");
+    const name = model.name.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").toLowerCase() || "model";
+    download(name + "-monthly.csv", new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+  }
+
+  function saveJSON() {
+    const out = CLONE(model);
+    out.schema = 2; out.app = "Rainwater Collection 3D"; out.saved = new Date().toISOString();
+    const name = model.name.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").toLowerCase() || "model";
+    download(name + ".json", new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
+  }
+
+  /* Rebuild a full model from a saved object, filling in anything the file
+     predates or omits. Shared by Open, the autosave restore and Presentation. */
+  function hydrate(data) {
+    const base = newModel();
+    const m = Object.assign(base, data);
+    m.blocks  = data.blocks.map(b => Object.assign(newBlock(), b, { roof: Object.assign(newBlock().roof, b.roof || {}) }));
+    m.climate = Object.assign(base.climate, data.climate || {});
+    m.demand  = Object.assign(base.demand,  data.demand  || {});
+    m.system  = Object.assign(base.system,  data.system  || {});
+    m.view    = Object.assign(base.view,    data.view    || {});
+    if (!Array.isArray(m.climate.monthly) || m.climate.monthly.length !== 12)
+      m.climate.monthly = CITY_BY_ID.lon.r.slice();
+    m.climate.monthly = m.climate.monthly.map(v => Math.max(0, +v || 0));
+    if (!Array.isArray(m.demand.uses) || !m.demand.uses.length) m.demand.uses = base.demand.uses;
+    return m;
+  }
+
+  function loadJSON(text, label) {
+    let data;
+    try { data = JSON.parse(text); }
+    catch (e) { toast("That file is not valid JSON."); return; }
+    if (!data || !Array.isArray(data.blocks) || !data.blocks.length) { toast("No blocks in that file — is it a Rainwater Collection 3D model?"); return; }
+    if (data.schema && data.schema > 2) toast("Saved by a newer version — loading what is readable.");
+    model = hydrate(data);
+    selectedId = model.blocks[0].id;
+    history = []; hIndex = -1; snapshot();
+    refresh(true); fitView(); syncViewChips();
+    toast("Opened " + (label || model.name));
+  }
+
+  /* ═══════════════ A3 report sheet ═══════════════ */
+
+  function buildReport() {
+    const plate = renderPlate(1180, 760, 2).toDataURL("image/png");
+    const b = res.bal;
+    const kv = rows => `<dl class="rwc-rep-kv">${rows.map(r => `<dt>${esc(r[0])}</dt><dd>${r[1]}</dd>`).join("")}</dl>`;
+    const now = new Date();
+    const svgFix = s => s.replace(/var\(--series-1\)/g, "#2a78d6").replace(/var\(--series-2\)/g, "#eb6834")
+      .replace(/var\(--series-3\)/g, "#1baf7a").replace(/var\(--line\)/g, "#d7d6d1")
+      .replace(/var\(--ink-3\)/g, "#85847e").replace(/var\(--ink-2\)/g, "#52514e")
+      .replace(/var\(--surface-1\)/g, "#ffffff").replace(/var\(--ink\)/g, "#14140f");
+
+    $("#rwc-report").innerHTML = `
+      <div class="rwc-rep-bar">
+        <button class="rwc-btn" id="rwc-rep-x" style="background:var(--surface-2);border-color:var(--line)">Close</button>
+        <button class="rwc-btn rwc-primary" id="rwc-rep-print">Print / Save as PDF</button>
+      </div>
+      <div class="rwc-rep-sheet">
+        <div class="rwc-rep-head">
+          <div><h1>${esc(model.name)}</h1>
+            <p>Rainwater harvesting appraisal · projected catchment method · BS EN 16941-1:2024</p></div>
+          <div class="rwc-rep-meta">${esc(model.climate.label)} · ${nf(res.annualRain, 0)} mm/yr<br>
+            ${now.toLocaleDateString()} · ${model.system.daily ? "daily" : "monthly"} balance<br>
+            <b>© Karam Al-Obaidi</b></div>
+        </div>
+        <div class="rwc-rep-grid">
+          <div>
+            <img src="${plate}" alt="3D model of ${esc(model.name)}">
+            <div class="rwc-rep-box" style="margin-top:12px">
+              <h2>Roof schedule</h2>
+              <table class="rwc-rep-table">
+                <thead><tr><th>Block</th><th>Roof</th><th>W×D×H m</th><th>Material</th><th>Yc</th><th>Catch. m²</th><th>Surf. m²</th></tr></thead>
+                <tbody>${geom.per.map(p => {
+                  const bl = model.blocks.find(x => x.id === p.id) || { roof: {} };
+                  return `<tr><td>${esc(p.name)}</td><td>${esc(ROOFS[bl.roof.type] ? ROOFS[bl.roof.type].label : "—")}</td>
+                    <td>${nf(bl.w,1)}×${nf(bl.d,1)}×${nf(bl.wallH,1)}</td><td>${esc(MATERIALS[p.material].label)}</td>
+                    <td>${p.yc.toFixed(2)}</td><td>${nf(p.proj,1)}</td><td>${nf(p.surf,1)}</td></tr>`;
+                }).join("")}</tbody>
+                <tfoot><tr><td colspan="4">Total</td><td>${nf(geom.ycMean,2)}</td><td>${nf(geom.catchment,1)}</td><td>${nf(geom.surface,1)}</td></tr></tfoot>
+              </table>
+            </div>
+            <div class="rwc-rep-box" style="margin-top:12px"><h2>Monthly figures</h2>
+              <table class="rwc-rep-table">
+                <thead><tr><th>Month</th><th>Rain mm</th><th>Inflow L</th><th>Demand L</th><th>Supplied L</th><th>Store L</th><th>Spill L</th><th>Mains L</th></tr></thead>
+                <tbody>${MONTHS.map((m, i) => `<tr><td>${m}</td><td>${nf(model.climate.monthly[i],0)}</td>
+                  <td>${nf(b.inflow[i],0)}</td><td>${nf(b.demand[i],0)}</td><td>${nf(b.yield[i],0)}</td>
+                  <td>${nf(b.level[i],0)}</td><td>${nf(b.overflow[i],0)}</td><td>${nf(b.deficit[i],0)}</td></tr>`).join("")}</tbody>
+                <tfoot><tr><td>Year</td><td>${nf(res.annualRain,0)}</td><td>${nf(b.totalInflow,0)}</td><td>${nf(b.totalDemand,0)}</td>
+                  <td>${nf(b.totalYield,0)}</td><td>—</td><td>${nf(b.totalOverflow,0)}</td><td>${nf(b.totalDeficit,0)}</td></tr></tfoot>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="rwc-rep-box"><h2>Method</h2>
+              <p style="font-size:11px;margin:0 0 6px"><b>Y = A · R · Yc · Fc</b><br>
+                ${nf(geom.catchment,1)} m² × ${nf(res.annualRain,0)} mm × ${nf(geom.ycMean,2)} × ${nf(model.system.filterCoef,2)}
+                = <b>${fmtVol(res.annualInflow).v} ${fmtVol(res.annualInflow).u}/yr</b></p>
+              ${kv([
+                ["Non-potable demand", fmtVol(res.annualDemand).v + " " + fmtVol(res.annualDemand).u + "/yr"],
+                ["Supplied from store", fmtVol(b.totalYield).v + " " + fmtVol(b.totalYield).u],
+                ["Mains top-up", fmtVol(b.totalDeficit).v + " " + fmtVol(b.totalDeficit).u],
+                ["Overflow to drain", fmtVol(b.totalOverflow).v + " " + fmtVol(b.totalOverflow).u],
+                ["Water saving efficiency", fmtPct(b.saving)],
+                [(model.system.daily ? "Days" : "Months") + " fully supplied", fmtPct(b.reliability)],
+                ["Store capacity", fmtVol(res.capacity).v + " " + fmtVol(res.capacity).u + " (" + nf(res.daysStorage,0) + " days)"],
+                ["BS simplified (5%)", fmtVol(res.simple).v + " " + fmtVol(res.simple).u],
+                ["Profile-optimised knee", fmtVol(res.knee).v + " " + fmtVol(res.knee).u],
+                ["Mains displaced", nf(res.mainsSaved,1) + " m³/yr"]
+              ])}
+            </div>
+            <div class="rwc-rep-box" style="margin-top:12px"><h2>Monthly water balance</h2>
+              ${svgFix(CHART.wrap(CHART.balance(res)))}
+              <p style="font-size:9.5px;color:#555;margin:4px 0 0">Blue supplied from store · orange mains top-up · green line roof inflow</p>
+            </div>
+          </div>
+          <div>
+            <div class="rwc-rep-box"><h2>Store behaviour</h2>${svgFix(CHART.wrap(CHART.store(res)))}</div>
+            <div class="rwc-rep-box" style="margin-top:12px"><h2>Capacity optimisation</h2>${svgFix(CHART.wrap(CHART.sweep(res)))}</div>
+          </div>
+        </div>
+        <div class="rwc-rep-foot">
+          <span>© Karam Al-Obaidi — Rainwater Collection 3D</span>
+          <span>Yield to BS EN 16941-1:2024. Downpipe sizing indicative only; a real design follows BS EN 12056-3.</span>
+        </div>
+      </div>`;
+    const rep = $("#rwc-report");
+    rep.classList.add("rwc-preview"); rep.setAttribute("aria-hidden", "false");
+    $("#rwc-rep-print").onclick = () => window.print();
+    $("#rwc-rep-x").onclick = closeReport;
+    document.addEventListener("keydown", reportEsc);
+  }
+  function closeReport() {
+    const rep = $("#rwc-report");
+    rep.classList.remove("rwc-preview"); rep.setAttribute("aria-hidden", "true"); rep.innerHTML = "";
+    document.removeEventListener("keydown", reportEsc);
+  }
+  const reportEsc = e => { if (e.key === "Escape") closeReport(); };
+
+  /* ═══════════════ modes ═══════════════ */
+
+  function setMode(m) {
+    const leaving = mode === "present" && m !== "present";
+    if (m === "present" && mode !== "present") {
+      /* stash the working model: presentation must never destroy unsaved work */
+      present.saved = JSON.stringify(model);
+      present.index = -1;
+    }
+    if (leaving) {
+      if (present.index >= 0 && present.saved) {          // a demo was loaded over it
+        model = hydrate(JSON.parse(present.saved));
+        selectedId = model.blocks[0].id;
+        refresh(true); fitView();
+      }
+      present.saved = null; present.index = -1;
+    }
+    mode = m;
+    root.dataset.mode = m;
+    $("#rwc-mode-label").textContent = m === "design" ? "Design" : m === "analysis" ? "Analysis" : "Presentation";
+    if (m === "present") presentHud();
+    setTimeout(() => { draw(); if (m === "analysis") charts(); }, 30);
+  }
+
+  /* The deck is [your model, ...the demo library]. Index -1 is your own model,
+     so entering presentation shows what you were working on, not a demo. */
+  function presentShow(i) {
+    const N = DEMOS.length;
+    present.index = i > N - 1 ? -1 : i < -1 ? N - 1 : i;
+    if (present.index >= 0) {
+      const d = DEMOS[present.index];
+      model = d.make(); selectedId = model.blocks[0].id;
+    } else if (present.saved) {
+      model = hydrate(JSON.parse(present.saved)); selectedId = model.blocks[0].id;
+    }
+    refresh(true); fitView(); presentHud();
+  }
+  function presentHud() {
+    const N = DEMOS.length;
+    if (present.index >= 0) {
+      const d = DEMOS[present.index];
+      $("#rwc-p-title").textContent = d.name;
+      $("#rwc-p-sub").textContent = d.caption;
+      $("#rwc-p-count").textContent = (present.index + 2) + " / " + (N + 1);
+    } else {
+      $("#rwc-p-title").textContent = model.name;
+      $("#rwc-p-sub").textContent = `${nf(geom.catchment, 0)} m² catchment in ${model.climate.label} — `
+        + `${fmtVol(res.annualInflow).v} ${fmtVol(res.annualInflow).u} a year, `
+        + `${fmtPct(res.bal.saving)} of demand met from a ${fmtVol(res.capacity).v} ${fmtVol(res.capacity).u} store.`;
+      $("#rwc-p-count").textContent = "1 / " + (N + 1);
+    }
+  }
+  function fitView() { sizeCanvas(); if (geom) R3D.fit(geom.bounds, cw, ch); draw(); }
+
+  function setTheme(t) {
+    if (t) root.dataset.theme = t; else delete root.dataset.theme;
+    try { localStorage.setItem("rwc3d.theme", t || ""); } catch (e) {}
+    R3D.invalidateTheme(); draw();
+  }
+  function currentTheme() {
+    if (root.dataset.theme) return root.dataset.theme;
+    return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function syncViewChips() {
+    $$("[data-style]").forEach(c => c.setAttribute("aria-pressed", c.dataset.style === model.view.style));
+    $("#rwc-t-grid").setAttribute("aria-pressed", !!model.view.grid);
+    $("#rwc-t-tank").setAttribute("aria-pressed", !!model.view.system);
+    $("#rwc-t-dims").setAttribute("aria-pressed", !!model.view.dims);
+  }
+
+  /* ═══════════════ events ═══════════════ */
+
+  function commit() { snapshot(); }
+
+  /* --- parameter inputs ------------------------------------------------- */
+
+  root.addEventListener("input", e => {
+    const t = e.target;
+
+    if (t.matches("input[type=text][data-path]")) {
+      setPath(t.dataset.path, t.value); tree(); refresh(false); return;
+    }
+    if (t.matches("input[type=range][data-path], input[type=number][data-path]")) {
+      let v = parseFloat(t.value);
+      if (!isFinite(v)) return;
+      const mn = parseFloat(t.min), mx = parseFloat(t.max);
+      if (isFinite(mn)) v = Math.max(mn, v);
+      if (isFinite(mx)) v = Math.min(mx, v);
+      setPath(t.dataset.path, v);
+      const dp = +t.dataset.dp || 0, unit = t.dataset.unit || "";
+      root.querySelectorAll(`[data-path="${t.dataset.path}"]`).forEach(o => {
+        if (o === t) return;
+        o.value = o.type === "range" ? v : nf(v, dp).replace(/,/g, "");
+      });
+      const out = root.querySelector(`[data-out="${t.dataset.path}"]`);
+      if (out) out.textContent = nf(v, dp) + (unit ? " " + unit : "");
+      if (t.dataset.path === "climate.annual") applyAnnual();
+      refresh(false); return;
+    }
+    if (t.matches("input[data-month]")) {
+      const i = +t.dataset.month, v = Math.max(0, parseFloat(t.value) || 0);
+      model.climate.monthly[i] = v;
+      model.climate.annual = sum(model.climate.monthly);
+      model.climate.label = "Custom monthly profile";
+      const holder = root.querySelector("#panel-climate .rwc-card");
+      if (holder) holder.innerHTML = CHART.wrap(CHART.rainfall(model.climate.monthly));
+      refresh(false); return;
+    }
+    if (t.matches("input[data-use][data-field=lpd]")) {
+      model.demand.uses[+t.dataset.use].lpd = Math.max(0, parseFloat(t.value) || 0);
+      refresh(false); return;
+    }
+  });
+
+  root.addEventListener("change", e => {
+    const t = e.target;
+    if (t.matches("input[type=checkbox][data-path]")) { setPath(t.dataset.path, t.checked); commit(); refresh(true); return; }
+    if (t.matches("input[data-use][data-field=on]"))  { model.demand.uses[+t.dataset.use].on = t.checked; commit(); refresh(true); return; }
+    if (t.matches("select[data-path]")) {
+      setPath(t.dataset.path, t.dataset.num ? +t.value : t.value); commit(); refresh(true); return;
+    }
+    if (t.id === "rwc-city") { applyCity(t.value); commit(); refresh(true); return; }
+    if (t.matches("[data-path], [data-month], [data-use]")) commit();
+  });
+
+  root.addEventListener("click", e => {
+    const t = e.target;
+    const seg = t.closest(".rwc-seg button[data-path]");
+    if (seg) {
+      setPath(seg.dataset.path, seg.dataset.val);
+      if (seg.dataset.path === "climate.mode") {
+        if (seg.dataset.val === "preset") applyCity(model.climate.cityId);
+        if (seg.dataset.val === "annual") applyAnnual();
+      }
+      commit(); refresh(true); return;
+    }
+    const rf = t.closest("[data-roof]");
+    if (rf) { block().roof.type = rf.dataset.roof; commit(); refresh(true); return; }
+
+    const cap = t.closest("[data-apply-cap]");
+    if (cap) { model.system.tankMode = "manual"; model.system.tank = +cap.dataset.applyCap; commit(); refresh(true); return; }
+
+    if (t.closest("#rwc-var-add")) {
+      variants.push({ name: model.name + (variants.length ? " · " + (variants.length + 1) : ""),
+        json: JSON.stringify(model),
+        s: { catchment: geom.catchment, yield: res.bal.totalYield, saving: res.bal.saving, cap: res.capacity } });
+      if (variants.length > 6) variants.shift();
+      refresh(true); toast("Variant saved"); return;
+    }
+    const vl = t.closest("[data-var-load]");
+    if (vl) { loadJSON(variants[+vl.dataset.varLoad].json, variants[+vl.dataset.varLoad].name); return; }
+    const vd = t.closest("[data-var-del]");
+    if (vd) { variants.splice(+vd.dataset.varDel, 1); refresh(true); return; }
+
+    if (t.closest("#rwc-dup")) {
+      const b = block(), c = CLONE(b);
+      c.id = uid(); c.name = b.name + " copy"; c.x = b.x + b.w + 2;
+      model.blocks.push(c); selectedId = c.id; commit(); refresh(true); return;
+    }
+    if (t.closest("#rwc-del")) { removeBlock(selectedId); return; }
+    if (t.closest("#rwc-tree-add")) { addBlock(); return; }
+
+    const del = t.closest("[data-del]");
+    if (del) { e.stopPropagation(); removeBlock(del.dataset.del); return; }
+    const item = t.closest("[data-block]");
+    if (item) { selectedId = item.dataset.block; refresh(true); return; }
+
+    const tabBtn = t.closest(".rwc-tab");
+    if (tabBtn) {
+      tab = tabBtn.dataset.tab;
+      $$(".rwc-tab").forEach(x => { const on = x.dataset.tab === tab; x.setAttribute("aria-selected", on); $("#panel-" + x.dataset.tab).hidden = !on; });
+      return;
+    }
+
+    const view = t.closest("[data-view]");
+    if (view) {
+      R3D.setView(view.dataset.view);
+      $$("[data-view]").forEach(c => c.setAttribute("aria-pressed", c === view));
+      draw(); return;
+    }
+    const st = t.closest("[data-style]");
+    if (st) { model.view.style = st.dataset.style; syncViewChips(); draw(); return; }
+    if (t.closest("#rwc-fit")) { fitView(); return; }
+    if (t.closest("#rwc-t-grid")) { model.view.grid = !model.view.grid; syncViewChips(); draw(); return; }
+    if (t.closest("#rwc-t-tank")) { model.view.system = !model.view.system; syncViewChips(); draw(); return; }
+    if (t.closest("#rwc-t-dims")) { model.view.dims = !model.view.dims; syncViewChips(); draw(); return; }
+
+    if (t.closest("#rwc-fetch")) { fetchClimate(); return; }
+    if (t.closest("#rwc-p-prev")) { presentShow(present.index - 1); return; }
+    if (t.closest("#rwc-p-next")) { presentShow(present.index + 1); return; }
+    if (t.closest("#rwc-p-exit")) { setMode("design"); return; }
+  });
+
+  function addBlock() {
+    const last = model.blocks[model.blocks.length - 1];
+    const b = newBlock({ name: "Block " + (model.blocks.length + 1), x: last ? last.x + last.w / 2 + 8 : 0, z: last ? last.z : 0 });
+    model.blocks.push(b); selectedId = b.id; commit(); refresh(true);
+  }
+  function removeBlock(id) {
+    if (model.blocks.length < 2) { toast("A model needs at least one block."); return; }
+    const i = model.blocks.findIndex(b => b.id === id);
+    if (i < 0) return;
+    model.blocks.splice(i, 1);
+    if (selectedId === id) selectedId = model.blocks[Math.max(0, i - 1)].id;
+    commit(); refresh(true);
+  }
+
+  /* --- toolbar ---------------------------------------------------------- */
+
+  $("#rwc-new").onclick = () => {
+    if (!confirm("Start a new model? Unsaved changes to this one will be lost.")) return;
+    model = newModel(); selectedId = model.blocks[0].id; variants = [];
+    history = []; hIndex = -1; snapshot(); refresh(true); fitView(); syncViewChips();
+    toast("New model");
+  };
+  $("#rwc-save").onclick = saveJSON;
+  $("#rwc-open").onclick = () => $("#rwc-file").click();
+  $("#rwc-file").onchange = e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => loadJSON(String(r.result), f.name);
+    r.onerror = () => toast("Could not read that file.");
+    r.readAsText(f); e.target.value = "";
+  };
+  $("#rwc-add-btn").onclick = addBlock;
+  $("#rwc-undo").onclick = undo;
+  $("#rwc-redo").onclick = redo;
+  $("#rwc-theme").onclick = () => setTheme(currentTheme() === "dark" ? "light" : "dark");
+
+  $("#rwc-models-btn").onclick = function () {
+    const groups = {};
+    for (const d of DEMOS) (groups[d.group] = groups[d.group] || []).push(d);
+    menu(this, Object.keys(groups).map(g =>
+      `<div class="rwc-menu-head">${esc(g)}</div>` +
+      groups[g].map(d => mItem(`data-demo="${d.id}"`, d.name, d.caption.slice(0, 78) + "…")).join("")
+    ).join('<div class="rwc-menu-div"></div>'));
+  };
+  $("#rwc-export-btn").onclick = function () {
+    menu(this,
+      mItem('data-x="png"',    "Image (PNG)", "3× resolution, with title block and copyright") +
+      mItem('data-x="report"', "Report sheet", "A3 landscape, print or save as PDF") +
+      mItem('data-x="csv"',    "Monthly results (CSV)", "For Excel") +
+      mItem('data-x="json"',   "Model file (JSON)", "Re-openable parametric model"));
+  };
+  $("#rwc-mode-btn").onclick = function () {
+    menu(this,
+      mItem('data-m="design"',   "Design", "Full editing workspace") +
+      mItem('data-m="analysis"', "Analysis", "Charts, tables and variant comparison") +
+      mItem('data-m="present"',  "Presentation", "Lecture view — ← → steps through the models"));
+  };
+  $("#rwc-help").onclick = function () {
+    menu(this,
+      `<div class="rwc-menu-head">Model space</div>` +
+      mItem("", "Drag to orbit · scroll to zoom", "Shift-drag or right-drag to pan · pinch on touch") +
+      mItem("", "Click a roof to select its block", "F fits the model · arrow keys rotate") +
+      `<div class="rwc-menu-div"></div><div class="rwc-menu-head">Method</div>` +
+      mItem("", "Y = A · R · Yc · Fc", "BS EN 16941-1:2024. A is the plan-projected catchment, never the sloping surface.") +
+      mItem("", "YAS store operation", "Demand is met from the previous step's volume, before this step's inflow.") +
+      `<div class="rwc-menu-div"></div>` +
+      mItem("", "© Karam Al-Obaidi", "Rainwater Collection 3D"));
+  };
+
+  document.addEventListener("click", e => {
+    const d = e.target.closest("[data-demo]");
+    if (d) { closeMenu(); const dm = DEMO_BY_ID[d.dataset.demo];
+      model = dm.make(); selectedId = model.blocks[0].id;
+      history = []; hIndex = -1; snapshot(); refresh(true); fitView(); syncViewChips();
+      toast(dm.name); return; }
+    const x = e.target.closest("[data-x]");
+    if (x) { closeMenu();
+      ({ png: exportPNG, csv: exportCSV, json: saveJSON, report: buildReport })[x.dataset.x](); return; }
+    const m = e.target.closest("[data-m]");
+    if (m) { closeMenu(); setMode(m.dataset.m); return; }
+  });
+
+  /* --- canvas interaction ---------------------------------------------- */
+
+  const pointers = new Map();
+  let dragMode = null, lastX = 0, lastY = 0, moved = 0, pinchDist = 0;
+
+  canvas.addEventListener("pointerdown", e => {
+    canvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinchDist = Math.hypot(a.x - b.x, a.y - b.y); dragMode = "pinch";
+    } else {
+      dragMode = (e.button === 2 || e.button === 1 || e.shiftKey) ? "pan" : "orbit";
+      lastX = e.clientX; lastY = e.clientY; moved = 0;
+      canvas.classList.add("rwc-dragging");
+    }
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (dragMode === "pinch" && pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinchDist > 0) R3D.cam.dist = clamp(R3D.cam.dist * (pinchDist / Math.max(1, d)), 2, 4000);
+      pinchDist = d; draw(); return;
+    }
+    if (!dragMode) return;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+    if (dragMode === "orbit") {
+      R3D.cam.az -= dx * 0.008;
+      R3D.cam.el = clamp(R3D.cam.el + dy * 0.006, -1.45, 1.55);
+    } else {
+      const s = R3D.cam.dist * 0.0016;
+      const ca = Math.cos(R3D.cam.az), sa = Math.sin(R3D.cam.az);
+      R3D.cam.target[0] -= (dx * ca - 0) * s;
+      R3D.cam.target[2] += (dx * sa) * s;
+      R3D.cam.target[1] += dy * s;
+    }
+    draw();
+  });
+  function endPointer(e) {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2 && dragMode === "pinch") dragMode = null;
+    if (pointers.size === 0) {
+      if (dragMode === "orbit" && moved < 5) {
+        const r = canvas.getBoundingClientRect();
+        const hit = R3D.pick(e.clientX - r.left, e.clientY - r.top, cw, ch, geom);
+        if (hit && hit !== selectedId) { selectedId = hit; refresh(true); }
+      }
+      dragMode = null; canvas.classList.remove("rwc-dragging");
+    }
+  }
+  canvas.addEventListener("pointerup", endPointer);
+  canvas.addEventListener("pointercancel", endPointer);
+  canvas.addEventListener("contextmenu", e => e.preventDefault());
+  canvas.addEventListener("wheel", e => {
+    e.preventDefault();
+    R3D.cam.dist = clamp(R3D.cam.dist * Math.exp(clamp(e.deltaY, -120, 120) * 0.0011), 2, 4000);
+    draw();
+  }, { passive: false });
+
+  canvas.addEventListener("keydown", e => {
+    const k = e.key;
+    if (k === "ArrowLeft")  { R3D.cam.az -= 0.09; draw(); e.preventDefault(); }
+    else if (k === "ArrowRight") { R3D.cam.az += 0.09; draw(); e.preventDefault(); }
+    else if (k === "ArrowUp")    { R3D.cam.el = clamp(R3D.cam.el + 0.06, -1.45, 1.55); draw(); e.preventDefault(); }
+    else if (k === "ArrowDown")  { R3D.cam.el = clamp(R3D.cam.el - 0.06, -1.45, 1.55); draw(); e.preventDefault(); }
+    else if (k === "+" || k === "=") { R3D.cam.dist = clamp(R3D.cam.dist * 0.88, 2, 4000); draw(); }
+    else if (k === "-" || k === "_") { R3D.cam.dist = clamp(R3D.cam.dist * 1.14, 2, 4000); draw(); }
+    else if (k === "f" || k === "F") fitView();
+  });
+
+  /* --- global keys ------------------------------------------------------ */
+
+  document.addEventListener("keydown", e => {
+    const typing = /^(INPUT|SELECT|TEXTAREA)$/.test((e.target.tagName || ""));
+    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+      const k = e.key.toLowerCase();
+      if (k === "s") { e.preventDefault(); saveJSON(); return; }
+      if (k === "o") { e.preventDefault(); $("#rwc-file").click(); return; }
+      if (k === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+      if (k === "y") { e.preventDefault(); redo(); return; }
+      return;
+    }
+    if (typing) return;
+    if (e.key === "Escape") { if (mode === "present") setMode("design"); else closeMenu(); return; }
+    if (mode === "present") {
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); presentShow(present.index + 1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); presentShow(present.index - 1); }
+      else if (e.key === "p" || e.key === "P") setMode("design");
+      return;
+    }
+    if (e.key === "p" || e.key === "P") setMode(mode === "present" ? "design" : "present");
+    if (e.key === "f" || e.key === "F") fitView();
+  });
+
+  /* --- chart tooltips --------------------------------------------------- */
+
+  const tipEl = document.createElement("div");
+  tipEl.style.cssText = "position:fixed;z-index:80;padding:5px 9px;border-radius:5px;font:12px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;pointer-events:none;opacity:0;transition:opacity .12s;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.2)";
+  document.body.appendChild(tipEl);
+  function showTip(el, x, y) {
+    const P = R3D.palette();
+    tipEl.style.background = P.ink; tipEl.style.color = P.surface;
+    tipEl.textContent = el.dataset.tip;
+    tipEl.style.opacity = "1";
+    tipEl.style.left = Math.min(window.innerWidth - tipEl.offsetWidth - 8, x + 12) + "px";
+    tipEl.style.top  = Math.max(6, y - 34) + "px";
+  }
+  const hideTip = () => { tipEl.style.opacity = "0"; };
+  document.addEventListener("pointermove", e => {
+    const el = e.target.closest && e.target.closest("[data-tip]");
+    if (el) showTip(el, e.clientX, e.clientY); else hideTip();
+  });
+  document.addEventListener("focusin", e => {
+    const el = e.target.closest && e.target.closest("[data-tip]");
+    if (el) { const r = el.getBoundingClientRect(); showTip(el, r.left + r.width / 2, r.top); } else hideTip();
+  });
+
+  /* --- resize ----------------------------------------------------------- */
+
+  if (window.ResizeObserver) new ResizeObserver(() => draw()).observe($("#rwc-view"));
+  else window.addEventListener("resize", () => draw());
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { R3D.invalidateTheme(); draw(); });
+
+  /* ═══════════════ live climate fetch (optional) ═══════════════ */
+
+  async function fetchClimate() {
+    const note = $("#rwc-fetch-note");
+    const lat = parseFloat($("#rwc-lat").value), lon = parseFloat($("#rwc-lon").value);
+    if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+      note.textContent = "Enter a valid latitude (−90 to 90) and longitude (−180 to 180)."; return;
+    }
+    note.textContent = "Fetching 10 years of daily rainfall from Open-Meteo…";
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 20000);
+    try {
+      const url = "https://archive-api.open-meteo.com/v1/archive?latitude=" + lat.toFixed(3) +
+        "&longitude=" + lon.toFixed(3) + "&start_date=2015-01-01&end_date=2024-12-31" +
+        "&daily=precipitation_sum&timezone=UTC";
+      const r = await fetch(url, { signal: ctl.signal });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json();
+      const time = j.daily && j.daily.time, pr = j.daily && j.daily.precipitation_sum;
+      if (!time || !pr || !time.length) throw new Error("no data");
+      const tot = new Array(12).fill(0), yrs = new Set(), wet = new Array(12).fill(0);
+      for (let i = 0; i < time.length; i++) {
+        const v = pr[i]; if (v == null) continue;
+        const mo = +time[i].slice(5, 7) - 1;
+        tot[mo] += v; yrs.add(time[i].slice(0, 4));
+        if (v >= 1) wet[mo]++;
+      }
+      const n = Math.max(1, yrs.size);
+      model.climate.monthly = tot.map(v => Math.round((v / n) * 10) / 10);
+      const wetTotal = sum(wet) / n, rainTotal = sum(tot) / n;
+      model.climate.dpd = clamp(Math.round(wetTotal > 0 ? rainTotal / wetTotal : 8), 2, 30);
+      model.climate.annual = sum(model.climate.monthly);
+      model.climate.lat = lat; model.climate.lon = lon;
+      model.climate.mode = "manual";
+      model.climate.label = "Open-Meteo " + lat.toFixed(2) + ", " + lon.toFixed(2);
+      commit(); refresh(true);
+      toast("Loaded " + nf(model.climate.annual, 0) + " mm/yr from Open-Meteo");
+    } catch (err) {
+      note.innerHTML = "<b>Could not reach Open-Meteo.</b> This is expected offline, on a restricted classroom network, or under a strict WordPress content policy. Use a preset location or type the monthly values instead.";
+      note.classList.add("rwc-warn");
+    } finally { clearTimeout(timer); }
+  }
+
+  /* ═══════════════ boot ═══════════════ */
+
+  function boot() {
+    const q = new URLSearchParams(location.search);
+    if (q.get("embed") === "1") {
+      /* fill the iframe exactly: 100dvh can be wrong inside a nested frame */
+      root.classList.add("rwc-embed");
+      document.documentElement.style.height = "100%";
+      document.body.style.height = "100%";
+      document.body.style.margin = "0";
+    }
+    const th = q.get("theme") || (() => { try { return localStorage.getItem("rwc3d.theme"); } catch (e) { return ""; } })();
+    if (th === "dark" || th === "light") root.dataset.theme = th;
+
+    const demoId = q.get("model");
+    if (demoId && DEMO_BY_ID[demoId]) {
+      model = DEMO_BY_ID[demoId].make();
+    } else {
+      try {
+        const saved = localStorage.getItem(LS_KEY);
+        if (saved) {
+          const d = JSON.parse(saved);
+          if (d && Array.isArray(d.blocks) && d.blocks.length) model = hydrate(d);
+        }
+      } catch (e) { /* ignore a corrupt or unavailable autosave */ }
+    }
+    if (!model.blocks.length) model = newModel();
+    selectedId = model.blocks[0].id;
+
+    const m = q.get("mode");
+    snapshot();
+    refresh(true);
+    sizeCanvas(); R3D.fit(geom.bounds, cw, ch);
+    syncViewChips();
+    if (m === "analysis" || m === "present") setMode(m); else draw();
+  }
+
+  return { boot, refresh, get model() { return model; } };
+})();
+
+APP.boot();
+</script>
+</body>
+</html>
