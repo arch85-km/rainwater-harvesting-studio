@@ -95,8 +95,16 @@ with `?model=forms&mode=present`.
 
 ### Model space
 Drag to orbit · scroll to zoom · shift-drag or right-drag to pan · pinch on touch.
-Click a roof to select its block. `F` fits the model, arrow keys rotate,
-`P` toggles Presentation mode, `Esc` leaves it.
+`F` fits the model, arrow keys rotate, `P` toggles Presentation mode, `Esc` leaves it.
+
+**Moving blocks.** Click a roof to select its block, then **drag it** to slide it
+across the ground. Dragging empty space or an unselected block still orbits, so a
+block cannot be moved by accident — the cursor changes over the one that can.
+Position snaps to 0.25 m; hold **Alt** for free placement, or use **Shift + arrow
+keys** to nudge (they move the way the screen looks, not the way the world is
+axed). If a block ends up overlapping another in plan, both are outlined in the
+warning colour and the status bar says so — an overlap counts the same area twice
+in the catchment. New blocks are always placed clear of the whole model.
 
 ### Toolbar
 **New · Open · Save** work on `.json` model files. Work is also autosaved to the
@@ -117,7 +125,10 @@ flags them in the model tree and the status bar.
 
 ### Render styles
 Shaded · Hidden line · Wire · X-ray · **Catchment** (roofs coloured by yield
-coefficient) · **Flow** (arrows down each slope, to the gutters and downpipes).
+coefficient) · **Flow** — arrows tiled across every collecting surface, pointing
+down the fall to the gutters. Vertical surfaces such as sawtooth glazing carry no
+arrows because they collect nothing, which is the point: swing the model round to
+the collecting side and the whole roof fills with arrows.
 
 ### Modes
 - **Design** — the full editing workspace.
@@ -130,8 +141,8 @@ coefficient) · **Flow** (arrows down each slope, to the gutters and downpipes).
 | Export | What you get |
 |---|---|
 | **Image (PNG)** | The 3D view at 3× resolution with a title block, key figures and the copyright line |
-| **Report sheet** | A3 landscape: 3D view, roof schedule, method, three charts, monthly table. Print or Save as PDF |
-| **Explain sheet** | The calculation walked step by step with your numbers — see below. Also printable |
+| **Report sheet** | One **A3 landscape** page: 3D view, roof schedule, method, three charts, monthly table. Print or Save as PDF |
+| **Explain sheet** | The calculation walked step by step with your numbers — see below. Prints **A4 portrait** across 2–3 pages |
 | **Monthly CSV** | Month-by-month rainfall, inflow, demand, supplied, store, spill and mains top-up, for Excel |
 | **Model JSON** | The full parametric model, re-openable |
 
@@ -344,6 +355,10 @@ whole-face sort, at 8–25 ms per frame for the shipped models.
 
 Charts are hand-authored inline SVG for the same reasons as the renderer — crisp
 at any size, print cleanly, no dependency.
+
+Each sheet sets its own `@page` size as it opens (A4 portrait for Explain, A3
+landscape for Report) and drops out of fixed positioning for print, so both
+paginate properly instead of being clipped to a single page.
 
 Browser support: any browser from the last few years. Uses `ResizeObserver`,
 `pointer events`, `canvas.toBlob` and CSS Grid.

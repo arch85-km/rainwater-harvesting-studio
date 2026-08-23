@@ -514,14 +514,50 @@ button.rwc-tile:focus-visible { outline:2px solid var(--accent); outline-offset:
 /* ---------- report sheet (print) ---------- */
 .rwc-report { display:none; }
 @media print {
-  @page { size: A3 landscape; margin: 10mm; }
   html, body { background:#fff !important; height:auto !important; overflow:visible !important; }
   body > *:not(.rwc-report) { display:none !important; }
   .rwc-report { display:block !important; color:#000; font-family: var(--font); }
+
+  /* On screen the sheet is a fixed, internally-scrolling overlay. A fixed
+     element is clipped to ONE printed page, which silently dropped everything
+     below the fold — undoing that here is what restores pagination. */
+  .rwc-report.rwc-preview {
+    position:static !important; inset:auto !important;
+    height:auto !important; max-height:none !important;
+    overflow:visible !important; padding:0 !important;
+  }
+  .rwc-rep-sheet { max-width:none !important; }
+  .rwc-rep-bar { display:none !important; }
+
+  /* never split a card, a legend or a table row across the page break */
+  .rwc-ex-step, .rwc-ex-box, .rwc-rep-box, .rwc-card { break-inside:avoid; page-break-inside:avoid; }
+  .rwc-rep-head { break-after:avoid; page-break-after:avoid; }
+  tr, .rwc-legend { break-inside:avoid; page-break-inside:avoid; }
+  thead { display:table-header-group; }
+  .rwc-table-wrap { max-height:none !important; overflow:visible !important; }
+
+  /* the Explain sheet prints A4 portrait, so it reflows narrower */
+  .rwc-ex-steps { grid-template-columns:repeat(2,1fr) !important; }
+  .rwc-ex-cols  { grid-template-columns:1fr !important; }
 }
-.rwc-report.rwc-preview { display:block; position:fixed; inset:0; z-index:200; background:#fff; color:#111; overflow:auto; padding:64px 22px 22px; }
-.rwc-rep-bar { position:fixed; top:12px; right:16px; z-index:210; display:flex; gap:8px; }
-@media print { .rwc-rep-bar { display:none !important; } }
+.rwc-report.rwc-preview { display:block; position:fixed; inset:0; z-index:200; background:#fff; color:#111; overflow:auto; padding:66px 22px 28px; }
+
+/* #rwc-report sits outside #rwc-app, so the design tokens do not reach it — the
+   sheet is a white document preview either way, so the bar is styled literally.
+   (This is also why the primary button used to render with no fill at all.) */
+.rwc-rep-bar {
+  position:fixed; top:0; left:0; right:0; z-index:210;
+  display:flex; align-items:center; gap:8px;
+  padding:9px 16px;
+  background:#fcfcfb; border-bottom:1px solid #d7d6d1;
+  box-shadow:0 1px 8px rgba(0,0,0,.10);
+}
+.rwc-rep-bar-title { flex:1 1 auto; min-width:0; font-size:12.5px; font-weight:650; color:#14140f; line-height:1.25; }
+.rwc-rep-bar-title small { display:block; font-weight:400; font-size:11px; color:#85847e; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rwc-rep-bar .rwc-btn { color:#14140f; background:#f0efec; border-color:#d7d6d1; flex:0 0 auto; }
+.rwc-rep-bar .rwc-btn:hover { background:#e6e5e1; border-color:#b9b8b2; }
+.rwc-rep-bar .rwc-btn.rwc-primary { background:#2a78d6; color:#fff; border-color:transparent; }
+.rwc-rep-bar .rwc-btn.rwc-primary:hover { background:#2468bb; }
 .rwc-rep-sheet { max-width: 1580px; margin:0 auto; }
 .rwc-rep-head { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:14px; }
 .rwc-rep-head h1 { font-size:20px; margin:0 0 2px; letter-spacing:-.02em; }
@@ -1364,6 +1400,7 @@ const GEO = (() => {
     const diag = Math.max(2, Math.hypot(
       bounds.max[0] - bounds.min[0], bounds.max[1] - bounds.min[1], bounds.max[2] - bounds.min[2]));
     markSmoothEdges(faces);
+    const overlaps = planOverlaps(model.blocks);
     const maxEdge = edgeBudget(faces, model.blocks);
     const prims = [];
     for (const f of faces) for (const t of tessellate(f, maxEdge)) { t.f = f; prims.push(t); }
@@ -1371,7 +1408,8 @@ const GEO = (() => {
     return {
       faces, prims, maxEdge, diag,
       uid: ++_geomUid,
-      overlaps: planOverlaps(model.blocks),
+      overlaps: overlaps,
+      overlapIds: new Set(overlaps.flatMap(o => [o.a, o.b])),
       per, bounds,
       catchment: sum(per.map(p => p.proj)),
       surface:   sum(per.map(p => p.surf)),
@@ -1557,7 +1595,7 @@ const R3D = (() => {
       ink: g("--ink"), ink2: g("--ink-2"), ink3: g("--ink-3"),
       surface: g("--surface-1"), line: g("--line"), accent: g("--accent"),
       s1: g("--series-1"), s2: g("--series-2"), s3: g("--series-3"),
-      bg1: g("--scene-bg-a"), bg2: g("--scene-bg-b"),
+      bg1: g("--scene-bg-a"), bg2: g("--scene-bg-b"), warn: g("--warn"),
       seq: [g("--seq-100"), g("--seq-200"), g("--seq-300"), g("--seq-400"), g("--seq-500"), g("--seq-600"), g("--seq-700")]
     };
     return theme;
@@ -1794,6 +1832,11 @@ const R3D = (() => {
             return { fill: shadeHex(f.col, 0.5 + 0.5 * ndl), stroke: withAlpha(P.edge, 0.35), lw: 0.8 };
           })()
         : faceColour(f, style, P, selected && f.block === selected);
+      /* a block overlapping another in plan is outlined in the warning colour,
+         so a bad drop is obvious in the model space, not only in the status bar */
+      if (geom.overlapIds.size && geom.overlapIds.has(f.block)) {
+        col.stroke = P.warn; col.lw = 1.7;
+      }
 
       if (col.fill) {
         let fp = sp;
@@ -1836,34 +1879,77 @@ const R3D = (() => {
     /* flow arrows: one per roof plane, not one per triangle, and only on planes
        that face the camera so they cannot show through the building */
     if (style === "flow") {
-      const roofs = geom.faces.filter(f => f.kind === "roof").slice()
-        .sort((a, z) => (z.centroid[0]-eye[0])**2 + (z.centroid[1]-eye[1])**2 + (z.centroid[2]-eye[2])**2
-                      - ((a.centroid[0]-eye[0])**2 + (a.centroid[1]-eye[1])**2 + (a.centroid[2]-eye[2])**2));
-      for (const f of roofs) {
-        const toEye = [eye[0]-f.centroid[0], eye[1]-f.centroid[1], eye[2]-f.centroid[2]];
-        if (f.normal[0]*toEye[0] + f.normal[1]*toEye[1] + f.normal[2]*toEye[2] <= 0) continue;
-        /* on the plane n.p = const, dy/ds along a horizontal unit d is
-           -(nx*dx + nz*dz)/ny. With n flipped upward, +(nx,nz) is downhill. */
+      /* A single arrow at each plane's centre means that on a large roof — or
+         once you zoom in — there is often no arrow anywhere in view, which reads
+         as the mode being broken. Tile arrows over each roof instead, on a
+         world-aligned grid, so the fall direction is legible wherever you look.
+         Each arrow is kept only where its own point is the frontmost surface on
+         screen, which is winding-independent (a normal's sign is an artifact of
+         vertex order) and also hides arrows on roofs behind another block. */
+      const po = projectAll(geom.faces, proj);
+      const spacing = clamp(geom.diag * 0.10, 1.2, 6);
+      const len = spacing * 0.58;
+      let budget = 160;
+
+      const arrow = (a0, a1) => {
+        const px = Math.hypot(a1[0]-a0[0], a1[1]-a0[1]);
+        if (px < 10 * scale) return false;
+        const ang = Math.atan2(a1[1]-a0[1], a1[0]-a0[0]);
+        const hl = clamp(px * 0.30, 5 * scale, 13 * scale);
+        const shaft = () => {
+          ctx.beginPath();
+          ctx.moveTo(a0[0], a0[1]); ctx.lineTo(a1[0], a1[1]);
+          ctx.moveTo(a1[0], a1[1]);
+          ctx.lineTo(a1[0] - hl*Math.cos(ang-0.42), a1[1] - hl*Math.sin(ang-0.42));
+          ctx.moveTo(a1[0], a1[1]);
+          ctx.lineTo(a1[0] - hl*Math.cos(ang+0.42), a1[1] - hl*Math.sin(ang+0.42));
+          ctx.stroke();
+        };
+        ctx.lineCap = "round"; ctx.lineJoin = "round";
+        /* halo first, so an arrow reads on terracotta and on grey metal alike */
+        ctx.strokeStyle = withAlpha(P.surface, 0.92); ctx.lineWidth = 5 * scale; shaft();
+        ctx.strokeStyle = P.s1;                       ctx.lineWidth = 2.2 * scale; shaft();
+        return true;
+      };
+
+      for (const f of geom.faces) {
+        if (f.kind !== "roof" || budget <= 0) continue;
+        /* flipped up, so +(nx,nz) is downhill */
         const n = f.normal[1] < 0 ? [-f.normal[0], -f.normal[1], -f.normal[2]] : f.normal;
+        if (Math.abs(n[1]) < 0.05) continue;                  // effectively vertical
         let d = [n[0], 0, n[2]];
-        let L = Math.hypot(d[0], d[2]);
-        if (L < 1e-4) { d = [0, 0, 1]; L = 1; }       // dead flat: fall to +z
-        d = [d[0]/L, 0, d[2]/L];
-        const len = Math.min(3.2, Math.sqrt(f.surfaceArea) * 0.42);
-        const c = f.centroid;
-        const drop = -(n[0]*d[0] + n[2]*d[2]) / (n[1] || 1);
-        const a0 = proj([c[0] - d[0]*len/2, c[1] - drop*len/2, c[2] - d[2]*len/2]);
-        const a1 = proj([c[0] + d[0]*len/2, c[1] + drop*len/2, c[2] + d[2]*len/2]);
-        if (!a0 || !a1) continue;
-        ctx.strokeStyle = P.s1; ctx.lineWidth = 2 * scale; ctx.lineCap = "round";
-        ctx.beginPath(); ctx.moveTo(a0[0], a0[1]); ctx.lineTo(a1[0], a1[1]); ctx.stroke();
-        const ang = Math.atan2(a1[1]-a0[1], a1[0]-a0[0]), hl = 7 * scale;
-        ctx.beginPath();
-        ctx.moveTo(a1[0], a1[1]);
-        ctx.lineTo(a1[0] - hl*Math.cos(ang-0.42), a1[1] - hl*Math.sin(ang-0.42));
-        ctx.moveTo(a1[0], a1[1]);
-        ctx.lineTo(a1[0] - hl*Math.cos(ang+0.42), a1[1] - hl*Math.sin(ang+0.42));
-        ctx.stroke();
+        const L = Math.hypot(d[0], d[2]);
+        d = L < 1e-4 ? [0, 0, 1] : [d[0]/L, 0, d[2]/L];       // dead flat: fall to +z
+        const drop = -(n[0]*d[0] + n[2]*d[2]) / n[1];
+        const planeD = n[0]*f.pts[0][0] + n[1]*f.pts[0][1] + n[2]*f.pts[0][2];
+        const yAtXZ = (x, z) => (planeD - n[0]*x - n[2]*z) / n[1];
+
+        const poly2 = f.pts.map(q => [q[0], q[2]]);
+        const xs = f.pts.map(q => q[0]), zs = f.pts.map(q => q[2]);
+        const x0 = Math.min(...xs), x1 = Math.max(...xs);
+        const z0 = Math.min(...zs), z1 = Math.max(...zs);
+
+        const place = (x, z) => {
+          if (budget <= 0) return false;
+          const y = yAtXZ(x, z);
+          const pt = [x, y, z];
+          const mid = proj(pt);
+          if (!mid || occluded(pt, mid[0], mid[1], f, eye, po)) return false;
+          const a0 = proj([x - d[0]*len/2, y - drop*len/2, z - d[2]*len/2]);
+          const a1 = proj([x + d[0]*len/2, y + drop*len/2, z + d[2]*len/2]);
+          if (!a0 || !a1) return false;
+          if (arrow(a0, a1)) { budget--; return true; }
+          return false;
+        };
+
+        let drawn = 0;
+        for (let z = Math.floor(z0 / spacing) * spacing + spacing / 2; z < z1 && budget > 0; z += spacing)
+          for (let x = Math.floor(x0 / spacing) * spacing + spacing / 2; x < x1 && budget > 0; x += spacing) {
+            if (!pointInPoly(x, z, poly2)) continue;
+            if (place(x, z)) drawn++;
+          }
+        /* a face narrower than the grid (a vault strip) still gets one */
+        if (!drawn) place(f.centroid[0], f.centroid[2]);
       }
     }
 
@@ -2009,19 +2095,54 @@ const R3D = (() => {
 
   /* --- picking ---------------------------------------------------------- */
 
-  function pick(px, py, W, H, geom) {
-    const proj = makeProjector(W, H);
-    const b = basis();
-    const list = geom.faces.map(f => {
+  /* faces sorted nearest-first, for "what is actually on top at this pixel" */
+  function nearestFirst(faces, eye) {
+    return faces.map(f => {
       const c = f.centroid;
-      return { f, d: (c[0]-b.eye[0])**2 + (c[1]-b.eye[1])**2 + (c[2]-b.eye[2])**2 };
+      return { f, d: (c[0]-eye[0])**2 + (c[1]-eye[1])**2 + (c[2]-eye[2])**2 };
     }).sort((a, z) => a.d - z.d);
-    for (const it of list) {
+  }
+  function faceAt(px, py, order, proj) {
+    for (const it of order) {
       const sp = it.f.pts.map(proj);
       if (sp.some(q => q === null)) continue;
-      if (pointInPoly(px, py, sp)) return it.f.block;
+      if (pointInPoly(px, py, sp)) return it.f;
     }
     return null;
+  }
+  /* Project every face once, so hundreds of visibility samples cost only a
+     point-in-polygon each. Order does not matter — occlusion is decided by an
+     exact ray/plane intersection rather than by centroid depth, which is the
+     same approximation that misorders large adjacent faces elsewhere. */
+  function projectAll(faces, proj) {
+    const out = [];
+    for (const f of faces) {
+      const sp = f.pts.map(proj);
+      if (sp.some(q => q === null)) continue;
+      out.push({ f, sp });
+    }
+    return out;
+  }
+  /* Is `pt` (which lies on face `self`) hidden from `eye` by any other face?
+     Parameterise the ray as eye + t*(pt - eye); anything crossing at 0 < t < 1
+     is strictly in front of the sample. */
+  function occluded(pt, px, py, self, eye, po) {
+    const ex = pt[0]-eye[0], ey = pt[1]-eye[1], ez = pt[2]-eye[2];
+    for (const o of po) {
+      if (o.f === self) continue;
+      if (!pointInPoly(px, py, o.sp)) continue;
+      const n = o.f.normal;
+      const denom = n[0]*ex + n[1]*ey + n[2]*ez;
+      if (Math.abs(denom) < 1e-9) continue;
+      const q = o.f.pts[0];
+      const t = (n[0]*(q[0]-eye[0]) + n[1]*(q[1]-eye[1]) + n[2]*(q[2]-eye[2])) / denom;
+      if (t > 0.002 && t < 0.998) return true;
+    }
+    return false;
+  }
+  function pick(px, py, W, H, geom) {
+    const f = faceAt(px, py, nearestFirst(geom.faces, basis().eye), makeProjector(W, H));
+    return f ? f.block : null;
   }
   function pointInPoly(x, y, poly) {
     let inside = false;
@@ -2032,7 +2153,38 @@ const R3D = (() => {
     return inside;
   }
 
-  return { cam, render, fit, setView, pick, palette, invalidateTheme, makeProjector, VIEWS };
+  /* Inverse of the projector onto a horizontal plane — the ray from the eye
+     through a pixel, intersected with y = y0. Returns null when the camera is
+     too near horizontal for the hit to be meaningful. */
+  function screenToGround(px, py, W, H, y0) {
+    const b = basis();
+    const f = (H / 2) / Math.tan(cam.fov / 2);
+    const sx = px - W / 2, sy = H / 2 - py;
+    const dir = [
+      b.right[0]*sx + b.up[0]*sy + b.fwd[0]*f,
+      b.right[1]*sx + b.up[1]*sy + b.fwd[1]*f,
+      b.right[2]*sx + b.up[2]*sy + b.fwd[2]*f
+    ];
+    const L = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+    if (Math.abs(dir[1] / L) < 0.02) return null;          // grazing the ground
+    const t = (y0 - b.eye[1]) / dir[1];
+    if (t <= 0) return null;                                // plane is behind us
+    return [b.eye[0] + dir[0]*t, y0, b.eye[2] + dir[2]*t];
+  }
+
+  /* the camera's right and forward directions flattened onto the ground, so a
+     keyboard nudge moves the way the screen looks */
+  function groundAxes() {
+    const b = basis();
+    const norm = v => { const L = Math.hypot(v[0], v[1]) || 1; return [v[0]/L, v[1]/L]; };
+    return {
+      right: norm([b.right[0], b.right[2]]),
+      fwd:   norm([b.fwd[0],   b.fwd[2]])
+    };
+  }
+
+  return { cam, render, fit, setView, pick, palette, invalidateTheme, makeProjector, VIEWS,
+           screenToGround, groundAxes };
 })();
 
 /* ═══════════════════════════ FORMAT ═══════════════════════════ */
@@ -2351,7 +2503,12 @@ const APP = (() => {
   function restore(i) {
     if (i < 0 || i >= history.length) return;
     const s = JSON.parse(history[i]);
-    model = s.model; selectedId = s.selectedId; hIndex = i;
+    const keep = selectedId;
+    model = s.model; hIndex = i;
+    /* Undo is about the model, not the selection. Keep whatever is selected if
+       that block still exists — having undo jump the panel to a different block
+       is disorienting, especially right after moving one. */
+    selectedId = model.blocks.some(b => b.id === keep) ? keep : s.selectedId;
     updateUndo(); refresh(true);
   }
   const undo = () => restore(hIndex - 1);
@@ -2378,6 +2535,14 @@ const APP = (() => {
       readout();
       autosave();
     });
+  }
+
+  /* Moving a block changes geometry but no hydrology — catchment, rainfall and
+     demand are all unaffected by position. Skip HYD.compute (its 37-point
+     capacity sweep is the expensive part) while dragging. */
+  function refreshGeom() {
+    geom = GEO.build(model);
+    draw(); readout(); tree();
   }
 
   let saveTimer = 0;
@@ -2558,7 +2723,7 @@ const APP = (() => {
   function overlapNote() {
     const bad = geom.overlaps.filter(o => o.a === selectedId || o.b === selectedId);
     if (!bad.length)
-      return `<p class="rwc-note">Blocks must not overlap in plan, roof overhangs included — overlapping footprints double-count catchment and cannot be depth-sorted correctly.</p>`;
+      return `<p class="rwc-note"><b>Drag the selected block</b> in the model space to move it, or use the offsets above. Blocks must not overlap in plan, roof overhangs included — overlapping footprints double-count catchment and cannot be depth-sorted correctly.</p>`;
     return `<p class="rwc-note rwc-warn"><b>Overlaps in plan.</b> This block overlaps
       ${bad.map(o => esc(o.names[o.a === selectedId ? 1 : 0])).join(" and ")}
       by ${nf(sum(bad.map(o => o.area)), 1)} m², roof overhangs included.
@@ -3089,7 +3254,8 @@ const APP = (() => {
 
     $("#rwc-report").innerHTML = `
       <div class="rwc-rep-bar">
-        <button class="rwc-btn" id="rwc-rep-x" style="background:var(--surface-2);border-color:var(--line)">Close</button>
+        <div class="rwc-rep-bar-title">Explain sheet<small>${esc(model.name)} &middot; prints A4 portrait</small></div>
+        <button class="rwc-btn" id="rwc-rep-x">Close</button>
         <button class="rwc-btn rwc-primary" id="rwc-rep-print">Print / Save as PDF</button>
       </div>
       <div class="rwc-rep-sheet">
@@ -3148,12 +3314,25 @@ const APP = (() => {
           <span>Yield to BS EN 16941-1:2024. Downpipe sizing indicative only; a real design follows BS EN 12056-3.</span>
         </div>
       </div>`;
-    openSheet(anchorId ? "ex-" + anchorId : null);
+    openSheet(PAGE_A4, anchorId ? "ex-" + anchorId : null);
   }
 
-  function openSheet(scrollToId) {
+  /* A static @page rule cannot serve both sheets, so write it per sheet. This
+     also makes the browser's print dialog open on the right orientation instead
+     of falling back to Portrait. */
+  function setPageSize(css) {
+    let st = document.getElementById("rwc-page");
+    if (!st) { st = document.createElement("style"); st.id = "rwc-page"; document.head.appendChild(st); }
+    st.textContent = css;
+  }
+  const PAGE_A4 = "@page { size: A4 portrait; margin: 12mm; }";
+  const PAGE_A3 = "@page { size: A3 landscape; margin: 10mm; }";
+
+  function openSheet(pageCss, scrollToId) {
+    setPageSize(pageCss);
     const rep = $("#rwc-report");
     rep.classList.add("rwc-preview"); rep.setAttribute("aria-hidden", "false");
+    rep.scrollTop = 0;
     $("#rwc-rep-print").onclick = () => window.print();
     $("#rwc-rep-x").onclick = closeReport;
     document.addEventListener("keydown", reportEsc);
@@ -3177,7 +3356,8 @@ const APP = (() => {
 
     $("#rwc-report").innerHTML = `
       <div class="rwc-rep-bar">
-        <button class="rwc-btn" id="rwc-rep-x" style="background:var(--surface-2);border-color:var(--line)">Close</button>
+        <div class="rwc-rep-bar-title">Report sheet<small>${esc(model.name)} &middot; prints A3 landscape</small></div>
+        <button class="rwc-btn" id="rwc-rep-x">Close</button>
         <button class="rwc-btn rwc-primary" id="rwc-rep-print">Print / Save as PDF</button>
       </div>
       <div class="rwc-rep-sheet">
@@ -3248,11 +3428,12 @@ const APP = (() => {
           <span>Yield to BS EN 16941-1:2024. Downpipe sizing indicative only; a real design follows BS EN 12056-3.</span>
         </div>
       </div>`;
-    openSheet(null);
+    openSheet(PAGE_A3, null);
   }
   function closeReport() {
     const rep = $("#rwc-report");
     rep.classList.remove("rwc-preview"); rep.setAttribute("aria-hidden", "true"); rep.innerHTML = "";
+    setPageSize("");
     document.removeEventListener("keydown", reportEsc);
   }
   const reportEsc = e => { if (e.key === "Escape") closeReport(); };
@@ -3336,6 +3517,22 @@ const APP = (() => {
 
   /* --- parameter inputs ------------------------------------------------- */
 
+  /* Push a value into every control bound to `path` and its readout. Used by the
+     slider/number pair and by the drag, which moves a block without rebuilding
+     the panel (that would fight the pointer). */
+  function syncField(path, v, except) {
+    const nodes = root.querySelectorAll(`[data-path="${path}"]`);
+    let dp = 0, unit = "";
+    for (const o of nodes) if (o.dataset.dp !== undefined) { dp = +o.dataset.dp || 0; unit = o.dataset.unit || ""; }
+    for (const o of nodes) {
+      if (o === except) continue;
+      if (o.type === "range") o.value = v;
+      else if (o.type === "number") o.value = nf(v, dp).replace(/,/g, "");
+    }
+    const out = root.querySelector(`[data-out="${path}"]`);
+    if (out) out.textContent = nf(v, dp) + (unit ? " " + unit : "");
+  }
+
   root.addEventListener("input", e => {
     const t = e.target;
 
@@ -3349,13 +3546,7 @@ const APP = (() => {
       if (isFinite(mn)) v = Math.max(mn, v);
       if (isFinite(mx)) v = Math.min(mx, v);
       setPath(t.dataset.path, v);
-      const dp = +t.dataset.dp || 0, unit = t.dataset.unit || "";
-      root.querySelectorAll(`[data-path="${t.dataset.path}"]`).forEach(o => {
-        if (o === t) return;
-        o.value = o.type === "range" ? v : nf(v, dp).replace(/,/g, "");
-      });
-      const out = root.querySelector(`[data-out="${t.dataset.path}"]`);
-      if (out) out.textContent = nf(v, dp) + (unit ? " " + unit : "");
+      syncField(t.dataset.path, v, t);
       if (t.dataset.path === "climate.annual") applyAnnual();
       refresh(false); return;
     }
@@ -3456,9 +3647,18 @@ const APP = (() => {
   });
 
   function addBlock() {
-    const last = model.blocks[model.blocks.length - 1];
-    const b = newBlock({ name: "Block " + (model.blocks.length + 1), x: last ? last.x + last.w / 2 + 8 : 0, z: last ? last.z : 0 });
-    model.blocks.push(b); selectedId = b.id; commit(); refresh(true);
+    const b = newBlock({ name: "Block " + (model.blocks.length + 1) });
+    /* Clear the WHOLE model's plan extent, overhangs included. The old rule
+       offset from the last block only and ignored the new block's own width, so
+       a new block could land on top of an existing one. */
+    if (model.blocks.length) {
+      const edge = Math.max(...model.blocks.map(o => o.x + o.w / 2 + Math.max(0, o.roof.overhang)));
+      const zs = model.blocks.map(o => o.z);
+      b.x = Math.round((edge + 3 + b.w / 2 + Math.max(0, b.roof.overhang)) * 4) / 4;
+      b.z = Math.round(((Math.min(...zs) + Math.max(...zs)) / 2) * 4) / 4;
+    }
+    model.blocks.push(b); selectedId = b.id; commit(); refresh(true); fitView();
+    toast("Block added — drag it in the model space to reposition it");
   }
   function removeBlock(id) {
     if (model.blocks.length < 2) { toast("A model needs at least one block."); return; }
@@ -3519,6 +3719,7 @@ const APP = (() => {
       `<div class="rwc-menu-head">Model space</div>` +
       mItem("", "Drag to orbit · scroll to zoom", "Shift-drag or right-drag to pan · pinch on touch") +
       mItem("", "Click a roof to select its block", "F fits the model · arrow keys rotate") +
+      mItem("", "Drag a selected block to move it", "Snaps to 0.25 m · hold Alt for free · Shift + arrows to nudge") +
       `<div class="rwc-menu-div"></div><div class="rwc-menu-head">Method</div>` +
       mItem("", "Y = A · R · Yc · Fc", "BS EN 16941-1:2024. A is the plan-projected catchment, never the sloping surface.") +
       mItem("", "YAS store operation", "Demand is met from the previous step's volume, before this step's inflow.") +
@@ -3543,7 +3744,8 @@ const APP = (() => {
   /* --- canvas interaction ---------------------------------------------- */
 
   const pointers = new Map();
-  let dragMode = null, lastX = 0, lastY = 0, moved = 0, pinchDist = 0;
+  let dragMode = null, lastX = 0, lastY = 0, moved = 0, pinchDist = 0, grab = null;
+  const local = e => { const r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 
   canvas.addEventListener("pointerdown", e => {
     canvas.setPointerCapture(e.pointerId);
@@ -3551,15 +3753,62 @@ const APP = (() => {
     if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
       pinchDist = Math.hypot(a.x - b.x, a.y - b.y); dragMode = "pinch";
-    } else {
-      dragMode = (e.button === 2 || e.button === 1 || e.shiftKey) ? "pan" : "orbit";
-      lastX = e.clientX; lastY = e.clientY; moved = 0;
-      canvas.classList.add("rwc-dragging");
+      return;
     }
+    lastX = e.clientX; lastY = e.clientY; moved = 0; grab = null;
+    const wantPan = e.button === 2 || e.button === 1 || e.shiftKey;
+
+    /* Pressing on the block that is ALREADY selected moves it. Empty space, an
+       unselected block, the right/middle button or Shift all still orbit or pan,
+       so a block cannot be dragged by accident. */
+    if (!wantPan) {
+      const [px, py] = local(e);
+      const hit = R3D.pick(px, py, cw, ch, geom);
+      if (hit && hit === selectedId) {
+        const b = block();
+        const g = R3D.screenToGround(px, py, cw, ch, 0);
+        if (b && g) {
+          dragMode = "move";
+          grab = { dx: g[0] - b.x, dz: g[2] - b.z, x0: b.x, z0: b.z };
+          canvas.style.cursor = "grabbing";
+          return;
+        }
+      }
+    }
+    dragMode = wantPan ? "pan" : "orbit";
+    canvas.classList.add("rwc-dragging");
   });
+  let hoverRaf = 0;
   canvas.addEventListener("pointermove", e => {
+    /* cursor affordance: the selected block is draggable */
+    if (!dragMode && !hoverRaf) {
+      const [hx, hy] = local(e);
+      hoverRaf = requestAnimationFrame(() => {
+        hoverRaf = 0;
+        if (dragMode || !geom) return;
+        const hit = R3D.pick(hx, hy, cw, ch, geom);
+        canvas.style.cursor = hit && hit === selectedId ? "move" : "";
+      });
+    }
     if (!pointers.has(e.pointerId)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (dragMode === "move" && grab) {
+      const [px, py] = local(e);
+      const g = R3D.screenToGround(px, py, cw, ch, 0);
+      moved += Math.abs(e.clientX - lastX) + Math.abs(e.clientY - lastY);
+      lastX = e.clientX; lastY = e.clientY;
+      if (g) {
+        const b = block();
+        const snap = e.altKey ? 0 : 0.25;              // Alt for free positioning
+        const round = v => snap ? Math.round(v / snap) * snap : v;
+        b.x = clamp(round(g[0] - grab.dx), -400, 400);
+        b.z = clamp(round(g[2] - grab.dz), -400, 400);
+        syncField("b.x", b.x); syncField("b.z", b.z);
+        refreshGeom();
+      }
+      return;
+    }
     if (dragMode === "pinch" && pointers.size === 2) {
       const [a, b] = [...pointers.values()];
       const d = Math.hypot(a.x - b.x, a.y - b.y);
@@ -3586,11 +3835,18 @@ const APP = (() => {
     if (pointers.size < 2 && dragMode === "pinch") dragMode = null;
     if (pointers.size === 0) {
       if (dragMode === "orbit" && moved < 5) {
-        const r = canvas.getBoundingClientRect();
-        const hit = R3D.pick(e.clientX - r.left, e.clientY - r.top, cw, ch, geom);
+        const [px, py] = local(e);
+        const hit = R3D.pick(px, py, cw, ch, geom);
         if (hit && hit !== selectedId) { selectedId = hit; refresh(true); }
+      } else if (dragMode === "move") {
+        canvas.style.cursor = "";
+        const b = block();
+        if (b && (b.x !== grab.x0 || b.z !== grab.z0)) {   // a click is not an edit
+          commit(); refresh(true);
+          toast(`${b.name} moved to ${nf(b.x, 2)}, ${nf(b.z, 2)} m`);
+        }
       }
-      dragMode = null; canvas.classList.remove("rwc-dragging");
+      grab = null; dragMode = null; canvas.classList.remove("rwc-dragging");
     }
   }
   canvas.addEventListener("pointerup", endPointer);
@@ -3604,6 +3860,21 @@ const APP = (() => {
 
   canvas.addEventListener("keydown", e => {
     const k = e.key;
+    /* Shift + arrows nudge the selected block; plain arrows keep orbiting */
+    if (e.shiftKey && k.indexOf("Arrow") === 0) {
+      const b = block(); if (!b) return;
+      e.preventDefault();
+      const ax = R3D.groundAxes(), step = e.ctrlKey || e.metaKey ? 1 : 0.25;
+      const v = k === "ArrowLeft"  ? [-ax.right[0], -ax.right[1]]
+              : k === "ArrowRight" ? [ ax.right[0],  ax.right[1]]
+              : k === "ArrowUp"    ? [ ax.fwd[0],    ax.fwd[1]]
+              :                      [-ax.fwd[0],   -ax.fwd[1]];
+      b.x = clamp(Math.round((b.x + v[0]*step) / 0.25) * 0.25, -400, 400);
+      b.z = clamp(Math.round((b.z + v[1]*step) / 0.25) * 0.25, -400, 400);
+      syncField("b.x", b.x); syncField("b.z", b.z);
+      commit(); refreshGeom();
+      return;
+    }
     if (k === "ArrowLeft")  { R3D.cam.az -= 0.09; draw(); e.preventDefault(); }
     else if (k === "ArrowRight") { R3D.cam.az += 0.09; draw(); e.preventDefault(); }
     else if (k === "ArrowUp")    { R3D.cam.el = clamp(R3D.cam.el + 0.06, -1.45, 1.55); draw(); e.preventDefault(); }
