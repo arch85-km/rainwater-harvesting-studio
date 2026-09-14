@@ -538,52 +538,64 @@ Browser support: any browser from the last few years. Uses `ResizeObserver`,
 
 ---
 
+## Before you cite
+
+Five things this page cannot settle for you:
+
+- **Record the date you fetched the rainfall** — an API archive is revisable, so
+  a citation without a retrieval date names no fixed thing.
+- **Cite the reanalysis the generator recorded** in `docs/climate-source.json`,
+  not one assumed here; the archive picks by location.
+- **Check the Open-Meteo DOI** below on their own site — supplied by an external
+  review, not verified here.
+- **Open-Meteo's CC BY 4.0 covers non-commercial use**; commercial use needs
+  their paid API, per the same review.
+- **The BSI standards are paywalled** — a real limit on how far anyone can check
+  what is claimed about them.
+
 ## References
 
-The sources the code names, and what each contributes. The full treatment,
-including everything the code uses *without* naming a source, is in
-[`docs/method-notes.html`](docs/method-notes.html).
+What the tool draws on. Clause and table numbers were checked against
+**BS EN 16941‑1:2024 specifically** — the edition incorporating the July 2024
+corrigendum. Numbering moved from the withdrawn 2018 edition.
 
-- **BS EN 16941‑1:2024**, *On-site non-potable water systems. Part 1: Systems for
-  the use of rainwater* (incorporating corrigendum July 2024). BSI — the source
-  of almost everything the tool calculates: the catchment definition and yield
-  equation (6.1.2, Formula 1), Table 2, the demand formulas (6.1.3), the store
-  recurrence and coverage rate (A.2.2.3), the basic approach and its dry periods
-  (A.2.1), the coverage curve (A.2.2.4), and the UK National Annex NA.1.2 and
-  NA.3.
-- **BS 8515:2009+A1:2013**, *Rainwater harvesting systems: Code of practice*.
-  BSI — named once in the code (without the 2013 amendment) and nowhere else.
-  Nothing in the tool derives from it. The national foreword to BS EN 16941-1:2024
-  describes it as the standard "which this standard replaces"; that is quoted
-  rather than interpreted, and no supersession chain is asserted here.
-- **BS EN 12056‑3:2000**, *Gravity drainage systems inside buildings. Part 3:
-  Roof drainage, layout and calculation*. BSI — named in the code only as what
-  the tool is *not*. Go here for gutter and downpipe sizing; the tool's
-  litres-per-second figure is indicative and its pipe table is unsourced. Its own
-  UK National Annex is where a design rainfall intensity comes from, which is why
-  the 75 mm/h here is traceable to nothing. The code names no edition; 2000 is
-  given on the authority of an external review reporting it as still current.
-- **World Bank, Average precipitation in depth (mm per year)** (AG.LND.PRCP.MM) —
-  <https://data.worldbank.org/indicator/AG.LND.PRCP.MM> — named by
-  `tools/build-climate.mjs`, which records the national figure beside each city in
-  `docs/climate-source.json`. Contributes no value the app calculates with: it is
-  country-level and annual where the library is city-level and monthly. A
-  cross-check on order of magnitude, nothing more. The indicator is a
-  republication — its metadata page names FAO (AQUASTAT) as the underlying source.
-- **World Meteorological Organization** (2017), *WMO guidelines on the calculation
-  of climate normals* (WMO-No. 1203). WMO — why the window is 1991–2020 rather
-  than a recent decade. Supplied by an external review, not verified here.
-- **Open-Meteo historical weather API** —
-  <https://open-meteo.com/en/docs/historical-weather-api> — the only external
-  source the tool can reach, and the route by which citable rainfall enters it:
-  both the Climate panel's fetch and `tools/build-climate.mjs`, over the same
-  window and through the same reduction. A reanalysis, not gauge measurement.
-  Optional and user-initiated; the file works offline. Data under CC BY 4.0 per
-  Open-Meteo's terms — which, per an external review, offer CC BY 4.0 for
-  **non-commercial** use, with commercial use requiring their paid API. Attribute
-  it with the window and your retrieval date. The archive draws on more than one
-  reanalysis dataset and picks by location; the generator records which one
-  answered, and that is the dataset to cite for the data itself.
+- **British Standards Institution** (2024), *On-site non-potable water systems.
+  Part 1: Systems for the use of rainwater* (BS EN 16941‑1:2024, incorporating
+  corrigendum July 2024). BSI — the method, nearly entire: catchment and yield
+  (6.1.2, Formula 1), Table 2, demand (6.1.3), store and coverage rate (A.2.2.3),
+  capacity and dry periods (A.2.1), the coverage curve (A.2.2.4), and NA.1.2 and
+  NA.3 from the BSI UK National Annex. The tool does **not** implement A.2.2,
+  NA.4, or anything on water quality.
+- **Open-Meteo**, *Historical weather API* —
+  <https://open-meteo.com/en/docs/historical-weather-api> — the rainfall, once
+  the preset library has been regenerated; until then it supplies nothing, and
+  the app says so. Citable software record: Zippenfenig, P. (2023).
+  *Open-Meteo.com Weather API* [Computer software]. Zenodo.
+  `https://doi.org/10.5281/zenodo.7970649`
+- **World Meteorological Organization** (2017), *WMO guidelines on the
+  calculation of climate normals* (WMO-No. 1203). WMO — defines the thirty-year
+  standard normal, so it decides which years the rainfall averages over.
+
+## Also named in the code
+
+Named in `index.html` or `tools/build-climate.mjs`, but **drawn on for nothing**
+— listed so every name can be traced, and kept apart so that appearing in a list
+is not mistaken for contributing a number.
+
+- **British Standards Institution** (2013), *Rainwater harvesting systems: Code
+  of practice* (BS 8515:2009+A1:2013). BSI — the national foreword to
+  BS EN 16941‑1:2024 calls it the standard "which this standard replaces"; quoted
+  rather than interpreted, with no supersession chain asserted. The code names it
+  without the 2013 amendment.
+- **British Standards Institution** (2000), *Gravity drainage systems inside
+  buildings. Part 3: Roof drainage, layout and calculation* (BS EN 12056‑3:2000).
+  BSI — **where to go for gutter and downpipe sizing**, which this tool does not
+  do. Its own UK National Annex is where a design rainfall intensity comes from;
+  the 75 mm/h here did not come from there.
+- **World Bank**, *Average precipitation in depth (mm per year)*
+  (AG.LND.PRCP.MM) — <https://data.worldbank.org/indicator/AG.LND.PRCP.MM> — a
+  country-level annual average recorded beside each city as a sanity check, never
+  an input. A republication: its metadata page names FAO (AQUASTAT) as the source.
 
 Reviewed for comparison, not used as a source:
 [DROP Rainwater Harvesting Design Software](https://www.freeflush.co.uk/pages/drop-rainwater-harvesting-software)

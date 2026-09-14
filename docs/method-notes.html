@@ -941,115 +941,74 @@ spaced evenly through the month.</div>
       be checked by anyone reading you &mdash; as <a href="#cs-04">section 04</a> shows, the time step
       alone moves it from 4.6&nbsp;% to 59.3&nbsp;%.</p>
 
+    <h3>Before you cite</h3>
+    <p>Five things this page cannot settle for you. They are gathered here because they are
+      instructions, and instructions buried inside a reference entry do not get read.</p>
+    <ul class="cs-refs">
+      <li><b>Record the date you fetched the rainfall.</b> An API archive is revisable, so a citation
+        without a retrieval date names no fixed thing. The app prints the date once the generator has
+        run.</li>
+      <li><b>Cite the reanalysis the generator recorded</b>, in
+        <span class="cs-mono">docs/climate-source.json</span>, not one assumed here. The archive draws
+        on more than one dataset and picks by location.</li>
+      <li><b>Check the Open&#8209;Meteo DOI</b> below on their own site. It was supplied by an external
+        review and not verified for this page.</li>
+      <li><b>Open&#8209;Meteo's CC&nbsp;BY&nbsp;4.0 offer covers non-commercial use.</b> Commercial use
+        needs their paid API, per the same review. Do not cite this page for an unconditional
+        CC&nbsp;BY claim.</li>
+      <li><b>The BSI standards are paywalled.</b> Checking what this page says about them needs a
+        purchased copy or an institutional subscription — a real limit on how far you can verify it.</li>
+    </ul>
+
     <h3>References</h3>
-    <p>These are the sources the code itself names &mdash; all six of them, and nothing else. What each
-      one actually contributes is stated at the end of its entry, because the count is not what a reader
-      should take from a reference list. <b>As the tool stands, exactly one of the six puts a number into
-      a calculation:</b> BS EN 16941-1:2024, which supplies the whole method. One more does so once the
-      rainfall library has been regenerated: Open&#8209;Meteo. The remaining four record a convention the
-      tool follows, or what the tool is <em>not</em> &mdash; a replaced code of practice, a drainage
-      standard it defers to, a normal period it borrows, and a national average it only checks itself
-      against.</p>
-    <p>Every clause, table and formula number cited on this page was checked against
-      <b>BS EN 16941-1:2024 specifically</b> &mdash; the edition incorporating the July 2024 corrigendum,
-      not the withdrawn 2018 edition and not a secondary summary of either. Numbering moved between those
-      editions, so a reader checking this page against a 2018 copy should expect it not to line up.</p>
-    <p>Two entries carry <b>[bracketed blanks]</b>. They mark details this document could not verify
-      &mdash; a primary citation and a publication reference that were not to hand when it was written.
-      They are left visibly empty rather than filled from memory, which is precisely the failure that
-      produced the unsourced rainfall library in the first place. Fill them from a copy you can check
-      before you cite either work.</p>
-    <p>A caution about access: the three BSI standards are <b>paywalled</b>. Checking what this page
-      claims about them needs a purchased copy or an institutional subscription, which most readers of a
-      teaching page will not have. That is a real limit on how far you can verify this document, and it
-      is better said than left for you to discover.</p>
-    <p>Everything the code uses <em>without</em> naming a source is set out in
-      <a href="#cs-04">How exact the numbers are</a> and is deliberately absent from this list.</p>
+    <p>What the tool draws on. Every clause and table number cited on this page was checked against
+      <b>BS EN 16941-1:2024 specifically</b> — the edition incorporating the July 2024 corrigendum.
+      Numbering moved between that and the withdrawn 2018 edition, so a reader checking against a 2018
+      copy should expect it not to line up.</p>
     <ul class="cs-refs">
       <li>British Standards Institution. (2024). <i>On-site non-potable water systems. Part 1: Systems
         for the use of rainwater</i> (BS EN 16941-1:2024, incorporating corrigendum July 2024). BSI.
-        &mdash; the source of almost everything the tool calculates: <i>A</i> as the horizontal projection
-        of the collection area and the yield equation (6.1.2, Formula 1); the eight surface yield
-        coefficients (Table 2); the fallback treatment coefficient of 0.9 (note to 6.1.2); the demand
-        formulas (6.1.3); the store recurrence and the coverage rate (A.2.2.3, Formulas A.3&ndash;A.5);
-        capacity by the basic approach and its 15, 18 and 21-day dry periods (A.2.1); the
-        coverage-against-capacity curve (A.2.2.4); and, in the BSI UK National Annex, 40&nbsp;l/person/day for
-        toilet and washing-machine use (NA.1.2) and the reduction of the dry period outside a
-        yield-to-demand ratio of 0.5 to 2.0 (NA.3). The tool does <b>not</b> implement the detailed
-        approach of A.2.2, which requires at least five years of measured daily rainfall (A.2.2.2), nor
-        the climate-change sensitivity analysis of NA.4, nor any part of the quality, treatment or risk
-        provisions.</li>
-      <li>British Standards Institution. (2009). <i>Rainwater harvesting systems: Code of practice</i>
-        (BS 8515:2009). BSI. &mdash; named once in the code, in the phrase "which superseded BS 8515:2009",
-        and <b>nowhere else</b>. No value, coefficient or method in the tool derives from it. It is listed
-        because the code names it, and for the reader who arrives holding the older code of practice.</li>
-      <li>British Standards Institution. (2000). <i>Gravity drainage systems inside buildings. Part 3:
-        Roof drainage, layout and calculation</i> (BS EN 12056-3:2000). BSI. &mdash; named in the code
-        <b>only as what the tool is not</b>: the comment above the drainage routine reads "indicative
-        gutter / downpipe check (NOT a substitute for BS EN 12056-3)". Neither the pipe capacity table nor
-        the 75&nbsp;mm/h design storm comes from it, or from any source the code names. BS EN 16941-1
-        makes the same distinction from the other side, noting at 6.1.2 that the surface yield coefficient
-        is not the run-off coefficient used in BS EN 12056-3 for the hydraulic design of pipes: the two
-        answer different questions. Go here for gutter and downpipe sizing; do not take it from this tool.
-        Its own BSI UK National Annex is where a design rainfall intensity is obtained, which is the
-        clearest statement of why the 75&nbsp;mm/h in this tool is traceable to nothing: it did not
-        come from there either. The code names no edition; the 2000 edition is given here on the
-        authority of an external review reporting it as still current, not from a check made for
-        this page.</li>
-      <li>World Bank. (n.d.). <i>Average precipitation in depth (mm per year)</i>
-        (AG.LND.PRCP.MM) [Data set]. World Bank Open Data.
-        <a href="https://data.worldbank.org/indicator/AG.LND.PRCP.MM" target="_blank" rel="noopener">https://data.worldbank.org/indicator/AG.LND.PRCP.MM</a>
-        &mdash; named by <span class="cs-mono">tools/build-climate.mjs</span>, which records the national
-        figure beside each city in <span class="cs-mono">docs/climate-source.json</span>. It contributes
-        <b>no value the app calculates with</b>, and it could not: it is one long-term annual average per
-        country, over the whole of that country's land area, where the tool needs twelve monthly figures
-        for a single location. It is a cross-check on order of magnitude, described under
-        <a href="#cs-06">the comparison section</a>. The indicator is a World Bank republication rather
-        than a primary observation: its metadata page names the FAO (AQUASTAT) as the underlying source,
-        reported by an external review, so anyone relying on the figure should follow it back there. If the fetch fails the field is recorded as null and
-        the library is unaffected. The indicator's own metadata page states its provenance and vintage;
-        read it before citing the number.</li>
-      <li>World Meteorological Organization. (2017). <i>WMO guidelines on the calculation of climate
-        normals</i> (WMO-No.&nbsp;1203). WMO. &mdash; supplied by an external review and not verified for
-        this page. It defines the thirty-year standard normal, updated each decade, of which
-        1991&ndash;2020 is the current one. Named in <span class="cs-mono">index.html</span>, where the constant
-        <span class="cs-mono">CLIMATE_WINDOW</span> calls 1991&ndash;2020 "the WMO standard normal
-        period". It is the reason for that window rather than a recent decade, and so it decides which
-        years the regenerated rainfall would average over &mdash; but it supplies no value the tool
-        calculates with. Like the entry above, its publication details are left blank rather than
-        guessed.</li>
+        &mdash; the method, nearly entire: the catchment definition and yield equation (6.1.2, Formula 1),
+        Table 2, the demand formulas (6.1.3), the store and coverage rate (A.2.2.3), capacity and dry
+        periods (A.2.1), the coverage curve (A.2.2.4), and NA.1.2 and NA.3 from the BSI UK National
+        Annex. The tool does <b>not</b> implement the detailed approach of A.2.2, the climate-change
+        analysis of NA.4, or anything on water quality.</li>
       <li>Open-Meteo. (n.d.). <i>Historical weather API</i> [Data set].
         <a href="https://open-meteo.com/" target="_blank" rel="noopener">https://open-meteo.com/</a>
-        &mdash; the only external source the tool can reach, and the route by which citable rainfall
-        enters it, in two places. The Climate panel fetches daily precipitation for a latitude and
-        longitude you give over the 1991&ndash;2020 window and reduces it to twelve monthly means and a depth
-        per wet day. The same request, the same window and the same reduction are used by
-        <span class="cs-mono">tools/build-climate.mjs</span> to regenerate the 28-location preset
-        library, so a fetched site and a preset are the same kind of figure and can be compared.
-        <b>Cite it as retrieved on [date you fetched]</b>, which this document cannot supply because
-        the data had not been fetched when it was written: an API archive is revisable, so a citation
-        without a retrieval date names no fixed thing. The app prints the date once the generator has
-        run, and
-        <span class="cs-mono">docs/climate-source.json</span> records what each location geocoded to.
-        Its archive serves a <b>reanalysis</b> rather than gauge measurement, and the window is a
-        <b>baseline</b>; both limit what the data can be held to, and both are set out in
-        <a href="#cs-04">How exact the numbers are</a> rather than restated here. Which reanalysis
-        dataset served a given location is recorded by the generator, and is the work to cite for the
-        data itself &mdash; this page does not name it, because it cannot be known until the generator
-        has run. The fetch is optional and user-initiated, and the
-        file works with no network at all. An external review reports a citable software record for the API itself &mdash;
+        &mdash; the rainfall, once the preset library has been regenerated; until then it supplies
+        nothing, and the app says so wherever it prints a location. A citable software record exists:
         Zippenfenig, P. (2023). <i>Open-Meteo.com Weather API</i> [Computer software]. Zenodo.
-        <span class="cs-mono">https://doi.org/10.5281/zenodo.7970649</span> &mdash; <b>verify that DOI on
-        their site before using it</b>: it is reproduced as supplied and was not checked for this page.
-        The same review reports that CC&nbsp;BY&nbsp;4.0 covers <b>non-commercial</b> use and that
-        commercial use needs their paid API, so do not cite this page for an unconditional
-        CC&nbsp;BY claim. The code gives no accession date, so record the date you fetched.</li>
+        <span class="cs-mono">https://doi.org/10.5281/zenodo.7970649</span></li>
+      <li>World Meteorological Organization. (2017). <i>WMO guidelines on the calculation of climate
+        normals</i> (WMO-No.&nbsp;1203). WMO. &mdash; defines the thirty-year standard normal, of which
+        1991&ndash;2020 is the current one, so it decides which years the rainfall averages over.
+        Supplied by an external review and not verified for this page.</li>
     </ul>
-    <p class="cs-cite">Read the list for what each work contributes, not for its length. One of the
-      six supplies the method the tool implements; one more supplies its rainfall, but only after the
-      library has been regenerated; the rest are conventions it borrows or standards it defers to. For
-      anything that must be built, none of the six substitutes for a designer who can take
-      responsibility for the system.</p>
+
+    <h3>Also named in the code</h3>
+    <p>Named in <span class="cs-mono">index.html</span> or
+      <span class="cs-mono">tools/build-climate.mjs</span>, but <b>drawn on for nothing</b>. They are
+      listed so every name a reader meets can be traced, and kept apart from the references so that
+      appearing in a list is not mistaken for contributing a number.</p>
+    <ul class="cs-refs">
+      <li>British Standards Institution. (2013). <i>Rainwater harvesting systems: Code of practice</i>
+        (BS 8515:2009+A1:2013). BSI. &mdash; the national foreword to BS EN 16941-1:2024 calls it the
+        standard "which this standard replaces"; that is quoted rather than interpreted, and no
+        supersession chain is asserted here. The code names it without the 2013 amendment.</li>
+      <li>British Standards Institution. (2000). <i>Gravity drainage systems inside buildings. Part 3:
+        Roof drainage, layout and calculation</i> (BS EN 12056-3:2000). BSI. &mdash; <b>where to go for
+        gutter and downpipe sizing</b>, which this tool does not do: its own UK National Annex is where a
+        design rainfall intensity comes from, and the 75&nbsp;mm/h here did not come from there. The
+        2000 edition is given on an external review's report that it is current.</li>
+      <li>World Bank. (n.d.). <i>Average precipitation in depth (mm per year)</i> (AG.LND.PRCP.MM)
+        [Data set]. World Bank Open Data.
+        <a href="https://data.worldbank.org/indicator/AG.LND.PRCP.MM" target="_blank" rel="noopener">https://data.worldbank.org/indicator/AG.LND.PRCP.MM</a>
+        &mdash; a country-level annual average recorded beside each city as a sanity check on order of
+        magnitude, described under <a href="#cs-06">the comparison section</a>. It is a republication:
+        its metadata page names FAO (AQUASTAT) as the source.</li>
+    </ul>
+    <p class="cs-cite">For anything that must be built, none of these substitutes for a designer who can
+      take responsibility for the system.</p>
   </div>
 
 </div>
