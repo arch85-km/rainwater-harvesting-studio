@@ -1,6 +1,6 @@
 # Rainwater Collection Studio
 
-A parametric 3D roof modeller that calculates rainwater harvesting yield, store
+A parametric 3D modeller that calculates rainwater harvesting yield, store
 size and reliability to **BS EN 16941‑1:2024**. Built for teaching architecture
 students, and for embedding in a WordPress page.
 
