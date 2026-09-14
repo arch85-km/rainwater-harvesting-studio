@@ -1,10 +1,10 @@
 {
-  "name": "rainwater-collection-studio",
+  "name": "rainwater-harvesting-studio",
   "version": "1.0.0",
   "description": "Parametric 3D modeller that calculates rainwater harvesting yield, tank size and reliability to BS EN 16941-1:2024. For architecture teaching.",
   "license": "MIT",
   "author": "Karam Al-Obaidi",
-  "homepage": "https://karam.me.uk/applications/rainwater-collection-studio/",
+  "homepage": "https://karam.me.uk/applications/rainwater-harvesting-studio/",
   "private": false,
   "scripts": {
     "test": "node test/run.mjs",

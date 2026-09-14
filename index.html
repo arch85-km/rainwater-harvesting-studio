@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Rainwater Collection Studio — Parametric Design Tool</title>
+<title>Rainwater Harvesting Studio — Parametric Design Tool</title>
 <meta name="description" content="Parametric 3D modeller that calculates rainwater harvesting yield, tank size and reliability to BS EN 16941-1. For architecture teaching.">
 <style>
 /* ==========================================================================
-   Rainwater Collection Studio
+   Rainwater Harvesting Studio
    All styles scoped under #rwc-app so a host theme (WordPress) cannot bleed in.
    ========================================================================== */
 
@@ -702,7 +702,7 @@ button.rwc-tile:focus-visible { outline:2px solid var(--accent); outline-offset:
         <svg viewBox="0 0 24 24"><path d="M12 2.5 5.5 12.2a7.6 7.6 0 1 0 13 0Z"/></svg>
       </div>
       <div class="rwc-brand-txt">
-        <b>Rainwater Collection Studio</b>
+        <b>Rainwater Harvesting Studio</b>
         <span>Parametric design tool</span>
       </div>
     </div>
@@ -865,7 +865,7 @@ button.rwc-tile:focus-visible { outline:2px solid var(--accent); outline-offset:
 <script>
 "use strict";
 /* ==========================================================================
-   Rainwater Collection Studio  —  Karam Al-Obaidi
+   Rainwater Harvesting Studio  —  Karam Al-Obaidi
    Single-file parametric rainwater harvesting modeller. No dependencies.
 
    Copyright (c) 2026 Karam Al-Obaidi. MIT licensed — see LICENSE. Accompanying
@@ -3270,7 +3270,7 @@ const APP = (() => {
     g.font = "600 11px -apple-system, Segoe UI, Roboto, sans-serif";
     g.fillText("© Karam Al-Obaidi", wPx - pad, hPx - barH + 19);
     g.fillStyle = P.ink3; g.font = "10px -apple-system, Segoe UI, Roboto, sans-serif";
-    g.fillText("Rainwater Collection Studio · BS EN 16941-1", wPx - pad, hPx - barH + 34);
+    g.fillText("Rainwater Harvesting Studio · BS EN 16941-1", wPx - pad, hPx - barH + 34);
     return c;
   }
 
@@ -3290,7 +3290,7 @@ const APP = (() => {
   function exportCSV() {
     const b = res.bal;
     const rows = [
-      ["Rainwater Collection Studio — monthly results"],
+      ["Rainwater Harvesting Studio — monthly results"],
       ["Model", model.name], ["Location", model.climate.label],
       ["Rainfall source", rainfallProvenanceFor(model.climate)],
       ["Catchment m2", nf(geom.catchment, 2)], ["Roof surface m2", nf(geom.surface, 2)],
@@ -3315,7 +3315,7 @@ const APP = (() => {
 
   function saveJSON() {
     const out = CLONE(model);
-    out.schema = 2; out.app = "Rainwater Collection Studio"; out.saved = new Date().toISOString();
+    out.schema = 2; out.app = "Rainwater Harvesting Studio"; out.saved = new Date().toISOString();
     const name = model.name.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").toLowerCase() || "model";
     download(name + ".json", new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
   }
@@ -3343,7 +3343,7 @@ const APP = (() => {
     let data;
     try { data = JSON.parse(text); }
     catch (e) { toast("That file is not valid JSON."); return; }
-    if (!data || !Array.isArray(data.blocks) || !data.blocks.length) { toast("No blocks in that file — is it a Rainwater Collection Studio model?"); return; }
+    if (!data || !Array.isArray(data.blocks) || !data.blocks.length) { toast("No blocks in that file — is it a Rainwater Harvesting Studio model?"); return; }
     if (data.schema && data.schema > 2) toast("Saved by a newer version — loading what is readable.");
     model = hydrate(data);
     selectedId = model.blocks[0].id;
@@ -3524,7 +3524,7 @@ const APP = (() => {
         </div>
 
         <div class="rwc-rep-foot">
-          <span>© Karam Al-Obaidi — Rainwater Collection Studio</span>
+          <span>© Karam Al-Obaidi — Rainwater Harvesting Studio</span>
           <span>Yield to BS EN 16941-1:2024. Downpipe sizing indicative only; a real design follows BS EN 12056-3.</span>
         </div>
       </div>`;
@@ -3640,7 +3640,7 @@ const APP = (() => {
           </div>
         </div>
         <div class="rwc-rep-foot">
-          <span>© Karam Al-Obaidi — Rainwater Collection Studio</span>
+          <span>© Karam Al-Obaidi — Rainwater Harvesting Studio</span>
           <span>Yield to BS EN 16941-1:2024. Downpipe sizing indicative only; a real design follows BS EN 12056-3.</span>
         </div>
       </div>`;
@@ -4210,7 +4210,7 @@ const APP = (() => {
 
   const TOUR = [
     { id:"welcome",
-      title:"Welcome to Rainwater Collection Studio",
+      title:"Welcome to Rainwater Harvesting Studio",
       body:"Shape a roof in 3D and watch its rainwater harvesting performance respond. The tour takes about a minute — skip it any time." },
 
     { id:"view", target:() => $("#rwc-view"), pad:-6,

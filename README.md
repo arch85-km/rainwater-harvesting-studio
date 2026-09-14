@@ -1,6 +1,6 @@
-# Rainwater Collection Studio
+# Rainwater Harvesting Studio
 
-**[karam.me.uk/applications/rainwater-collection-studio](https://karam.me.uk/applications/rainwater-collection-studio/)**
+**[karam.me.uk/applications/rainwater-harvesting-studio](https://karam.me.uk/applications/rainwater-harvesting-studio/)**
 
 A parametric 3D modeller that calculates rainwater harvesting yield, store
 size and reliability to **BS EN 16941‑1:2024**. Built for teaching architecture
@@ -53,7 +53,7 @@ styling, and nothing in your theme can break the app.
             border:1px solid #d7d6d1;border-radius:8px;overflow:hidden">
   <iframe
     src="/wp-content/uploads/rwc/index.html?embed=1"
-    title="Rainwater Collection Studio"
+    title="Rainwater Harvesting Studio"
     loading="lazy"
     style="position:absolute;inset:0;width:100%;height:100%;border:0"
     sandbox="allow-scripts allow-downloads allow-popups allow-same-origin allow-modals">
@@ -492,7 +492,7 @@ If you are pushing this somewhere new:
 
 ```
 git branch -m main                      # the history arrives on its original branch
-git remote add origin git@github.com:<you>/rainwater-collection-studio.git
+git remote add origin git@github.com:<you>/rainwater-harvesting-studio.git
 git push -u origin main
 ```
 
