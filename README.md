@@ -315,14 +315,27 @@ node tools/build-climate.mjs            # fetch and rewrite index.html
 node tools/build-climate.mjs --dry-run  # fetch and report, write nothing
 ```
 
-It geocodes each city (filtered on the country code in its label, so "Athens, GR"
-cannot land in Georgia), pulls daily precipitation for the window the app
-declares, reduces it with the app's own `CLIMATE.reduce` — the same function the
-in-app fetch uses, so the two can never drift — and rewrites the `CITIES` block
-with coordinates, elevation and a provenance record. It also writes
-`docs/climate-source.json` with what each city matched to, so a run can be checked
-and repeated. If any city fails it writes nothing at all: a half-sourced library
-is worse than none, because you cannot tell which rows are which.
+It resolves every location first and reports them together, so a bad country code
+costs seconds rather than surfacing twenty downloads into the run. The country
+code comes from the city's own label and is mapped to ISO 3166-1 where the two
+differ — "London, UK" is geocoded as GB — so "Athens, GR" cannot land in Georgia.
+It then pulls daily precipitation for the window the app declares, reduces it with
+the app's own `CLIMATE.reduce` — the same function the in-app fetch uses, so the
+two can never drift — and rewrites the `CITIES` block with coordinates, elevation
+and a provenance record. It also writes `docs/climate-source.json` with what each
+city matched to, so a run can be checked and repeated. If any city fails it writes
+nothing at all: a half-sourced library is worse than none, because you cannot tell
+which rows are which.
+
+Beside each city it records the World Bank's average annual precipitation for that
+*country*, as an independent cross-check on order of magnitude. It is a check and
+not a source: one long-term annual average per country, where the library needs
+twelve monthly figures per city. Three pairs in the list share a country — Kuala
+Lumpur with Kuching, Seattle with Phoenix, Sydney with Melbourne — and in the
+library as it stands they differ by roughly 1 500, 770 and 550 mm a year, so one
+national number cannot be right for both halves of any of them. Nothing in the app
+is calculated from it, and if the fetch fails the field is null and the library is
+unaffected.
 
 Two things to say when citing the result: Open-Meteo's archive is **ERA5
 reanalysis**, not gauge measurement, and 1991–2020 is a baseline rather than
@@ -492,6 +505,12 @@ including everything the code uses *without* naming a source, is in
   the tool is *not*. Go here for gutter and downpipe sizing; the tool's
   litres-per-second figure is indicative and its pipe table is unsourced. The
   code names no edition, so the edition above is this README's choice.
+- **World Bank, Average precipitation in depth (mm per year)** (AG.LND.PRCP.MM) —
+  <https://data.worldbank.org/indicator/AG.LND.PRCP.MM> — named by
+  `tools/build-climate.mjs`, which records the national figure beside each city in
+  `docs/climate-source.json`. Contributes no value the app calculates with: it is
+  country-level and annual where the library is city-level and monthly. A
+  cross-check on order of magnitude, nothing more.
 - **Open-Meteo historical weather API** —
   <https://open-meteo.com/en/docs/historical-weather-api> — the only external
   source the tool can reach, and the route by which citable rainfall enters it:

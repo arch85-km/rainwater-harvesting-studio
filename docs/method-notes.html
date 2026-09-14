@@ -608,7 +608,9 @@ spaced evenly through the month.</div>
           <tbody>
             <tr><td>28 locations &times; 12 monthly rainfall figures <b>&mdash; unless regenerated</b></td><td class="cs-p">CITIES</td>
               <td>Read the provenance line the app prints. Regenerate with
-                <span class="cs-mono">tools/build-climate.mjs</span>, or replace with rainfall you can cite.</td></tr>
+                <span class="cs-mono">tools/build-climate.mjs</span>, or replace with rainfall you can cite.
+                The generator also records a national average beside each city as a cross-check &mdash;
+                a check, not a source; see <a href="#cs-06">the comparison section</a>.</td></tr>
             <tr><td>Depth per wet day, by location <b>&mdash; unless regenerated</b></td><td class="cs-p">CITIES</td>
               <td>Same provenance as the monthly figures; the generator derives it from the same daily series.</td></tr>
             <tr><td>Downpipe capacities, 63&ndash;150 mm at 1.7&ndash;16.0 l/s</td><td class="cs-p">PIPE_CAP</td>
@@ -740,6 +742,19 @@ spaced evenly through the month.</div>
         <li><b>On anything touching quality, pipework, pumps, carbon or cost</b>, where there is nothing
           to compare because there is nothing modelled.</li>
       </ul>
+
+      <h3>Against a national average</h3>
+      <p>When the library is regenerated, <span class="cs-mono">docs/climate-source.json</span> records
+        beside each city the World Bank's average annual precipitation for that <em>country</em>. It is
+        there to be disagreed with. A country figure is a long-term average over a whole land area, so
+        for a large or varied country it will sit a long way from any particular city &mdash; which is
+        the point of looking. Three <em>pairs</em> among the twenty-eight share a country: Kuala Lumpur
+        with Kuching, Seattle with Phoenix, Sydney with Melbourne. In the library as it currently
+        stands they differ by roughly 1&nbsp;500, 770 and 550&nbsp;mm a year, and one national number
+        cannot be right for both halves of any of them.</p>
+      <p>So use it as a sanity check on the order of magnitude and on nothing else. <b>Nothing in the
+        app is calculated from it</b>, and a city figure that differs from its national average is not
+        thereby wrong &mdash; Phoenix is supposed to differ from the average of the United States.</p>
 
       <h3>Against the tool's own drainage figure</h3>
       <p>The litres-per-second check divides the catchment by a 75&nbsp;mm/h storm and looks up a pipe
@@ -893,11 +908,12 @@ spaced evenly through the month.</div>
       alone moves it from 4.6&nbsp;% to 59.3&nbsp;%.</p>
 
     <h3>References</h3>
-    <p>These are the sources the code itself names &mdash; all four of them, and nothing else. Two of the
-      four contribute no number to the tool and are listed with that said plainly, because a reference
-      list that implies otherwise is worse than a short one. Everything the code uses without naming a
-      source is set out in <a href="#cs-04">How exact the numbers are</a> and is deliberately absent from
-      this list.</p>
+    <p>These are the sources the code itself names &mdash; all five of them, and nothing else. Only two
+      of the five put a number into a calculation. The other three are listed with that said plainly:
+      one is named as a predecessor, one as a standard the tool expressly is <em>not</em>, and one as a
+      cross-check that nothing is computed from. A reference list that lets a reader assume otherwise is
+      worse than a short one. Everything the code uses <em>without</em> naming a source is set out in
+      <a href="#cs-04">How exact the numbers are</a> and is deliberately absent from this list.</p>
     <ul class="cs-refs">
       <li>British Standards Institution. (2024). <i>On-site non-potable water systems. Part 1: Systems
         for the use of rainwater</i> (BS EN 16941-1:2024, incorporating corrigendum July 2024). BSI.
@@ -925,6 +941,17 @@ spaced evenly through the month.</div>
         is not the run-off coefficient used in BS EN 12056-3 for the hydraulic design of pipes: the two
         answer different questions. Go here for gutter and downpipe sizing; do not take it from this tool.
         The code names no edition, so the edition above is this document's choice.</li>
+      <li>World Bank. (n.d.). <i>Average precipitation in depth (mm per year)</i>
+        (AG.LND.PRCP.MM) [Data set]. World Bank Open Data.
+        <a href="https://data.worldbank.org/indicator/AG.LND.PRCP.MM" target="_blank" rel="noopener">https://data.worldbank.org/indicator/AG.LND.PRCP.MM</a>
+        &mdash; named by <span class="cs-mono">tools/build-climate.mjs</span>, which records the national
+        figure beside each city in <span class="cs-mono">docs/climate-source.json</span>. It contributes
+        <b>no value the app calculates with</b>, and it could not: it is one long-term annual average per
+        country, over the whole of that country's land area, where the tool needs twelve monthly figures
+        for a single location. It is a cross-check on order of magnitude, described under
+        <a href="#cs-06">the comparison section</a>. If the fetch fails the field is recorded as null and
+        the library is unaffected. The indicator's own metadata page states its provenance and vintage;
+        read it before citing the number.</li>
       <li>Open-Meteo. (n.d.). <i>Historical weather API</i> [Data set].
         <a href="https://open-meteo.com/" target="_blank" rel="noopener">https://open-meteo.com/</a>
         &mdash; the only external source the tool can reach, and the route by which citable rainfall
@@ -944,10 +971,11 @@ spaced evenly through the month.</div>
         file works with no network at all. Open-Meteo&rsquo;s own terms place its data under
         CC&nbsp;BY&nbsp;4.0; check them and attribute accordingly.</li>
     </ul>
-    <p class="cs-cite">For anything that must be built, none of the above substitutes for a designer who
-      can take responsibility for the system. They are where the tool's method comes from, not a design
-      authority &mdash; and, in the case of the last three, mostly a record of what the tool leaves to
-      someone else.</p>
+    <p class="cs-cite">Two of the five put numbers into the calculation: BS EN 16941-1 supplies the
+      method, and Open-Meteo the rainfall once the library has been regenerated. The other three are a
+      record of what the tool is not &mdash; a superseded code of practice, a drainage standard it
+      defers to, and a national figure it only checks itself against. For anything that must be built,
+      none of the five substitutes for a designer who can take responsibility for the system.</p>
   </div>
 
 </div>

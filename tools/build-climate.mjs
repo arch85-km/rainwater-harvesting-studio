@@ -38,6 +38,25 @@ const GEOCODE     = "https://geocoding-api.open-meteo.com/v1/search";
 const LICENCE     = "CC BY 4.0 (Open-Meteo terms)";
 const PAUSE_MS    = 1200;
 
+/* An independent, country-level sanity check. The World Bank's average
+   precipitation indicator is a long-term average over a whole country's land
+   area, so it is NOT a substitute for city rainfall — three of these cities
+   share a country with another (Kuala Lumpur with Kuching, Seattle with
+   Phoenix, Sydney with Melbourne) and a single national figure would collapse
+   each pair. It is recorded beside each city so a reader can see how far that
+   city sits from its country's mean, and for nothing else. It never affects the
+   library: if it cannot be fetched, the run carries on and the field is null. */
+const WORLDBANK   = "https://api.worldbank.org/v2/country";
+const WB_INDICATOR = "AG.LND.PRCP.MM";
+const WB_NAME     = "World Bank, Average precipitation in depth (mm per year), AG.LND.PRCP.MM";
+
+/* The city labels use the code a reader expects, which is not always ISO 3166-1
+   alpha-2 — "London, UK", where the geocoder reports GB. Map the label's code to
+   the real one rather than changing what students see. Anything not listed is
+   passed through unchanged and will fail loudly in preflight if it is wrong. */
+const CC_ALIAS = { UK: "GB" };
+const iso2 = cc => CC_ALIAS[cc] || cc;
+
 const argv    = process.argv.slice(2);
 const DRY     = argv.includes("--dry-run");
 const onlyArg = argv[argv.indexOf("--only") + 1];
@@ -71,17 +90,21 @@ async function getJSON(url, what) {
 export function splitLabel(name) {
   const i = name.lastIndexOf(",");
   if (i < 0) throw new Error(`city label "${name}" has no country code`);
-  return { place: name.slice(0, i).trim(), cc: name.slice(i + 1).trim().toUpperCase() };
+  const shown = name.slice(i + 1).trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(shown))
+    throw new Error(`city label "${name}" does not end in a two-letter country code`);
+  return { place: name.slice(0, i).trim(), cc: iso2(shown), shown };
 }
 
 /* Split out from the request so the country filter and the tie-break can be
    tested on canned responses, which is where the real risk lives: a geocoder
    that quietly returns the wrong Athens would poison the whole library. */
 export function pickHit(name, results) {
-  const { place, cc } = splitLabel(name);
+  const { place, cc, shown } = splitLabel(name);
   const hits = (results || []).filter(r => (r.country_code || "").toUpperCase() === cc);
   if (!hits.length)
-    throw new Error(`geocode ${place}: no result in country ${cc} ` +
+    throw new Error(`geocode ${place}: no result in country ${cc}` +
+      (cc === shown ? "" : ` (label says ${shown})`) + " " +
       `(got ${(results || []).map(r => `${r.name}/${r.country_code}`).join(", ") || "nothing"})`);
   /* most populous match in the right country — the capital or major city, which
      is what a label like "Athens, GR" means */
@@ -101,6 +124,23 @@ async function geocode(name) {
   const url = `${GEOCODE}?name=${encodeURIComponent(place)}&count=20&language=en&format=json`;
   const j = await getJSON(url, `geocode ${place}`);
   return pickHit(name, j.results);
+}
+
+/* Country-level cross-check. Cached, because three countries carry two cities
+   each. Returns null on any failure — this must never be the reason a run dies. */
+const wbCache = new Map();
+async function nationalAnnual(cc) {
+  if (wbCache.has(cc)) return wbCache.get(cc);
+  let out = null;
+  try {
+    const url = `${WORLDBANK}/${cc}/indicator/${WB_INDICATOR}?format=json&mrnev=1`;
+    const j = await getJSON(url, `world bank ${cc}`);
+    const row = Array.isArray(j) && Array.isArray(j[1]) ? j[1][0] : null;
+    if (row && row.value != null)
+      out = { mm: +row.value, year: row.date, country: row.country?.value ?? null };
+  } catch { /* recorded as null below */ }
+  wbCache.set(cc, out);
+  return out;
 }
 
 async function series(lat, lon, win) {
@@ -167,29 +207,60 @@ console.log(`${SOURCE_NAME}`);
 console.log(`window ${CLIMATE_WINDOW.label}  (${CLIMATE_WINDOW.from} to ${CLIMATE_WINDOW.to})`);
 console.log(`${targets.length} cities${DRY ? "  — DRY RUN, nothing will be written" : ""}\n`);
 
-const out = [], record = [], failed = [];
-
+/* ── preflight ──────────────────────────────────────────────────────────────
+   Geocode everything first. It is quick, and it means a bad country code or an
+   ambiguous city costs seconds rather than surfacing twenty 30-year downloads
+   into the run. Every problem is reported together, not one per attempt. */
+console.log("Resolving locations:");
+const located = [], badly = [];
 for (const c of targets) {
-  process.stdout.write(`  ${c.name.padEnd(20)} `);
   try {
     const g = await geocode(c.name);
-    await sleep(PAUSE_MS);
+    located.push({ city: c, geo: g });
+    const flag = g.population != null && g.population < 100000 ? "  ! low population" : "";
+    console.log(`  ${c.name.padEnd(20)} ${String(g.lat).padStart(9)},${String(g.lon).padStart(10)}  ` +
+      `${g.matched}${flag}`);
+    if (flag && g.alternatives.length) console.log(`      other matches: ${g.alternatives.join("; ")}`);
+  } catch (err) {
+    console.log(`  ${c.name.padEnd(20)} FAILED — ${err.message}`);
+    badly.push({ id: c.id, name: c.name, error: err.message });
+  }
+  await sleep(PAUSE_MS);
+}
+if (badly.length) {
+  console.error(`\n${badly.length} of ${targets.length} locations could not be resolved, so nothing`);
+  console.error(`was downloaded and nothing has been written. Fix these and run again:\n`);
+  for (const b of badly) console.error(`  ${b.name}: ${b.error}`);
+  process.exit(1);
+}
+console.log(`\nAll ${located.length} resolved. Downloading ${CLIMATE_WINDOW.label} daily series:\n`);
+
+const out = [], record = [], failed = [];
+
+for (const { city: c, geo: g } of located) {
+  process.stdout.write(`  ${c.name.padEnd(20)} `);
+  try {
     const { time, pr } = await series(g.lat, g.lon, CLIMATE_WINDOW);
     const red = CLIMATE.reduce(time, pr);
     const before = c.r.reduce((a, b) => a + b, 0);
+    const wb = await nationalAnnual(splitLabel(c.name).cc);
     out.push({ ...c, lat: g.lat, lon: g.lon, elev: g.elev, dpd: red.dpd, r: red.monthly });
     record.push({
       id: c.id, name: c.name, matched: g.matched, population: g.population,
       alternatives: g.alternatives, lat: g.lat, lon: g.lon, elevation_m: g.elev,
       years: red.years, days: red.days,
       monthly_mm: red.monthly, annual_mm: +red.annual.toFixed(1), dpd_mm: red.dpd,
-      previous_annual_mm: before
+      previous_annual_mm: before,
+      /* cross-check only — a country average, not this city. See WORLDBANK above. */
+      national_annual_mm: wb ? wb.mm : null,
+      national_year: wb ? wb.year : null,
+      national_country: wb ? wb.country : null
     });
     const d = red.annual - before, pct = before ? (100 * d / before).toFixed(0) : "—";
+    const nat = wb ? `national ${Math.round(wb.mm)} (${wb.year})` : "national n/a";
     console.log(`${String(Math.round(red.annual)).padStart(5)} mm/yr  ` +
-      `(was ${String(before).padStart(5)}, ${d >= 0 ? "+" : ""}${pct}%)  dpd ${String(red.dpd).padStart(2)}  ${g.matched}`);
-    if (g.alternatives.length && g.population != null && g.population < 100000)
-      console.log(`      ! low-population match — check against: ${g.alternatives.join("; ")}`);
+      `(was ${String(before).padStart(5)}, ${d >= 0 ? "+" : ""}${pct}%)  ` +
+      `dpd ${String(red.dpd).padStart(2)}  ${nat}`);
     await sleep(PAUSE_MS);
   } catch (err) {
     console.log(`FAILED — ${err.message}`);
@@ -217,7 +288,13 @@ const meta = {
   accessed: new Date().toISOString().slice(0, 10),
   licence: LICENCE,
   reduction: "monthly totals / distinct years; wet day = 1 mm or more; dpd = annual rain / annual wet days, rounded, clamped 2-30",
-  generator: "tools/build-climate.mjs"
+  generator: "tools/build-climate.mjs",
+  cross_check: {
+    name: WB_NAME,
+    endpoint: `${WORLDBANK}/{ISO2}/indicator/${WB_INDICATOR}`,
+    what: "Long-term average annual precipitation over a whole country's land area. Recorded beside each city as an independent sanity check ONLY — it is neither city-level nor monthly, and nothing in the app is calculated from it.",
+    fetched: wbCache.size ? [...wbCache.entries()].filter(([, v]) => v).length + " of " + wbCache.size + " countries" : "none"
+  }
 };
 
 if (DRY) {
