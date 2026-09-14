@@ -1,0 +1,15 @@
+{
+  "name": "rainwater-collection-studio",
+  "version": "1.0.0",
+  "description": "Parametric 3D modeller that calculates rainwater harvesting yield, tank size and reliability to BS EN 16941-1:2024. For architecture teaching.",
+  "license": "MIT",
+  "author": "Karam Al-Obaidi",
+  "homepage": "https://karam.me.uk/applications/rainwater-collection-studio/",
+  "private": false,
+  "scripts": {
+    "test": "node test/run.mjs",
+    "build-climate": "node tools/build-climate.mjs"
+  },
+  "comment": "There are no dependencies and nothing to install. The app is a single HTML file with no build step; `npm test` runs on a bare Node 18+ install. This file exists for the scripts above and for the metadata.",
+  "engines": { "node": ">=18" }
+}

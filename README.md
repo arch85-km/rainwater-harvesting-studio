@@ -1,5 +1,7 @@
 # Rainwater Collection Studio
 
+**[karam.me.uk/applications/rainwater-collection-studio](https://karam.me.uk/applications/rainwater-collection-studio/)**
+
 A parametric 3D modeller that calculates rainwater harvesting yield, store
 size and reliability to **BS EN 16941‑1:2024**. Built for teaching architecture
 students, and for embedding in a WordPress page.
@@ -428,6 +430,8 @@ design, rather than quoting whichever number looks largest.
 
 ```
 index.html                the entire app — single file, no dependencies, no build step
+test/                     238 assertions, no dependencies — see Verifying below
+package.json              scripts and metadata; there is nothing to install
 docs/method-notes.html    method notes for students: what it calculates, which
                           clause each step comes from, and every figure the code
                           leaves unsourced. Paste into a CMS as an HTML block.
@@ -441,6 +445,55 @@ README.md                 this file
 Nothing to install. Nothing to compile. Open the file, or upload it.
 
 ---
+
+## Verifying
+
+```
+npm test          # or: node test/run.mjs
+```
+
+**238 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+build step. The suite extracts the app's own modules straight out of
+`index.html` and exercises them, so it tests the file that ships rather than a
+copy of it — change the app and the tests follow automatically.
+
+What it covers:
+
+- **Yield to BS EN 16941-1** — the equation as Formula (1) writes it, all eight
+  Table 2 coefficients at their published values, area-weighted mixing across
+  blocks of different surfaces.
+- **Catchment is the plan projection** — the identity `(w + 2o)(d + 2o)` across
+  every roof form, that pitch moves surface area but never catchment, and the
+  sawtooth exception.
+- **The water balance conserves volume** — inflow equals supplied plus overflow
+  plus the change in store, across several climates and capacities, and that
+  overflow can never exceed the harvest.
+- **Tank sizing** — the basic approach of A.2.1 at each of the standard's dry
+  periods, the National Annex NA.3 halving, and that coverage rises
+  monotonically with capacity.
+- **The climate reduction** — checked against the code it replaced, kept in the
+  suite as an oracle so the two can never drift apart.
+- **The generator's rewrite** — round-tripped by re-evaluating the patched file
+  rather than eyeballing a diff, plus the country-code handling that stops
+  "Athens, GR" landing in Georgia.
+
+The browser suites used during development — smoke tests at four viewport
+widths, the guided tour, PDF pagination, block dragging, iframe embedding, and
+two pixel regressions for render artefacts and flow arrows — need Playwright and
+are not shipped here.
+
+## Publishing
+
+`index.html` sits at the repository root, so GitHub Pages will serve the app
+directly with no configuration: **Settings → Pages → deploy from branch, root**.
+
+If you are pushing this somewhere new:
+
+```
+git branch -m main                      # the history arrives on its original branch
+git remote add origin git@github.com:<you>/rainwater-collection-studio.git
+git push -u origin main
+```
 
 ## Technical notes
 

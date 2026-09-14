@@ -1,0 +1,7 @@
+# Generated from index.html by test/extract-core.mjs. Never edit or commit it:
+# edit index.html and re-run, or the tests stop testing the app that ships.
+test/.core.js
+
+node_modules/
+.DS_Store
+*.log
