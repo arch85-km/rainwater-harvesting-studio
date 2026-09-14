@@ -950,7 +950,7 @@ const CLIMATE_WINDOW = { from:"1991-01-01", to:"2020-12-31", label:"1991–2020"
 
 const CLIMATE_SOURCE = {
   sourced:  false,          // set true by the generator
-  name:     "",             // e.g. "Open-Meteo historical weather API (ERA5 reanalysis)"
+  name:     "",             // e.g. "Open-Meteo historical weather API (reanalysis)"
   endpoint: "",
   window:   "",             // e.g. "1991-01-01 to 2020-12-31"
   accessed: "",             // ISO date the generator ran
@@ -1006,7 +1006,7 @@ const CLIMATE = {
 function rainfallProvenanceFor(climate) {
   switch (climate && climate.source) {
     case "open-meteo":
-      return `Open-Meteo (ERA5 reanalysis), ${CLIMATE_WINDOW.label}, retrieved by the user`;
+      return `Open-Meteo reanalysis, ${CLIMATE_WINDOW.label}, retrieved by the user`;
     case "manual":
       return "Entered by hand — source is the author's to state";
     case "preset-scaled":
@@ -1597,8 +1597,9 @@ const GEO = (() => {
 })();
 
 /* ═══════════════════════════ HYD ═══════════════════════════
-   Hydrology. Yield to BS EN 16941-1:2024 (which superseded BS 8515:2009),
-   clause 6.1.2, Formula (1):
+   Hydrology. Yield to BS EN 16941-1:2024, clause 6.1.2, Formula (1). That
+   standard's national foreword describes BS 8515:2009+A1:2013 as the code of
+   practice "which this standard replaces":
 
        Y(R,t) = Σ A(i) · e(i) · h(t) · η      litres, with A in m² and h in mm
                                               (1 mm falling on 1 m² = 1 litre)
@@ -3000,7 +3001,7 @@ const APP = (() => {
         </div>
         <button class="rwc-btn" id="rwc-fetch" style="width:100%;justify-content:center;border-color:var(--line);background:var(--surface-2)">Fetch ${CLIMATE_WINDOW.label} monthly means</button>
         <p class="rwc-note" id="rwc-fetch-note">Reduced the same way as the presets, over the same ${CLIMATE_WINDOW.label} window, so the two are comparable. Optional and needs internet: classroom networks, offline use and a strict WordPress content policy will all block it — the presets and the monthly table always work. Fetched values land in the editable table so you can correct them.</p>
-        <p class="rwc-note">Open-Meteo's archive is <b>ERA5 reanalysis</b>, not a rain gauge. Expect it to differ from a nearby station, most of all in convective and mountainous climates.</p>`);
+        <p class="rwc-note">Open-Meteo serves a <b>reanalysis</b> \u2014 a model estimate on a grid \u2014 not a rain gauge. Expect it to differ from a nearby station, most of all in convective and mountainous climates. The archive draws on more than one reanalysis dataset and picks by location; <b>tools/build-climate.mjs</b> records which one answered, and that is the one to cite.</p>`);
   }
 
   function panelDemand() {

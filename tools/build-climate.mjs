@@ -32,7 +32,11 @@ const ROOT   = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const APP    = resolve(ROOT, "index.html");
 const RECORD = resolve(ROOT, "docs/climate-source.json");
 
-const SOURCE_NAME = "Open-Meteo historical weather API (ERA5 reanalysis, ECMWF/Copernicus)";
+/* Deliberately does not name a reanalysis dataset. The archive draws on more
+   than one and selects by location, so the dataset that answered is a property
+   of the response, not of this script. Whatever the API reports is recorded per
+   city under `api` in docs/climate-source.json, and that is what to cite. */
+const SOURCE_NAME = "Open-Meteo historical weather API (reanalysis)";
 const ARCHIVE     = "https://archive-api.open-meteo.com/v1/archive";
 const GEOCODE     = "https://geocoding-api.open-meteo.com/v1/search";
 const LICENCE     = "CC BY 4.0 (Open-Meteo terms)";
@@ -149,7 +153,14 @@ async function series(lat, lon, win) {
   const j = await getJSON(url, `archive ${lat},${lon}`);
   const time = j.daily?.time, pr = j.daily?.precipitation_sum;
   if (!time?.length || !pr?.length) throw new Error(`archive ${lat},${lon}: empty series`);
-  return { time, pr };
+  /* Keep every scalar the response carries alongside the data: whichever key
+     names the model, plus the coordinates and elevation the API actually used,
+     which can differ from the ones requested. Recorded rather than interpreted —
+     this script does not know which keys matter, and guessing a field name would
+     be how the wrong dataset ends up cited. */
+  const meta = Object.fromEntries(
+    Object.entries(j).filter(([, v]) => v === null || typeof v !== "object"));
+  return { time, pr, meta };
 }
 
 /* ── rewrite ─────────────────────────────────────────────────────────────── */
@@ -240,7 +251,7 @@ const out = [], record = [], failed = [];
 for (const { city: c, geo: g } of located) {
   process.stdout.write(`  ${c.name.padEnd(20)} `);
   try {
-    const { time, pr } = await series(g.lat, g.lon, CLIMATE_WINDOW);
+    const { time, pr, meta } = await series(g.lat, g.lon, CLIMATE_WINDOW);
     const red = CLIMATE.reduce(time, pr);
     const before = c.r.reduce((a, b) => a + b, 0);
     const wb = await nationalAnnual(splitLabel(c.name).cc);
@@ -251,6 +262,9 @@ for (const { city: c, geo: g } of located) {
       years: red.years, days: red.days,
       monthly_mm: red.monthly, annual_mm: +red.annual.toFixed(1), dpd_mm: red.dpd,
       previous_annual_mm: before,
+      /* Exactly what the archive reported for this location, unedited. Read it
+         before citing the rainfall: it names the dataset that actually answered. */
+      api: meta,
       /* cross-check only — a country average, not this city. See WORLDBANK above. */
       national_annual_mm: wb ? wb.mm : null,
       national_year: wb ? wb.year : null,
@@ -289,6 +303,7 @@ const meta = {
   licence: LICENCE,
   reduction: "monthly totals / distinct years; wet day = 1 mm or more; dpd = annual rain / annual wet days, rounded, clamped 2-30",
   generator: "tools/build-climate.mjs",
+  dataset_note: "Open-Meteo's archive draws on more than one reanalysis dataset and selects by location. This file records the archive's own response metadata per city under `api`; cite the dataset named there, not a dataset assumed here.",
   cross_check: {
     name: WB_NAME,
     endpoint: `${WORLDBANK}/{ISO2}/indicator/${WB_INDICATOR}`,

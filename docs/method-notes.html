@@ -370,9 +370,9 @@ eta  hydraulic treatment efficiency coefficient</em>
             WC and laundry are on by default; cleaning and vehicle wash are off.</caption>
           <thead><tr><th>End use</th><th class="cs-sym">l/person/day</th><th>On by default</th><th>Source in the code</th></tr></thead>
           <tbody>
-            <tr><td>WC flushing</td><td class="cs-n">25</td><td>yes</td><td rowspan="2">None named. The two together come to <b>40 l/person/day</b>, which is exactly what the UK National Annex NA.1.2 recommends for toilet and washing-machine use. The split between them is the tool's.</td></tr>
+            <tr><td>WC flushing</td><td class="cs-n">25</td><td>yes</td><td rowspan="2">None named. The two together come to <b>40 l/person/day</b>, which is exactly what the BSI UK National Annex NA.1.2 recommends for toilet and washing-machine use. The split between them is the tool's.</td></tr>
             <tr><td>Laundry</td><td class="cs-n">15</td><td>yes</td></tr>
-            <tr><td>Cleaning</td><td class="cs-n">5</td><td>no</td><td rowspan="2"><b>No source named</b>, and outside the National Annex figure.</td></tr>
+            <tr><td>Cleaning</td><td class="cs-n">5</td><td>no</td><td rowspan="2"><b>No source named</b>, and outside the BSI UK National Annex figure.</td></tr>
             <tr><td>Vehicle wash</td><td class="cs-n">2</td><td>no</td></tr>
           </tbody>
         </table>
@@ -489,7 +489,7 @@ eta  hydraulic treatment efficiency coefficient</em>
         <li>Non-potable demand from four editable end uses, occupancy and a seasonal irrigation term.</li>
         <li>A store operated by the YAS rule of Formulas (A.3) and (A.4), stepped monthly or daily, with
           three warm-up cycles.</li>
-        <li>Capacity by the basic approach of A.2.1, including the National Annex NA.3 reduction, and by
+        <li>Capacity by the basic approach of A.2.1, including the BSI UK National Annex NA.3 reduction, and by
           reading a knee off the coverage-against-capacity curve of A.2.2.4.</li>
         <li>Coverage rate <i>C</i><sub>r</sub> to Formula (A.5), overflow, mains top-up and the saving in
           money at a tariff you set.</li>
@@ -501,7 +501,7 @@ eta  hydraulic treatment efficiency coefficient</em>
         from this tool says nothing about any of it:</p>
       <ul>
         <li><b>Water quality, treatment and risk assessment</b> &mdash; Clauses 5.9 and 10 of the standard,
-          and the whole of the National Annex NA.2 with its guideline values, monitoring and sampling.
+          and the whole of the BSI UK National Annex NA.2 with its guideline values, monitoring and sampling.
           A tool that sizes a tank has said nothing about whether the water in it is fit for the use.</li>
         <li><b>The back-up supply</b> &mdash; Clause 6.2. The tool reports a mains top-up volume; it does
           not size the back-up pipe or check the air gap.</li>
@@ -510,7 +510,7 @@ eta  hydraulic treatment efficiency coefficient</em>
           water by a tariff. That is a saving in water charges, not a financial appraisal.</li>
         <li><b>Rainfall intensity, storm events, snow, and extremes.</b> The store calculation never sees
           an intensity; the drainage check uses one fixed value.</li>
-        <li><b>Climate change.</b> The National Annex NA.4 asks for a sensitivity analysis on future
+        <li><b>Climate change.</b> The BSI UK National Annex NA.4 asks for a sensitivity analysis on future
           drier summers and wetter winters, and recommends a seasonal assessment alongside the annual
           one. The tool has no future scenario and does not prompt for one.</li>
         <li><b>Spatial rainfall, wind-driven rain and local shelter.</b> Depth is uniform over the site.</li>
@@ -524,7 +524,7 @@ eta  hydraulic treatment efficiency coefficient</em>
       <h3>Regulatory compliance</h3>
       <p>The tool checks nothing against Building Regulations, water fittings regulations, or any local
         requirement. It has no approval logic, no pass or fail, and no notion of jurisdiction beyond the
-        UK National Annex rules named on this page. Treat every output as a design study.</p>
+        BSI UK National Annex rules named on this page. Treat every output as a design study.</p>
     </div>
   </div>
 
@@ -555,18 +555,25 @@ spaced evenly through the month.</div>
       <h3>Regenerated rainfall is reanalysis, and it is a baseline</h3>
       <p>If the library has been regenerated, two properties of the replacement data limit every number
         built on it, and neither is a defect to be worked around &mdash; they are what the data is.</p>
-      <p><b>It is modelled, not measured.</b> The Open&#8209;Meteo archive is ERA5 reanalysis: a physical
-        model run backwards over past observations to produce a gridded estimate. It is not a rain gauge
-        at your site. A point value can differ materially from a nearby station, most of all where
-        rainfall is convective or the terrain is mountainous, because a grid cell averages over an area
-        in which a thunderstorm or a hillside is a detail. Where a station record exists for your
+      <p><b>It is modelled, not measured.</b> The Open&#8209;Meteo archive serves a <b>reanalysis</b>: a
+        physical model run backwards over past observations to produce a gridded estimate. It is not a
+        rain gauge at your site. A point value can differ materially from a nearby station, most of all
+        where rainfall is convective or the terrain is mountainous, because a grid cell averages over an
+        area in which a thunderstorm or a hillside is a detail. Where a station record exists for your
         location, it is the better source and you should type it in.</p>
+      <p>The archive draws on more than one reanalysis dataset and selects by location, so <b>which one
+        served your figures is not knowable in advance</b> &mdash; and the two differ in grid resolution,
+        which is exactly the property that governs the paragraph above. The generator records whatever
+        the API reports for each location in
+        <span class="cs-mono">docs/climate-source.json</span>. <b>Read it before citing the data</b>, and
+        cite the dataset named there rather than assuming: a citation to the wrong reanalysis is the same
+        class of error as an unsourced number.</p>
       <p><b>1991&ndash;2020 is a baseline, not the present.</b> The code calls that window the
         <b>World Meteorological Organization standard normal period</b>, and that is why it was chosen
         over a recent decade: a thirty-year normal is the convention published climate figures are
         quoted on, so a preset, a site you fetch yourself, and a figure from a met service are all the
         same kind of number and can be set beside one another. But a normal
-        is an average of the past. The UK National Annex, NA.4, asks a designer to go further and test
+        is an average of the past. The BSI UK National Annex, NA.4, asks a designer to go further and test
         the sizing against projected drier summers and wetter winters. <b>This tool has no future
         scenario and will not prompt you for one</b>, so a tank sized here is sized for the climate of
         1991&ndash;2020 and no other.</p>
@@ -600,7 +607,11 @@ spaced evenly through the month.</div>
       <div class="cs-tbl">
         <table>
           <caption>Sourced. Clause references are to <span class="cs-mono">BS EN 16941&#8209;1:2024</span>,
-            checked against the published standard.</caption>
+            checked against the published standard. Clauses beginning <b>NA</b> come from the
+            <b>BSI UK National Annex</b>, which BSI appends to the UK implementation &mdash; they are not
+            part of EN 16941-1:2024 as published by other national bodies. This matters here because the
+            tool <b>implements NA.3</b>: a reader holding a non-UK copy will not find that rule at
+            all.</caption>
           <thead><tr><th>What</th><th>Clause</th></tr></thead>
           <tbody>
             <tr><td>Catchment as the horizontal projection of the collection area</td><td class="cs-p">6.1.2, Formula (1)</td></tr>
@@ -637,7 +648,7 @@ spaced evenly through the month.</div>
             <tr><td>75 mm/h design storm</td><td class="cs-p">drainageCheck</td>
               <td>Substitute your local design intensity if you want an indication at all.</td></tr>
             <tr><td>Cleaning 5 and vehicle wash 2 l/person/day</td><td class="cs-p">ENDUSES</td>
-              <td>Outside the National Annex figure. Edit to a demand you can defend.</td></tr>
+              <td>Outside the BSI UK National Annex figure. Edit to a demand you can defend.</td></tr>
             <tr><td>The split of 40 l/person/day into WC 25 and laundry 15</td><td class="cs-p">ENDUSES</td>
               <td>The total is from NA.1.2; the split is the tool's.</td></tr>
             <tr><td>Mains tariff of 2.20 per m&sup3;, and its currency</td><td class="cs-p">newModel</td>
@@ -901,8 +912,11 @@ spaced evenly through the month.</div>
     <p>A model you make with the tool is <b>yours</b>. Neither licence claims anything over your model,
       your drawings or the images you export.</p>
     <p>Two things are not covered by either licence and are worth knowing. Rainfall fetched from
-      Open&#8209;Meteo comes under Open-Meteo’s own terms, which place its data under
-      CC&nbsp;BY&nbsp;4.0; attribute it where you use it.
+      Open&#8209;Meteo comes under Open-Meteo’s own terms, <b>not under either licence above</b>. An
+      external review reports that their CC&nbsp;BY&nbsp;4.0 offer covers <b>non-commercial</b> use and
+      that commercial use requires their paid API. For teaching that is no constraint, but nothing here
+      should be read as saying the data is CC&nbsp;BY unconditionally — <b>read their terms before any
+      commercial use</b>, and attribute the data wherever you use it.
       And <span class="cs-mono">BS EN 16941&#8209;1:2024</span> is a copyright work of BSI: this page
       cites clause numbers and states values the tool uses, and reproduces no part of its text.</p>
 
@@ -928,14 +942,18 @@ spaced evenly through the month.</div>
       alone moves it from 4.6&nbsp;% to 59.3&nbsp;%.</p>
 
     <h3>References</h3>
-    <p>These are the sources the code itself names &mdash; all seven of them, and nothing else. What
-      each one actually contributes is stated at the end of its entry, because the count is not what a
-      reader should take from a reference list. <b>As the tool stands, exactly one of the seven puts a
-      number into a calculation:</b> BS EN 16941-1:2024, which supplies the whole method. Two more do so
-      only once the rainfall library has been regenerated &mdash; Open&#8209;Meteo, and the ERA5
-      reanalysis behind it. The remaining four record a convention the tool follows, or what the tool is
-      <em>not</em>: a superseded code of practice, a drainage standard it defers to, a normal period it
-      borrows, and a national average it only checks itself against.</p>
+    <p>These are the sources the code itself names &mdash; all six of them, and nothing else. What each
+      one actually contributes is stated at the end of its entry, because the count is not what a reader
+      should take from a reference list. <b>As the tool stands, exactly one of the six puts a number into
+      a calculation:</b> BS EN 16941-1:2024, which supplies the whole method. One more does so once the
+      rainfall library has been regenerated: Open&#8209;Meteo. The remaining four record a convention the
+      tool follows, or what the tool is <em>not</em> &mdash; a replaced code of practice, a drainage
+      standard it defers to, a normal period it borrows, and a national average it only checks itself
+      against.</p>
+    <p>Every clause, table and formula number cited on this page was checked against
+      <b>BS EN 16941-1:2024 specifically</b> &mdash; the edition incorporating the July 2024 corrigendum,
+      not the withdrawn 2018 edition and not a secondary summary of either. Numbering moved between those
+      editions, so a reader checking this page against a 2018 copy should expect it not to line up.</p>
     <p>Two entries carry <b>[bracketed blanks]</b>. They mark details this document could not verify
       &mdash; a primary citation and a publication reference that were not to hand when it was written.
       They are left visibly empty rather than filled from memory, which is precisely the failure that
@@ -955,7 +973,7 @@ spaced evenly through the month.</div>
         coefficients (Table 2); the fallback treatment coefficient of 0.9 (note to 6.1.2); the demand
         formulas (6.1.3); the store recurrence and the coverage rate (A.2.2.3, Formulas A.3&ndash;A.5);
         capacity by the basic approach and its 15, 18 and 21-day dry periods (A.2.1); the
-        coverage-against-capacity curve (A.2.2.4); and, in the UK National Annex, 40&nbsp;l/person/day for
+        coverage-against-capacity curve (A.2.2.4); and, in the BSI UK National Annex, 40&nbsp;l/person/day for
         toilet and washing-machine use (NA.1.2) and the reduction of the dry period outside a
         yield-to-demand ratio of 0.5 to 2.0 (NA.3). The tool does <b>not</b> implement the detailed
         approach of A.2.2, which requires at least five years of measured daily rainfall (A.2.2.2), nor
@@ -973,7 +991,11 @@ spaced evenly through the month.</div>
         makes the same distinction from the other side, noting at 6.1.2 that the surface yield coefficient
         is not the run-off coefficient used in BS EN 12056-3 for the hydraulic design of pipes: the two
         answer different questions. Go here for gutter and downpipe sizing; do not take it from this tool.
-        The code names no edition, so the edition above is this document's choice.</li>
+        Its own BSI UK National Annex is where a design rainfall intensity is obtained, which is the
+        clearest statement of why the 75&nbsp;mm/h in this tool is traceable to nothing: it did not
+        come from there either. The code names no edition; the 2000 edition is given here on the
+        authority of an external review reporting it as still current, not from a check made for
+        this page.</li>
       <li>World Bank. (n.d.). <i>Average precipitation in depth (mm per year)</i>
         (AG.LND.PRCP.MM) [Data set]. World Bank Open Data.
         <a href="https://data.worldbank.org/indicator/AG.LND.PRCP.MM" target="_blank" rel="noopener">https://data.worldbank.org/indicator/AG.LND.PRCP.MM</a>
@@ -982,23 +1004,15 @@ spaced evenly through the month.</div>
         <b>no value the app calculates with</b>, and it could not: it is one long-term annual average per
         country, over the whole of that country's land area, where the tool needs twelve monthly figures
         for a single location. It is a cross-check on order of magnitude, described under
-        <a href="#cs-06">the comparison section</a>. If the fetch fails the field is recorded as null and
+        <a href="#cs-06">the comparison section</a>. The indicator is a World Bank republication rather
+        than a primary observation: its metadata page names the FAO (AQUASTAT) as the underlying source,
+        reported by an external review, so anyone relying on the figure should follow it back there. If the fetch fails the field is recorded as null and
         the library is unaffected. The indicator's own metadata page states its provenance and vintage;
         read it before citing the number.</li>
-      <li>[<b>Authors, year, article title, journal, volume, pages and DOI &mdash; not verified; fill
-        from a copy you can check</b>]. The ERA5 reanalysis, produced by ECMWF for the Copernicus
-        Climate Change Service.
-        &mdash; named by <span class="cs-mono">tools/build-climate.mjs</span> as what the Open&#8209;Meteo
-        archive is built from. <b>It contributes nothing as the tool currently stands</b>, because the
-        rainfall library has not been regenerated; once it has, ERA5 is the actual origin of every
-        monthly figure and every depth per wet day, and this is the work to cite for the data rather than
-        the API that served it. It is a model reconstruction, not gauge measurement &mdash; the
-        consequence is set out in <a href="#cs-04">How exact the numbers are</a>. The citation above is
-        deliberately incomplete: the primary reference could not be checked when this page was written,
-        and a plausible-looking one written from memory would be worse than a visible gap.</li>
-      <li>World Meteorological Organization. [<b>publication reference and year &mdash; not verified;
-        fill from a copy you can check</b>]. <i>WMO guidelines on the calculation of climate normals</i>.
-        WMO. &mdash; named in <span class="cs-mono">index.html</span>, where the constant
+      <li>World Meteorological Organization. (2017). <i>WMO guidelines on the calculation of climate
+        normals</i> (WMO-No.&nbsp;1203). WMO. &mdash; supplied by an external review and not verified for
+        this page. It defines the thirty-year standard normal, updated each decade, of which
+        1991&ndash;2020 is the current one. Named in <span class="cs-mono">index.html</span>, where the constant
         <span class="cs-mono">CLIMATE_WINDOW</span> calls 1991&ndash;2020 "the WMO standard normal
         period". It is the reason for that window rather than a recent decade, and so it decides which
         years the regenerated rainfall would average over &mdash; but it supplies no value the tool
@@ -1017,16 +1031,24 @@ spaced evenly through the month.</div>
         without a retrieval date names no fixed thing. The app prints the date once the generator has
         run, and
         <span class="cs-mono">docs/climate-source.json</span> records what each location geocoded to.
-        Its archive is <b>ERA5 reanalysis</b>, and the window is a <b>baseline</b>; both limit what
-        the data can be held to, and both are set out in <a href="#cs-04">How exact the numbers
-        are</a> rather than restated here. The fetch is optional and user-initiated, and the
-        file works with no network at all. Open-Meteo&rsquo;s own terms place its data under
-        CC&nbsp;BY&nbsp;4.0; check them and attribute accordingly.</li>
+        Its archive serves a <b>reanalysis</b> rather than gauge measurement, and the window is a
+        <b>baseline</b>; both limit what the data can be held to, and both are set out in
+        <a href="#cs-04">How exact the numbers are</a> rather than restated here. Which reanalysis
+        dataset served a given location is recorded by the generator, and is the work to cite for the
+        data itself &mdash; this page does not name it, because it cannot be known until the generator
+        has run. The fetch is optional and user-initiated, and the
+        file works with no network at all. An external review reports a citable software record for the API itself &mdash;
+        Zippenfenig, P. (2023). <i>Open-Meteo.com Weather API</i> [Computer software]. Zenodo.
+        <span class="cs-mono">https://doi.org/10.5281/zenodo.7970649</span> &mdash; <b>verify that DOI on
+        their site before using it</b>: it is reproduced as supplied and was not checked for this page.
+        The same review reports that CC&nbsp;BY&nbsp;4.0 covers <b>non-commercial</b> use and that
+        commercial use needs their paid API, so do not cite this page for an unconditional
+        CC&nbsp;BY claim. The code gives no accession date, so record the date you fetched.</li>
     </ul>
     <p class="cs-cite">Read the list for what each work contributes, not for its length. One of the
-      seven supplies the method the tool implements; two more supply its rainfall, but only after the
+      six supplies the method the tool implements; one more supplies its rainfall, but only after the
       library has been regenerated; the rest are conventions it borrows or standards it defers to. For
-      anything that must be built, none of the seven substitutes for a designer who can take
+      anything that must be built, none of the six substitutes for a designer who can take
       responsibility for the system.</p>
   </div>
 
