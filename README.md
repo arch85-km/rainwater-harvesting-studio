@@ -80,6 +80,7 @@ iframe is still the safer choice.
 | `?model=house` | Opens straight into a demo model — see the IDs below |
 | `?theme=dark` | Forces dark; `?theme=light` forces light. Default follows the viewer's OS setting |
 | `?mode=analysis` | Opens in Analysis mode; `?mode=present` opens in Presentation |
+| `?tour=1` | Forces the guided tour open even for someone who opted out; `?tour=0` suppresses it for that link only |
 
 Combine them: `index.html?embed=1&model=forms&mode=present`
 
@@ -96,6 +97,7 @@ with `?model=forms&mode=present`.
 ### Model space
 Drag to orbit · scroll to zoom · shift-drag or right-drag to pan · pinch on touch.
 `F` fits the model, arrow keys rotate, `P` toggles Presentation mode, `Esc` leaves it.
+First visit? The guided tour opens automatically — see below.
 
 **Moving blocks.** Click a roof to select its block, then **drag it** to slide it
 across the ground. Dragging empty space or an unselected block still orbits, so a
@@ -105,6 +107,19 @@ keys** to nudge (they move the way the screen looks, not the way the world is
 axed). If a block ends up overlapping another in plan, both are outlined in the
 warning colour and the status bar says so — an overlap counts the same area twice
 in the catchment. New blocks are always placed clear of the whole model.
+
+### The guided tour
+
+A nine-step tour opens **on every load**, so a student arriving at the page cold
+is always oriented: the model space, the roof types and the catchment point,
+which of the seven results is the answer, the Explain sheet, the model library,
+the three workspaces and the exports.
+
+Every step carries a **"Don't show this on launch"** checkbox — nobody has to
+reach the end to turn it off — and the choice is remembered in that browser.
+Once dismissed it stays available from **Help → Take the tour**. Arrow keys step
+through it, `Esc` closes it, and it never opens in Presentation mode, so it
+cannot interrupt a lecture.
 
 ### Toolbar
 **New · Open · Save** work on `.json` model files. Work is also autosaved to the
