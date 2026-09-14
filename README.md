@@ -300,13 +300,42 @@ own. Note 2 to 6.1.3 allows fewer than 365 days for commercial or public
 premises — the tool cannot be told that, so it overstates demand for any
 building that is not occupied all year.
 
-### Figures with no source
+### The rainfall library, and where it comes from
 
-The code names no origin for the 28-location rainfall library and its
-depth-per-wet-day figures, the downpipe capacity table, the 75 mm/h design
-storm, the cleaning and vehicle-wash demands, or the mains tariff. Replace the
-rainfall with something citable before publishing any number. The full register
-is in [`docs/method-notes.html`](docs/method-notes.html).
+The 28 presets were originally written by hand with no dataset behind them.
+`CLIMATE_SOURCE` in `index.html` records whether that is still true, and the app
+prints the answer under the location selector and on every report, explain sheet
+and CSV it exports — so an exported sheet carries its own citation.
+
+To give the library a real source, run the generator once, from a machine with
+outbound HTTPS:
+
+```
+node tools/build-climate.mjs            # fetch and rewrite index.html
+node tools/build-climate.mjs --dry-run  # fetch and report, write nothing
+```
+
+It geocodes each city (filtered on the country code in its label, so "Athens, GR"
+cannot land in Georgia), pulls daily precipitation for the window the app
+declares, reduces it with the app's own `CLIMATE.reduce` — the same function the
+in-app fetch uses, so the two can never drift — and rewrites the `CITIES` block
+with coordinates, elevation and a provenance record. It also writes
+`docs/climate-source.json` with what each city matched to, so a run can be checked
+and repeated. If any city fails it writes nothing at all: a half-sourced library
+is worse than none, because you cannot tell which rows are which.
+
+Two things to say when citing the result: Open-Meteo's archive is **ERA5
+reanalysis**, not gauge measurement, and 1991–2020 is a baseline rather than
+current conditions.
+
+**After regenerating, every figure quoted in the method notes and the test suites
+is stale** and must be re-measured, not edited to fit.
+
+### Figures still with no source
+
+The code names no origin for the downpipe capacity table, the 75 mm/h design
+storm, the cleaning and vehicle-wash demands, or the mains tariff. The full
+register is in [`docs/method-notes.html`](docs/method-notes.html).
 
 ### What is *not* rigorous
 
@@ -389,6 +418,9 @@ index.html                the entire app — single file, no dependencies, no bu
 docs/method-notes.html    method notes for students: what it calculates, which
                           clause each step comes from, and every figure the code
                           leaves unsourced. Paste into a CMS as an HTML block.
+docs/climate-source.json  provenance of the rainfall library — written by the
+                          generator, absent until it has been run
+tools/build-climate.mjs   regenerates the rainfall library from a real source
 LICENSE                   MIT for the code; CC BY 4.0 for the documentation
 README.md                 this file
 ```
@@ -462,9 +494,11 @@ including everything the code uses *without* naming a source, is in
   code names no edition, so the edition above is this README's choice.
 - **Open-Meteo historical weather API** —
   <https://open-meteo.com/en/docs/historical-weather-api> — the only external
-  source the tool can reach, and the only route by which citable rainfall enters
-  it. Optional and user-initiated; the file works offline. Data under CC BY 4.0
-  per Open-Meteo's terms; attribute it where you use it.
+  source the tool can reach, and the route by which citable rainfall enters it:
+  both the Climate panel's fetch and `tools/build-climate.mjs`, over the same
+  window and through the same reduction. ERA5 reanalysis, not gauge measurement.
+  Optional and user-initiated; the file works offline. Data under CC BY 4.0 per
+  Open-Meteo's terms; attribute it, with the window and your retrieval date.
 
 Reviewed for comparison, not used as a source:
 [DROP Rainwater Harvesting Design Software](https://www.freeflush.co.uk/pages/drop-rainwater-harvesting-software)
