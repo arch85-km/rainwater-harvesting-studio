@@ -1,0 +1,936 @@
+<!-- ==========================================================================
+     Rainwater Collection Studio — Method Notes
+     Paste into an Elementor "HTML" widget (Elements > HTML).
+
+     Same scoping and type scale as the Construction Studio notes, so the two
+     pages read as one series: everything is under .cs-doc, headings follow the
+     site's heading face (--cs-fd), body text inherits the theme, and only the
+     data — formulas, tables, the BibTeX block — is monospace. For the visitor's
+     dark-mode setting, change the opening tag to
+     <div class="cs-doc cs-auto-dark">.
+
+     Every figure on this page was read from the tool's source or produced by
+     running its own GEO and HYD modules. Claims about BS EN 16941-1:2024 were
+     checked against the published standard.
+     © Karam Al-Obaidi. CC BY 4.0.
+     ========================================================================== -->
+
+<style>
+
+.cs-doc{
+  --cs-paper:#F1F2EE; --cs-surface:#FBFBF9; --cs-surface2:#E8EAE4;
+  --cs-ink:#16191B; --cs-ink2:#4C555A; --cs-ink3:#5F696E;
+  --cs-rule:#D6D9D1; --cs-rule2:#E5E7E1;
+  --cs-accent:#1D5A73; --cs-accent-soft:rgba(29,90,115,.10);
+  --cs-ok:#3F6B47;  --cs-ok-soft:rgba(63,107,71,.12);
+  --cs-warn:#8A6410;--cs-warn-soft:rgba(138,100,16,.13);
+  --cs-no:#8E3A32;  --cs-no-soft:rgba(142,58,50,.11);
+  /* Headings and body follow the site's own typeface. `inherit` resolves where
+     it is used — inside .cs-doc, whose parent is the Elementor container — so
+     this keeps working if the theme font ever changes.
+     The monospace stack must NOT inherit: the table number columns use
+     font-variant-numeric:tabular-nums and align on fixed-width digits, and the
+     formulas and BibTeX block depend on their spacing. */
+  /* The site pairs a sans for headings with a serif for body, so the page
+     does the same. Body inherits — CSS has no way to inherit "the theme's
+     HEADING font", so that one is named. If the site's heading face ever
+     changes, this is the single line to update.
+     Weights sit at 600 throughout: the site ships Poppins 400/500/600 and
+     Source Serif 4 400/600, so 700 and 800 do not exist and the browser
+     would either drop to 600 or synthesise a smeared bold. Size carries the
+     hierarchy instead. */
+  --cs-fd:"Poppins",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  --cs-fb:inherit;
+  --cs-fm:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --cs-measure:90ch; --cs-rail:4.75rem;
+
+  background:var(--cs-paper); color:var(--cs-ink);
+  font-family:var(--cs-fb); font-size:17px; line-height:1.65; font-weight:400;
+  max-width:1040px; margin:0 auto; padding:0 20px 4rem;
+  -webkit-font-smoothing:antialiased; text-align:left;
+}
+@media (prefers-color-scheme:dark){
+  .cs-doc.cs-auto-dark{
+    --cs-paper:#121517; --cs-surface:#191D20; --cs-surface2:#21262A;
+    --cs-ink:#E9EBE6; --cs-ink2:#A6AFB4; --cs-ink3:#79838A;
+    --cs-rule:#2C3235; --cs-rule2:#232829;
+    --cs-accent:#74B6D0; --cs-accent-soft:rgba(116,182,208,.14);
+    --cs-ok:#7FB88C;  --cs-ok-soft:rgba(127,184,140,.14);
+    --cs-warn:#D6A748;--cs-warn-soft:rgba(214,167,72,.15);
+    --cs-no:#DD8479;  --cs-no-soft:rgba(221,132,121,.14);
+  }
+}
+
+/* local reset — only inside .cs-doc */
+.cs-doc *,.cs-doc *::before,.cs-doc *::after{box-sizing:border-box;}
+.cs-doc h1,.cs-doc h2,.cs-doc h3,.cs-doc h4,.cs-doc p,.cs-doc ul,.cs-doc ol,
+.cs-doc dl,.cs-doc dt,.cs-doc dd,.cs-doc table,.cs-doc figure{margin:0;padding:0;}
+.cs-doc ul,.cs-doc ol{list-style-position:outside;}
+.cs-doc li{margin:0;}
+.cs-doc img{max-width:100%;height:auto;}
+.cs-doc a{color:var(--cs-accent);text-decoration:underline;text-underline-offset:2px;}
+.cs-doc a:focus-visible{outline:2px solid var(--cs-accent);outline-offset:3px;}
+.cs-doc .cs-sechead{scroll-margin-top:5rem;}
+.cs-doc .cs-sechead:target h2{background:var(--cs-hl,rgba(127,127,127,.14));}
+.cs-doc code,.cs-doc .cs-mono{font-family:var(--cs-fm);font-size:.855em;}
+/* Inline bold defaults to 700. A site that ships only 400/500/600 has no such
+   face, so the browser either drops to 600 or fakes one by smearing the 400.
+   Pin it to a weight that exists. */
+.cs-doc b,.cs-doc strong{font-weight:600;}
+.cs-doc code{background:var(--cs-accent-soft);color:var(--cs-accent);
+  padding:.1em .34em;border-radius:2px;border:0;}
+
+/* masthead */
+.cs-doc .cs-masthead{padding:3.5rem 0 2.25rem;border-bottom:2px solid var(--cs-ink);}
+.cs-doc h1{font-family:var(--cs-fd);font-weight:600;
+  font-size:clamp(2.1rem,6.2vw,3.35rem);line-height:1.02;letter-spacing:-.028em;
+  text-wrap:balance;margin:0 0 1.1rem;color:var(--cs-ink);}
+.cs-doc .cs-standfirst{max-width:var(--cs-measure);font-size:1.14rem;line-height:1.6;
+  color:var(--cs-ink2);margin:0;}
+.cs-doc .cs-standfirst strong{color:var(--cs-ink);font-weight:600;}
+.cs-doc .cs-byline{display:flex;flex-wrap:wrap;gap:.5rem 1.6rem;margin-top:1.9rem;
+  font-family:var(--cs-fm);font-size:.74rem;letter-spacing:.04em;color:var(--cs-ink3);}
+.cs-doc .cs-byline b{color:var(--cs-ink2);font-weight:500;}
+
+/* trap notice */
+.cs-doc .cs-traps{margin:2.5rem 0;border:1px solid var(--cs-rule);
+  border-left:4px solid var(--cs-no);background:var(--cs-surface);padding:1.5rem 1.6rem;}
+.cs-doc .cs-traps h2{font-family:var(--cs-fd);font-size:.82rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--cs-no);margin:0 0 .9rem;}
+.cs-doc .cs-traps ol{margin:0;padding-left:1.15rem;display:grid;gap:.6rem;}
+.cs-doc .cs-traps li{max-width:var(--cs-measure);}
+
+/* sections */
+.cs-doc .cs-sec{padding:3.25rem 0 0;}
+.cs-doc .cs-sechead{display:grid;grid-template-columns:var(--cs-rail) 1fr;
+  align-items:baseline;gap:0 1rem;border-top:1px solid var(--cs-rule);
+  padding-top:1.4rem;margin-bottom:1.6rem;}
+.cs-doc .cs-secnum{font-family:var(--cs-fm);font-size:.95rem;font-weight:600;
+  color:var(--cs-accent);letter-spacing:.02em;font-variant-numeric:tabular-nums;}
+.cs-doc .cs-sechead h2{font-family:var(--cs-fd);font-weight:600;
+  font-size:clamp(1.45rem,3.3vw,1.95rem);line-height:1.12;letter-spacing:-.02em;
+  text-wrap:balance;margin:0;color:var(--cs-ink);}
+.cs-doc .cs-secbody{display:grid;grid-template-columns:var(--cs-rail) minmax(0,1fr);gap:0 1rem;}
+.cs-doc .cs-secbody>*{grid-column:2;}
+.cs-doc .cs-secbody>p,.cs-doc .cs-secbody>ul,.cs-doc .cs-secbody>ol{max-width:var(--cs-measure);}
+.cs-doc .cs-secbody>p{margin:0 0 1.05rem;}
+.cs-doc .cs-secbody>ul,.cs-doc .cs-secbody>ol{margin:0 0 1.15rem;padding-left:1.15rem;
+  display:grid;gap:.5rem;}
+.cs-doc h3{font-family:var(--cs-fd);font-weight:600;font-size:1.06rem;
+  letter-spacing:-.005em;margin:1.9rem 0 .7rem;color:var(--cs-ink);}
+.cs-doc .cs-secbody>h3:first-child{margin-top:0;}
+.cs-doc h4{font-family:var(--cs-fm);font-weight:600;font-size:.74rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--cs-ink3);margin:1.6rem 0 .6rem;}
+
+.cs-doc .cs-formula{font-family:var(--cs-fm);font-size:.84rem;line-height:1.75;
+  background:var(--cs-surface);border:1px solid var(--cs-rule);
+  border-left:3px solid var(--cs-accent);padding:.95rem 1.1rem;margin:0 0 1.2rem;
+  overflow-x:auto;white-space:pre;color:var(--cs-ink);}
+.cs-doc .cs-formula em{color:var(--cs-ink3);font-style:normal;}
+.cs-doc .cs-note{font-size:.9rem;color:var(--cs-ink2);border-left:2px solid var(--cs-rule);
+  padding-left:.95rem;margin:0 0 1.2rem;max-width:var(--cs-measure);}
+
+/* tables */
+.cs-doc .cs-tbl{overflow-x:auto;margin:0 0 1.4rem;border:1px solid var(--cs-rule);
+  background:var(--cs-surface);}
+.cs-doc .cs-tbl table{border-collapse:collapse;width:100%;font-size:.845rem;
+  line-height:1.45;background:transparent;}
+.cs-doc .cs-tbl th,.cs-doc .cs-tbl td{padding:.5rem .7rem;text-align:left;
+  vertical-align:top;border:0;border-bottom:1px solid var(--cs-rule2);color:var(--cs-ink);}
+.cs-doc .cs-tbl thead th{font-family:var(--cs-fm);font-size:.68rem;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--cs-ink3);
+  background:var(--cs-surface2);border-bottom:1px solid var(--cs-rule);white-space:nowrap;}
+.cs-doc .cs-tbl tbody tr:last-child td{border-bottom:0;}
+/* Greek and subscripted symbols must not be uppercased: text-transform turns
+   ν into Ν and γ into Γ, which are different letters, and a reader of a
+   materials table would be misled by both. */
+.cs-doc .cs-tbl thead th.cs-sym{text-transform:none;letter-spacing:.02em;font-size:.74rem;}
+.cs-doc .cs-tbl tbody tr{background:transparent;}
+.cs-doc .cs-tbl .cs-n{text-align:right;font-family:var(--cs-fm);
+  font-variant-numeric:tabular-nums;white-space:nowrap;}
+.cs-doc .cs-tbl .cs-p{font-family:var(--cs-fm);font-size:.8rem;white-space:nowrap;}
+.cs-doc .cs-tbl .cs-d{font-family:var(--cs-fm);font-variant-numeric:tabular-nums;
+  white-space:nowrap;color:var(--cs-accent);font-weight:500;text-align:right;}
+.cs-doc .cs-tbl caption{caption-side:bottom;text-align:left;padding:.6rem .7rem;
+  font-size:.78rem;color:var(--cs-ink3);border-top:1px solid var(--cs-rule2);}
+
+/* chips + ledger */
+.cs-doc .cs-chip{display:inline-block;font-family:var(--cs-fm);font-size:.64rem;
+  font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:.15em .5em;
+  border-radius:2px;white-space:nowrap;}
+.cs-doc .cs-chip.is-in{background:var(--cs-ok-soft);color:var(--cs-ok);}
+.cs-doc .cs-chip.is-part{background:var(--cs-warn-soft);color:var(--cs-warn);}
+.cs-doc .cs-chip.is-out{background:var(--cs-no-soft);color:var(--cs-no);}
+.cs-doc .cs-ledger{display:grid;gap:0;border:1px solid var(--cs-rule);
+  background:var(--cs-surface);margin-bottom:1.4rem;}
+.cs-doc .cs-ledger>div{display:grid;grid-template-columns:7.5rem minmax(0,1fr);
+  gap:.2rem .9rem;padding:.8rem 1rem;border-bottom:1px solid var(--cs-rule2);}
+.cs-doc .cs-ledger>div:last-child{border-bottom:0;}
+.cs-doc .cs-ledger dt{font-family:var(--cs-fd);font-weight:600;font-size:.95rem;
+  grid-column:2;margin:0;color:var(--cs-ink);}
+.cs-doc .cs-ledger .cs-chip{grid-row:1;grid-column:1;align-self:start;margin-top:.18rem;}
+.cs-doc .cs-ledger dd{grid-column:2;margin:0;font-size:.93rem;color:var(--cs-ink2);
+  line-height:1.55;}
+
+/* exercises */
+.cs-doc .cs-ex{border:1px solid var(--cs-rule);background:var(--cs-surface);
+  padding:1.5rem 1.6rem;margin-bottom:1.5rem;}
+.cs-doc .cs-ex-n{font-family:var(--cs-fm);font-size:.7rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--cs-accent);
+  display:block;margin-bottom:.35rem;}
+.cs-doc .cs-ex h3{margin:0 0 .9rem;font-size:1.18rem;}
+.cs-doc .cs-steps{margin:0;padding-left:1.2rem;display:grid;gap:.5rem;font-size:.95rem;}
+.cs-doc .cs-steps code{font-size:.8rem;}
+.cs-doc .cs-principle{font-size:.93rem;color:var(--cs-ink2);
+  border-top:1px solid var(--cs-rule2);padding-top:.85rem;margin:.95rem 0 0;}
+.cs-doc .cs-principle b{color:var(--cs-ink);font-weight:600;}
+
+/* footer */
+.cs-doc .cs-footer{margin-top:4rem;padding-top:1.6rem;border-top:2px solid var(--cs-ink);
+  font-size:.86rem;color:var(--cs-ink2);}
+.cs-doc .cs-footer p{max-width:var(--cs-measure);margin:0 0 .8rem;}
+.cs-doc .cs-cite{font-family:var(--cs-fm);font-size:.78rem;color:var(--cs-ink3);line-height:1.7;}
+.cs-doc .cs-refs{max-width:var(--cs-measure);margin:0 0 1.2rem;padding-left:1.15rem;
+  display:grid;gap:.55rem;font-size:.9rem;color:var(--cs-ink2);}
+.cs-doc .cs-refs b{color:var(--cs-ink);font-weight:600;}
+.cs-doc .cs-ref{border-left:2px solid var(--cs-rule);padding-left:.95rem;margin:0 0 1rem;
+  max-width:var(--cs-measure);font-size:.92rem;color:var(--cs-ink2);}
+.cs-doc pre{margin:0 0 1rem;padding:.9rem 1rem;background:var(--cs-surface);
+  border:1px solid var(--cs-rule);overflow-x:auto;font-family:var(--cs-fm);
+  font-size:.78rem;line-height:1.6;color:var(--cs-ink);white-space:pre;}
+
+@media (max-width:720px){
+  .cs-doc{--cs-rail:0px;font-size:16px;}
+  .cs-doc .cs-sechead{grid-template-columns:1fr;gap:.35rem;}
+  .cs-doc .cs-secbody{grid-template-columns:minmax(0,1fr);}
+  .cs-doc .cs-secbody>*{grid-column:1;}
+  .cs-doc .cs-traps,.cs-doc .cs-ex{padding:1.15rem;}
+}
+@media (max-width:560px){
+  .cs-doc .cs-ledger>div{grid-template-columns:1fr;}
+  .cs-doc .cs-ledger .cs-chip{grid-row:auto;grid-column:1;justify-self:start;margin-bottom:.3rem;}
+  .cs-doc .cs-ledger dt,.cs-doc .cs-ledger dd{grid-column:1;}
+}
+@media (prefers-reduced-motion:reduce){
+  .cs-doc *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
+}
+
+/* quick start — this page only */
+.cs-doc .cs-quick{margin:2.5rem 0 0;border:1px solid var(--cs-rule);
+  border-left:4px solid var(--cs-accent);background:var(--cs-surface);padding:1.5rem 1.6rem;}
+.cs-doc .cs-quick h2{font-family:var(--cs-fd);font-size:.82rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--cs-accent);margin:0 0 .9rem;}
+.cs-doc .cs-quick ol{margin:0;padding-left:1.15rem;display:grid;gap:.6rem;}
+.cs-doc .cs-quick li{max-width:var(--cs-measure);}
+.cs-doc .cs-quick .cs-principle{margin-top:1rem;}
+</style>
+
+<div class="cs-doc">
+
+  <div class="cs-masthead">
+    <h1>Rainwater Collection Studio &mdash; Method Notes</h1>
+    <p class="cs-standfirst">
+      What this tool calculates, which clause of the standard each step comes from, and — the part
+      that matters most when you cite it — <strong>where it departs from that standard and where it
+      uses figures with no source at all</strong>. Everything below is read from the source code and
+      checked against <span class="cs-mono">BS EN 16941&#8209;1:2024</span>. Where the code makes
+      something unclear, this page says so rather than inferring.
+    </p>
+    <div class="cs-byline">
+      <span><b>Audience</b> Architecture students and staff</span>
+      <span><b>Method</b> BS EN 16941-1:2024 &middot; yield and store simulation</span>
+      <span><b>Runs</b> Entirely in the browser</span>
+      <span><b>Updated</b> 14 September 2026</span>
+    </div>
+  </div>
+
+  <div class="cs-quick">
+    <h2>Quick start</h2>
+    <ol>
+      <li>Open the app and let the tour run, or dismiss it. <b>Models &rsaquo; Terraced housing row</b>
+        loads a worked example: five blocks, 325&nbsp;m&sup2; of catchment, 18 occupants, Dublin rainfall.</li>
+      <li>In the <b>System</b> panel tick <b>Daily balance</b>. Leave it off and the store is capped at one
+        tank-full a month, which is a property of the time step, not of the tank (see
+        <a href="#cs-04">How exact the numbers are</a>).</li>
+      <li>Set <b>Storage capacity</b> to <i>Set manually</i> and type <code>1000</code>, then <code>2000</code>.
+        Watch the coverage rate in the Results panel: 59.3&nbsp;% then 69.4&nbsp;%.</li>
+      <li>Type <code>4000</code>. Still 69.4&nbsp;%. You have just found the point where more tank buys nothing.</li>
+      <li><b>Export &rsaquo; Explain sheet</b> walks the same numbers step by step and names which one is
+        the answer. <b>Export &rsaquo; Report sheet</b> is the A3 version for a crit.</li>
+    </ol>
+    <p class="cs-principle"><b>The one number to report</b> is the <b>mains water displaced</b> —
+      what the store actually supplied. The annual yield is what the roof collects; a good deal of it
+      overflows. Quote yield without storage and you will overstate the benefit, often by half.</p>
+  </div>
+
+  <div class="cs-traps">
+    <h2>Three things to know before you cite a number</h2>
+    <ol>
+      <li><b>The tool holds no daily rainfall, anywhere, at any point.</b>
+        <span class="cs-mono">BS EN 16941&#8209;1:2024</span> A.2.2.2 requires the detailed approach to
+        run on measured daily rainfall over at least five years. This tool has twelve monthly totals per
+        location and nothing else. Its <i>daily balance</i> option does not read daily data: it divides
+        the month's depth by a typical depth per wet day to get a wet-day count, then spreads the month's
+        inflow evenly across those synthetic days. Every storage result here is therefore an
+        approximation of the detailed approach, not the detailed approach. <b>Do not present a tank size
+        from this tool as a BS EN 16941&#8209;1 detailed-approach sizing.</b></li>
+      <li><b>The rainfall library has no source.</b> The 28 locations carry 336 monthly figures and a
+        depth-per-wet-day each, and the code names no origin for any of them — no dataset, no station,
+        no period of record. They are fine for comparing one roof with another. They are not a
+        citable climate source. Before you publish a number, replace the location with rainfall you can
+        cite, either by typing the twelve months in or by fetching them from Open&#8209;Meteo in the
+        Climate panel.</li>
+      <li><b>The litres-per-second figure is not a design.</b> The gutter and downpipe check uses a
+        75&nbsp;mm/h storm and a seven-row pipe capacity table, and the code names a source for neither.
+        Its own comment marks it as <i>not a substitute for</i> <span class="cs-mono">BS EN 12056&#8209;3</span>.
+        Use it to see that a roof this size needs pipes of roughly this order, and for nothing else.</li>
+    </ol>
+  </div>
+
+  <div class="cs-sec">
+    <div class="cs-sechead" id="cs-01"><span class="cs-secnum">01</span><h2>What it calculates</h2></div>
+    <div class="cs-secbody">
+
+      <h3>The catchment is the plan projection, and that is the standard's own definition</h3>
+      <p>The tool builds each roof as a set of planes, takes the area vector of every face by Newell's
+        method, and keeps the <b>vertical component</b>. That is the area of the roof's shadow on the
+        ground, not the area of the sloping surface you would tile.</p>
+      <p>The standard behind the tool is <span class="cs-mono">BS EN 16941&#8209;1:2024</span>, which
+        superseded <span class="cs-mono">BS 8515:2009</span> — the code says so, and that phrase is the
+        only place BS 8515 appears in it; nothing the tool calculates comes from the older code of
+        practice.</p>
+      <p>This is not a simplification the tool has chosen. <span class="cs-mono">BS EN 16941&#8209;1:2024</span>,
+        clause 6.1.2, defines <i>A</i> in Formula (1) as <b>the horizontal projection of the collection
+        area</b>. Rain falls vertically; a steeper roof intercepts no more of it.</p>
+      <p>Everything follows from this, and it is the single most useful thing the tool teaches:</p>
+      <div class="cs-tbl">
+        <table>
+          <caption>Measured by running the tool's own <span class="cs-mono">GEO.build</span> on a
+            12&nbsp;&times;&nbsp;8&nbsp;m block with a 0.5&nbsp;m overhang, London rainfall, rough
+            pitched tile. Catchment and yield do not move at all.</caption>
+          <thead><tr><th>Gable pitch</th><th class="cs-sym">Catchment A</th><th class="cs-sym">Surface</th>
+            <th>Surface &divide; catchment</th><th class="cs-sym">Annual yield</th></tr></thead>
+          <tbody>
+            <tr><td class="cs-n">15&deg;</td><td class="cs-n">117.00 m&sup2;</td><td class="cs-n">121.13 m&sup2;</td><td class="cs-n">1.035</td><td class="cs-d">50.80 m&sup3;</td></tr>
+            <tr><td class="cs-n">25&deg;</td><td class="cs-n">117.00 m&sup2;</td><td class="cs-n">129.10 m&sup2;</td><td class="cs-n">1.103</td><td class="cs-d">50.80 m&sup3;</td></tr>
+            <tr><td class="cs-n">35&deg;</td><td class="cs-n">117.00 m&sup2;</td><td class="cs-n">142.83 m&sup2;</td><td class="cs-n">1.221</td><td class="cs-d">50.80 m&sup3;</td></tr>
+            <tr><td class="cs-n">45&deg;</td><td class="cs-n">117.00 m&sup2;</td><td class="cs-n">165.46 m&sup2;</td><td class="cs-n">1.414</td><td class="cs-d">50.80 m&sup3;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>At 45&deg; you are buying 41&nbsp;% more roof covering and collecting exactly the same water.
+        A barrel vault is the extreme case in this tool: on the same footprint its surface reaches
+        185.7&nbsp;m&sup2; against a catchment of 117.0&nbsp;m&sup2;.</p>
+
+      <h4>Catchment for each roof form</h4>
+      <p>With footprint <i>w</i> &times; <i>d</i> and overhang <i>o</i>, seven of the eight forms give the
+        same catchment and one does not:</p>
+      <div class="cs-formula">flat, gable, hip, shed, butterfly, vault, pyramid   A = (w + 2o)(d + 2o)
+sawtooth                                           A = (w + 2o)(d + o)
+<em>The sawtooth carries its overhang on the low edge only, so it loses one overhang's
+depth. On a 12 x 8 m block with o = 0.5 m that is 110.5 m2 against 117.0 m2.</em></div>
+
+      <h3>The yield equation, as implemented</h3>
+      <p>The code implements Formula (1) of clause 6.1.2 directly, summed over surfaces so that blocks
+        with different materials each keep their own coefficient:</p>
+      <div class="cs-formula">Y = SUM( A_i  x  e_i  x  h  x  eta )        litres
+
+<em>A_i  horizontal projection of collection area i, m2
+e_i  surface yield coefficient of that surface, Table 2
+h    rainfall depth for the time step, mm
+eta  hydraulic treatment efficiency coefficient</em>
+
+1 mm falling on 1 m2 = 1 litre, which is where the units close.</div>
+      <p>Worked, for the 12&nbsp;&times;&nbsp;8&nbsp;m gable above:
+        117.00&nbsp;m&sup2; &times; 603&nbsp;mm &times; 0.80 &times; 0.90 = <b>50&nbsp;797&nbsp;litres a year</b>, the 50.80&nbsp;m&sup3; in the table above.</p>
+
+      <h3>Two losses, and only two</h3>
+      <p><b>e</b>, the surface yield coefficient, is what the roof surface itself loses to wetting,
+        evaporation and wind. The tool offers all eight surfaces of Table 2 at the published values —
+        see <a href="#cs-02">How the roof is generated</a>.</p>
+      <p><b>&eta;</b>, the hydraulic treatment efficiency coefficient, is what the pre-tank treatment
+        loses. The tool defaults to 0.90. The standard's note to clause 6.1.2 says that where the
+        manufacturer does not specify a figure, 0.9 <i>can be used</i> for a system with no additional
+        treatment. It is a default to fall back on, <b>not a minimum the standard requires</b>, and the
+        tool's earlier wording said otherwise. Put the manufacturer's figure in when you have one.</p>
+      <p>The <b>first-flush</b> input is this tool's own addition. Formula (1) has no first-flush term.
+        The tool subtracts the diverted depth from each synthetic wet day before applying the
+        coefficients. Leave it at 0 to calculate strictly to the standard.</p>
+
+      <h3>The demand side</h3>
+      <p>Demand is built per person per day from four end uses, multiplied by occupancy, plus an
+        optional irrigation demand applied only within a chosen season:</p>
+      <div class="cs-tbl">
+        <table>
+          <caption>Read from <span class="cs-mono">ENDUSES</span>. Each figure is editable in the app.
+            WC and laundry are on by default; cleaning and vehicle wash are off.</caption>
+          <thead><tr><th>End use</th><th class="cs-sym">l/person/day</th><th>On by default</th><th>Source in the code</th></tr></thead>
+          <tbody>
+            <tr><td>WC flushing</td><td class="cs-n">25</td><td>yes</td><td rowspan="2">None named. The two together come to <b>40 l/person/day</b>, which is exactly what the UK National Annex NA.1.2 recommends for toilet and washing-machine use. The split between them is the tool's.</td></tr>
+            <tr><td>Laundry</td><td class="cs-n">15</td><td>yes</td></tr>
+            <tr><td>Cleaning</td><td class="cs-n">5</td><td>no</td><td rowspan="2"><b>No source named</b>, and outside the National Annex figure.</td></tr>
+            <tr><td>Vehicle wash</td><td class="cs-n">2</td><td>no</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Irrigation is <span class="cs-mono">area &times; mm/week &times; days/7</span>, applied in whole
+        months between the chosen start and end. The standard treats this as the non-person-related
+        demand <i>D</i><sub>f,d</sub> of Formula (2); the tool's weekly rate and season are its own
+        parameterisation, and it has no evapotranspiration model behind them.</p>
+      <p>Annual demand is daily demand &times; 365, as Formula (4). Note 2 of that clause points out
+        that 365 suits residential premises and that commercial or public buildings may run on fewer
+        days. <b>The tool always uses 365</b> and gives you no way to say otherwise, so a school or
+        office model overstates annual demand by the days the building is closed.</p>
+
+      <h3>The store, and which number is the answer</h3>
+      <p>The store is operated by Formulas (A.3) and (A.4) of Annex A.2.2.3. Abstraction is the lesser
+        of the demand and the volume that was in the store at the <b>end of the previous step</b>, before
+        this step's inflow is added; anything above the usable volume overflows. That convention is
+        called YAS, Yield After Spillage, and it is the conservative one. The tool runs three warm-up
+        cycles through the year before reporting the fourth, so the answer does not depend on how full
+        the tank was assumed to be on 1 January.</p>
+      <div class="cs-ledger">
+        <div><span class="cs-chip is-out">not it</span><dt>Annual yield</dt>
+          <dd>What the roof collects. A large part of it can overflow, so on its own it overstates
+            the benefit.</dd></div>
+        <div><span class="cs-chip is-out">not it</span><dt>Peak flow, litres/second</dt>
+          <dd>Answers a different question — how fast water leaves the roof in one storm, which sizes
+            pipes. It has no bearing on the tank.</dd></div>
+        <div><span class="cs-chip is-out">not it</span><dt>Storage capacity</dt>
+          <dd>An input, or the output of a sizing rule. Not a performance result.</dd></div>
+        <div><span class="cs-chip is-in">the answer</span><dt>Mains water displaced</dt>
+          <dd>The volume the store actually supplied over the year. This is what the system is for,
+            what the saving is calculated from, and the number to report.</dd></div>
+      </div>
+      <p>Alongside it the tool reports the <b>coverage rate</b> <i>C</i><sub>r</sub> — supplied divided
+        by demanded — which is Formula (A.5) of the standard, and a second figure counting the
+        <i>steps</i> in which demand was met in full. That second figure is the tool's own; the standard
+        has no such measure, and the two diverge whenever a shortfall is partial rather than total.</p>
+    </div>
+  </div>
+
+  <div class="cs-sec">
+    <div class="cs-sechead" id="cs-02"><span class="cs-secnum">02</span><h2>How the roof is generated</h2></div>
+    <div class="cs-secbody">
+      <p>A model is a set of rectangular blocks. Each block has a footprint, a wall height, a roof form
+        and a surface. The roof is generated parametrically from the form: six of the eight are extruded
+        along <i>X</i> from a profile drawn in the (<i>z</i>,&nbsp;<i>y</i>) plane, and two &mdash; hip and
+        pyramid &mdash; are built radially on the expanded footprint.</p>
+      <div class="cs-tbl">
+        <table>
+          <caption>The eight forms and the parameters each exposes, read from the panel code. Every form
+            also takes the eaves overhang and the downpipe count.</caption>
+          <thead><tr><th>Form</th><th>Construction</th><th>Parameters it adds</th></tr></thead>
+          <tbody>
+            <tr><td>Flat</td><td>profile</td><td>Fall 1&ndash;10&deg;, parapet 0&ndash;2&nbsp;m</td></tr>
+            <tr><td>Gable</td><td>profile</td><td>Pitch 1&ndash;60&deg;</td></tr>
+            <tr><td>Hip</td><td>radial</td><td>Pitch 5&ndash;60&deg;, ridge length 0&ndash;1 &times; max</td></tr>
+            <tr><td>Shed</td><td>profile</td><td>Pitch 1&ndash;60&deg;</td></tr>
+            <tr><td>Butterfly</td><td>profile</td><td>Pitch 1&ndash;60&deg;</td></tr>
+            <tr><td>Sawtooth</td><td>profile</td><td>Pitch 5&ndash;60&deg;, 1&ndash;12 bays</td></tr>
+            <tr><td>Vault</td><td>profile</td><td>Rise at crown 0.5&ndash;20&nbsp;m</td></tr>
+            <tr><td>Pyramid</td><td>radial</td><td>Pitch 1&ndash;60&deg;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The form changes the geometry, the surface area, where the flow arrows run and how many gutters
+        the drawing shows. With the single exception of the sawtooth's overhang, noted above, <b>it does
+        not change the catchment</b>, and so it does not change the yield.</p>
+
+      <h3>The surface library</h3>
+      <p>All eight rows of Table 2, in the standard's order, at the published values. The tool's earlier
+        library had six surfaces of its own naming, four of which sat below the published figures while
+        the code claimed Table 2 as their source; they have been corrected, and models saved under the
+        old names are mapped across when you open them.</p>
+      <div class="cs-tbl">
+        <table>
+          <caption>Transcribed from <span class="cs-mono">BS EN 16941&#8209;1:2024</span> Table 2.
+            Footnote <i>a</i> to that table: these coefficients can be used if no other values are
+            available. The standard also says the coefficient of other surfaces shall be adapted.</caption>
+          <thead><tr><th>Collection surface</th><th class="cs-sym">e</th></tr></thead>
+          <tbody>
+            <tr><td>Pitched roof, smooth &mdash; metal, glass, slate, glazed tile</td><td class="cs-d">0.90</td></tr>
+            <tr><td>Pitched roof, rough &mdash; concrete tile</td><td class="cs-d">0.80</td></tr>
+            <tr><td>Flat roof, without gravel</td><td class="cs-d">0.80</td></tr>
+            <tr><td>Flat roof, with gravel</td><td class="cs-d">0.70</td></tr>
+            <tr><td>Green roof, intensive &mdash; garden</td><td class="cs-d">0.30</td></tr>
+            <tr><td>Green roof, extensive</td><td class="cs-d">0.50</td></tr>
+            <tr><td>Sealed area &mdash; asphalt</td><td class="cs-d">0.80</td></tr>
+            <tr><td>Non-sealed area &mdash; cobble stone</td><td class="cs-d">0.50</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Note what the table does <b>not</b> distinguish. There is one figure for all smooth pitched
+        roofs whatever the pitch, and none of the eight rows varies with rainfall intensity, roof length
+        or climate. A coefficient chosen from this table carries no more precision than one significant
+        figure, and no result built on it deserves more.</p>
+
+      <h3>What is fixed</h3>
+      <p>Blocks are rectangular on plan, with vertical walls and a level eaves line. There are no
+        L-shaped or curved footprints, no dormers, rooflights, plant or service penetrations, and no
+        obstruction of one roof by another. Gutters and downpipes are drawn, and downpipes are counted
+        for the drainage check, but neither is modelled as a hydraulic object: nothing in the calculation
+        knows a gutter's profile, fall or length.</p>
+    </div>
+  </div>
+
+  <div class="cs-sec">
+    <div class="cs-sechead" id="cs-03"><span class="cs-secnum">03</span><h2>What is and isn't modelled</h2></div>
+    <div class="cs-secbody">
+
+      <h3>Included</h3>
+      <ul>
+        <li>Catchment as the horizontal projection, per surface, for eight roof forms and any number of blocks.</li>
+        <li>Yield to Formula (1), with the Table 2 coefficient of each surface and a treatment coefficient.</li>
+        <li>Non-potable demand from four editable end uses, occupancy and a seasonal irrigation term.</li>
+        <li>A store operated by the YAS rule of Formulas (A.3) and (A.4), stepped monthly or daily, with
+          three warm-up cycles.</li>
+        <li>Capacity by the basic approach of A.2.1, including the National Annex NA.3 reduction, and by
+          reading a knee off the coverage-against-capacity curve of A.2.2.4.</li>
+        <li>Coverage rate <i>C</i><sub>r</sub> to Formula (A.5), overflow, mains top-up and the saving in
+          money at a tariff you set.</li>
+        <li>An indicative gutter and downpipe check, expressly not a <span class="cs-mono">BS EN 12056&#8209;3</span> design.</li>
+      </ul>
+
+      <h3>Not modelled</h3>
+      <p>None of the following is approximated, simplified or estimated. It is <b>absent</b>, and a result
+        from this tool says nothing about any of it:</p>
+      <ul>
+        <li><b>Water quality, treatment and risk assessment</b> &mdash; Clauses 5.9 and 10 of the standard,
+          and the whole of the National Annex NA.2 with its guideline values, monitoring and sampling.
+          A tool that sizes a tank has said nothing about whether the water in it is fit for the use.</li>
+        <li><b>The back-up supply</b> &mdash; Clause 6.2. The tool reports a mains top-up volume; it does
+          not size the back-up pipe or check the air gap.</li>
+        <li><b>Pumps, pipework, controls, pressure and energy</b>. No pump curve, no head, no kWh.</li>
+        <li><b>Carbon, embodied impact, capital cost and payback.</b> The tool multiplies displaced mains
+          water by a tariff. That is a saving in water charges, not a financial appraisal.</li>
+        <li><b>Rainfall intensity, storm events, snow, and extremes.</b> The store calculation never sees
+          an intensity; the drainage check uses one fixed value.</li>
+        <li><b>Climate change.</b> The National Annex NA.4 asks for a sensitivity analysis on future
+          drier summers and wetter winters, and recommends a seasonal assessment alongside the annual
+          one. The tool has no future scenario and does not prompt for one.</li>
+        <li><b>Spatial rainfall, wind-driven rain and local shelter.</b> Depth is uniform over the site.</li>
+        <li><b>Tank geometry, siting and losses.</b> The capacity is a number of litres. There is no
+          shape, no depth, no minimum water level, no calmed inlet, no evaporation or leakage.</li>
+        <li><b>Gutters and downpipes as hydraulic objects</b>, as noted above.</li>
+        <li><b>Overflow discharge.</b> The tool reports the volume that overflows and stops there. Where
+          it goes, and whether the drain or the ground can take it, is outside the model.</li>
+      </ul>
+
+      <h3>Regulatory compliance</h3>
+      <p>The tool checks nothing against Building Regulations, water fittings regulations, or any local
+        requirement. It has no approval logic, no pass or fail, and no notion of jurisdiction beyond the
+        UK National Annex rules named on this page. Treat every output as a design study.</p>
+    </div>
+  </div>
+
+  <div class="cs-sec">
+    <div class="cs-sechead" id="cs-04"><span class="cs-secnum">04</span><h2>How exact the numbers are</h2></div>
+    <div class="cs-secbody">
+
+      <h3>The daily balance is not daily data</h3>
+      <p>This is the tool's sharpest departure from the standard, and it is worth stating exactly. The
+        detailed approach of A.2.2 runs on measured daily rainfall over at least five years, preferably
+        recent. The tool has twelve monthly totals. When you switch on the daily balance it:</p>
+      <div class="cs-formula">wet days in month = round( monthly depth / typical depth per wet day )
+                    clamped to between 1 and the days in the month
+
+then the month's inflow is divided equally between those wet days,
+spaced evenly through the month.</div>
+      <p>So a synthetic year of identical showers stands in for a real one of downpours and dry spells.
+        Real rainfall is far lumpier, which means real dry runs are longer and real spills larger than
+        this tool will show. <b>Expect it to flatter a small store.</b> The depth-per-wet-day figure that
+        drives the whole construction is one number per location, ranging from 5 to 24&nbsp;mm across the
+        library, and the code names no source for it either.</p>
+      <p>There is a second-order consequence worth knowing: first-flush diversion is applied per synthetic
+        wet day, so the first-flush loss is a direct function of a wet-day count the tool invented.</p>
+
+      <h3>On a monthly step the store can only deliver one tank-full a month</h3>
+      <p>With monthly stepping there is one draw per month, taken against the volume standing at the end
+        of the previous month. A tank cannot be drawn twice, so however often it would really refill, the
+        most it can supply in a month is its own capacity. Measured on the terraced-housing model, whose
+        demand is about 22&nbsp;m&sup3; a month:</p>
+      <div class="cs-tbl">
+        <table>
+          <caption>Coverage rate against capacity for the same model, stepped both ways. Produced by
+            running the tool's <span class="cs-mono">HYD.compute</span> directly.</caption>
+          <thead><tr><th>Usable capacity</th><th class="cs-sym">C<sub>r</sub>, monthly step</th><th class="cs-sym">C<sub>r</sub>, daily step</th></tr></thead>
+          <tbody>
+            <tr><td class="cs-n">1 000 L</td><td class="cs-n">4.6 %</td><td class="cs-d">59.3 %</td></tr>
+            <tr><td class="cs-n">2 000 L</td><td class="cs-n">9.1 %</td><td class="cs-d">69.4 %</td></tr>
+            <tr><td class="cs-n">4 000 L</td><td class="cs-n">18.3 %</td><td class="cs-d">69.4 %</td></tr>
+            <tr><td class="cs-n">10 000 L</td><td class="cs-n">45.7 %</td><td class="cs-d">69.4 %</td></tr>
+            <tr><td class="cs-n">20 000 L</td><td class="cs-n">69.4 %</td><td class="cs-d">69.4 %</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The monthly column is an artefact of the time step, not a property of the tank. <b>Use the daily
+        balance for any store smaller than a month's demand</b>; the app now warns when you have not. The
+        monthly step is only safe for comparing capacities well above that threshold.</p>
+
+      <h3>Where the figures come from, and where they come from nowhere</h3>
+      <p>Everything in the first table is traceable to the standard. Everything in the second is not, and
+        is listed so you can decide what to do about it before you cite anything.</p>
+      <div class="cs-tbl">
+        <table>
+          <caption>Sourced. Clause references are to <span class="cs-mono">BS EN 16941&#8209;1:2024</span>,
+            checked against the published standard.</caption>
+          <thead><tr><th>What</th><th>Clause</th></tr></thead>
+          <tbody>
+            <tr><td>Catchment as the horizontal projection of the collection area</td><td class="cs-p">6.1.2, Formula (1)</td></tr>
+            <tr><td>The yield equation, summed over surfaces</td><td class="cs-p">6.1.2, Formula (1)</td></tr>
+            <tr><td>The eight surface yield coefficients</td><td class="cs-p">6.1.2, Table 2</td></tr>
+            <tr><td>&eta; = 0.9 as the fallback where none is specified</td><td class="cs-p">6.1.2, note</td></tr>
+            <tr><td>Demand as person-related plus non-person-related; annual = daily &times; 365</td><td class="cs-p">6.1.3, Formulas (2), (3), (4)</td></tr>
+            <tr><td>Store operation, abstraction from the previous step's volume, overflow</td><td class="cs-p">A.2.2.3, Formulas (A.3), (A.4)</td></tr>
+            <tr><td>Coverage rate <i>C</i><sub>r</sub></td><td class="cs-p">A.2.2.3, Formula (A.5)</td></tr>
+            <tr><td>Capacity as the lesser of yield and demand &times; dry period &divide; 365</td><td class="cs-p">A.2.1, Formulas (A.1), (A.2)</td></tr>
+            <tr><td>Dry periods of 15, 18 and 21 days</td><td class="cs-p">A.2.1</td></tr>
+            <tr><td>Halving the dry period outside a yield/demand ratio of 0.5&ndash;2.0</td><td class="cs-p">NA.3</td></tr>
+            <tr><td>Plotting coverage against capacity to choose a volume</td><td class="cs-p">A.2.2.4</td></tr>
+            <tr><td>40 l/person/day for toilet and washing machine, as the sum of the two defaults</td><td class="cs-p">NA.1.2</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="cs-tbl">
+        <table>
+          <caption>Unsourced. For each of these the code names no origin whatever, and this page does
+            not supply one.</caption>
+          <thead><tr><th>Value</th><th>Where in the code</th><th>What to do</th></tr></thead>
+          <tbody>
+            <tr><td>28 locations &times; 12 monthly rainfall figures</td><td class="cs-p">CITIES</td>
+              <td>Replace with rainfall you can cite before publishing.</td></tr>
+            <tr><td>Typical depth per wet day, 5&ndash;24 mm by location</td><td class="cs-p">CITIES</td>
+              <td>Drives the whole synthetic daily construction. Treat every daily-step result as indicative.</td></tr>
+            <tr><td>Downpipe capacities, 63&ndash;150 mm at 1.7&ndash;16.0 l/s</td><td class="cs-p">PIPE_CAP</td>
+              <td>Do not use for sizing. Go to <span class="cs-mono">BS EN 12056&#8209;3</span>.</td></tr>
+            <tr><td>75 mm/h design storm</td><td class="cs-p">drainageCheck</td>
+              <td>Substitute your local design intensity if you want an indication at all.</td></tr>
+            <tr><td>Cleaning 5 and vehicle wash 2 l/person/day</td><td class="cs-p">ENDUSES</td>
+              <td>Outside the National Annex figure. Edit to a demand you can defend.</td></tr>
+            <tr><td>The split of 40 l/person/day into WC 25 and laundry 15</td><td class="cs-p">ENDUSES</td>
+              <td>The total is from NA.1.2; the split is the tool's.</td></tr>
+            <tr><td>Mains tariff of 2.20 per m&sup3;, and its currency</td><td class="cs-p">newModel</td>
+              <td>Set your own. The code names no currency at all.</td></tr>
+            <tr><td>The knee: smallest capacity reaching 95 % of the best achievable coverage</td><td class="cs-p">HYD.compute</td>
+              <td>The standard plots the curve and leaves the choice to the project. The 95 % test is the tool's.</td></tr>
+            <tr><td>First-flush diversion</td><td class="cs-p">inflowMonthly</td>
+              <td>No term for it in Formula (1). Set 0 to calculate strictly to the standard.</td></tr>
+            <tr><td>Counting steps in which demand was met in full</td><td class="cs-p">balance</td>
+              <td>Report <i>C</i><sub>r</sub> instead if you are citing the standard.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Where it is conservative, and where it is not</h3>
+      <ul>
+        <li><b>Conservative:</b> the YAS rule itself, which meets demand from the previous step's volume
+          and so never lets water arriving today be used today.</li>
+        <li><b>Conservative:</b> annual demand at 365 days, for any building that is not occupied all year.</li>
+        <li><b>Not conservative:</b> the synthetic even wet days, which shorten dry runs and understate spill.</li>
+        <li><b>Not conservative:</b> a catchment with no allowance for anything lost at gutter, filter or
+          overflow beyond the two coefficients.</li>
+        <li><b>Neither, just wrong at small capacities:</b> the monthly step, as set out above.</li>
+      </ul>
+      <p>The arithmetic itself is exact to floating point, and the volume balance closes: inflow equals
+        supplied plus overflow plus the change in store. Precision in the arithmetic is not accuracy in
+        the answer, and the inputs above are where the uncertainty lives.</p>
+    </div>
+  </div>
+
+  <div class="cs-sec">
+    <div class="cs-sechead" id="cs-05"><span class="cs-secnum">05</span><h2>Inputs you control</h2></div>
+    <div class="cs-secbody">
+      <p>Every parameter in the app, with the range, step and default read from the panel code. Anything
+        not in this table is not adjustable.</p>
+      <div class="cs-tbl">
+        <table>
+          <caption>Ranges and steps are the slider limits; typing a value is bounded by the same limits.</caption>
+          <thead><tr><th>Input</th><th>Range</th><th>Step</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr><td colspan="4"><h4 style="margin:.2rem 0">Block</h4></td></tr>
+            <tr><td>Width (X)</td><td class="cs-n">2 &ndash; 120 m</td><td class="cs-n">0.5</td><td class="cs-d">12 m</td></tr>
+            <tr><td>Depth (Z)</td><td class="cs-n">2 &ndash; 120 m</td><td class="cs-n">0.5</td><td class="cs-d">8 m</td></tr>
+            <tr><td>Wall / eaves height</td><td class="cs-n">2 &ndash; 40 m</td><td class="cs-n">0.25</td><td class="cs-d">6 m</td></tr>
+            <tr><td>Offset X, Offset Z</td><td class="cs-n">&minus;120 &ndash; 120 m</td><td class="cs-n">0.5</td><td class="cs-d">0 m</td></tr>
+            <tr><td>Downpipes on this block</td><td class="cs-n">1 &ndash; 24</td><td class="cs-n">1</td><td class="cs-d">2</td></tr>
+            <tr><td colspan="4"><h4 style="margin:.2rem 0">Roof</h4></td></tr>
+            <tr><td>Form</td><td colspan="2">flat, gable, hip, shed, butterfly, sawtooth, vault, pyramid</td><td class="cs-d">gable</td></tr>
+            <tr><td>Pitch &mdash; gable, shed, butterfly, pyramid</td><td class="cs-n">1 &ndash; 60&deg;</td><td class="cs-n">0.5</td><td class="cs-d">30&deg;</td></tr>
+            <tr><td>Pitch &mdash; hip, sawtooth</td><td class="cs-n">5 &ndash; 60&deg;</td><td class="cs-n">0.5</td><td class="cs-d">30&deg;</td></tr>
+            <tr><td>Fall &mdash; flat only <b>(no effect)</b></td><td class="cs-n">1 &ndash; 10&deg;</td><td class="cs-n">0.5</td><td class="cs-d">&mdash;</td></tr>
+            <tr><td>Parapet height &mdash; flat only</td><td class="cs-n">0 &ndash; 2 m</td><td class="cs-n">0.05</td><td class="cs-d">0.6 m</td></tr>
+            <tr><td>Rise at crown &mdash; vault only</td><td class="cs-n">0.5 &ndash; 20 m</td><td class="cs-n">0.25</td><td class="cs-d">3 m</td></tr>
+            <tr><td>Number of bays &mdash; sawtooth only</td><td class="cs-n">1 &ndash; 12</td><td class="cs-n">1</td><td class="cs-d">4</td></tr>
+            <tr><td>Ridge length &mdash; hip only</td><td class="cs-n">0 &ndash; 1 &times; max</td><td class="cs-n">0.05</td><td class="cs-d">1</td></tr>
+            <tr><td>Eaves overhang</td><td class="cs-n">0 &ndash; 3 m</td><td class="cs-n">0.05</td><td class="cs-d">0.5 m</td></tr>
+            <tr><td>Surface</td><td colspan="2">the eight rows of Table 2</td><td class="cs-d">pitched rough</td></tr>
+            <tr><td colspan="4"><h4 style="margin:.2rem 0">Climate</h4></td></tr>
+            <tr><td>Rainfall input</td><td colspan="2">preset location, twelve monthly figures, or an annual total scaled onto the current monthly shape</td><td class="cs-d">preset</td></tr>
+            <tr><td>Annual rainfall &mdash; annual mode</td><td class="cs-n">0 &ndash; 5 000 mm</td><td class="cs-n">10</td><td class="cs-d">603 mm</td></tr>
+            <tr><td>Monthly rainfall &mdash; monthly mode</td><td class="cs-n">0 &ndash; 2 000 mm each</td><td class="cs-n">1</td><td class="cs-d">London</td></tr>
+            <tr><td>Typical depth per wet day</td><td class="cs-n">2 &ndash; 30 mm</td><td class="cs-n">1</td><td class="cs-d">by location</td></tr>
+            <tr><td colspan="4"><h4 style="margin:.2rem 0">Demand</h4></td></tr>
+            <tr><td>Occupants</td><td class="cs-n">0 &ndash; 2 000</td><td class="cs-n">1</td><td class="cs-d">4</td></tr>
+            <tr><td>Each end use, l/person/day</td><td class="cs-n">0 &ndash; 300</td><td class="cs-n">1</td><td class="cs-d">25 / 15 / 5 / 2</td></tr>
+            <tr><td>Irrigated area</td><td class="cs-n">0 &ndash; 5 000 m&sup2;</td><td class="cs-n">10</td><td class="cs-d">0</td></tr>
+            <tr><td>Application rate</td><td class="cs-n">0 &ndash; 60 mm/week</td><td class="cs-n">1</td><td class="cs-d">15</td></tr>
+            <tr><td>Irrigation season</td><td colspan="2">any month to any month, inclusive</td><td class="cs-d">April to September</td></tr>
+            <tr><td colspan="4"><h4 style="margin:.2rem 0">System</h4></td></tr>
+            <tr><td>Treatment coefficient &eta;</td><td class="cs-n">0.5 &ndash; 1</td><td class="cs-n">0.01</td><td class="cs-d">0.90</td></tr>
+            <tr><td>First flush diverted</td><td class="cs-n">0 &ndash; 3 mm/event</td><td class="cs-n">0.1</td><td class="cs-d">0</td></tr>
+            <tr><td>Storage capacity</td><td colspan="2">basic approach A.2.1, or set manually</td><td class="cs-d">A.2.1</td></tr>
+            <tr><td>Design dry period</td><td class="cs-n">1 &ndash; 60 days</td><td class="cs-n">1</td><td class="cs-d">18 days</td></tr>
+            <tr><td>Tank capacity &mdash; manual mode</td><td class="cs-n">0 &ndash; 200 000 L</td><td class="cs-n">100</td><td class="cs-d">3 000 L</td></tr>
+            <tr><td>Daily balance</td><td colspan="2">on or off</td><td class="cs-d">off</td></tr>
+            <tr><td>Mains water tariff</td><td class="cs-n">0 &ndash; 20 per m&sup3;</td><td class="cs-n">0.05</td><td class="cs-d">2.20</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>One control does nothing.</b> The <i>Fall</i> slider on a flat roof changes neither the
+        geometry nor any result: the tool builds a flat roof as a level plane, so its surface area equals
+        its catchment whatever the fall is set to. For a fall in the range the slider offers the area
+        difference would be under half a per cent, so nothing is lost by it — but the slider should not
+        be read as doing anything.</p>
+      <p>Ten worked models ship with the tool: one roof-form comparison, five typologies (detached house,
+        school block, warehouse, mosque with courtyard, terraced row), three climate studies and one
+        surface comparison. Each is a starting point you can edit; nothing in them is locked.</p>
+    </div>
+  </div>
+
+  <div class="cs-sec">
+    <div class="cs-sechead" id="cs-06"><span class="cs-secnum">06</span><h2>Compared with the standard, and with a hand calculation</h2></div>
+    <div class="cs-secbody">
+
+      <h3>Where it should agree</h3>
+      <ul>
+        <li><b>Annual yield, exactly.</b> Formula (1) with a Table 2 coefficient is arithmetic, and the
+          tool does it as written. If you compute
+          <span class="cs-mono">A &times; e &times; h &times; &eta;</span> by hand with the same inputs,
+          the tool will match you to the litre. Any disagreement is in <i>A</i>, and it will be because
+          you used the sloping area.</li>
+        <li><b>Capacity by the basic approach, exactly.</b> A.2.1 is one multiplication and the tool
+          performs it with the dry period you choose, including the NA.3 reduction.</li>
+        <li><b>The direction and rough scale of every storage result</b>, against a detailed-approach
+          spreadsheet built on Formulas (A.3) to (A.5). The recurrence is the same one.</li>
+      </ul>
+
+      <h3>Where it will diverge</h3>
+      <ul>
+        <li><b>Against a detailed-approach simulation on measured daily rainfall</b>, which is what the
+          standard asks for and what a tool such as RainCycle performs. The rainfall series is the whole
+          difference: real records have dry runs and cloudbursts that a month divided into equal showers
+          does not. Expect this tool to show shorter deficits and less overflow than the real series
+          would, and the gap to be widest for small stores and seasonal climates.</li>
+        <li><b>Against any calculation that uses a location's real rainfall</b>, unless you have replaced
+          the preset. The library is unsourced and this is the first thing to change.</li>
+        <li><b>On any building not occupied 365 days a year</b>, because the tool cannot be told otherwise.</li>
+        <li><b>On the knee.</b> No standard produces it. Two people reading the same curve will choose
+          different volumes, which is exactly what A.2.2.4 expects — it calls the choice a compromise
+          between coverage, technical constraints and cost.</li>
+        <li><b>On anything touching quality, pipework, pumps, carbon or cost</b>, where there is nothing
+          to compare because there is nothing modelled.</li>
+      </ul>
+
+      <h3>Against the tool's own drainage figure</h3>
+      <p>The litres-per-second check divides the catchment by a 75&nbsp;mm/h storm and looks up a pipe
+        from a seven-row table. A <span class="cs-mono">BS EN 12056&#8209;3</span> design uses the local
+        design intensity, a gutter profile, its fall and length, and a run-off coefficient that the
+        standard's own note to clause 6.1.2 explicitly distinguishes from the surface yield coefficient
+        used here. The two are different coefficients answering different questions. Expect no agreement
+        and seek none.</p>
+    </div>
+  </div>
+
+  <div class="cs-sec">
+    <div class="cs-sechead" id="cs-07"><span class="cs-secnum">07</span><h2>Three exercises</h2></div>
+    <div class="cs-secbody">
+      <p>Each one is a sequence of settings and a number to read back. The figures quoted were produced
+        by running the tool's own modules, so if you follow the steps exactly you should see them.</p>
+
+      <div class="cs-ex">
+        <span class="cs-ex-n">Exercise 1</span>
+        <h3>The tank that stops paying for itself</h3>
+        <ol class="cs-steps">
+          <li>Open <b>Models &rsaquo; Terraced housing row</b>. Five blocks, 325&nbsp;m&sup2; of catchment,
+            18 occupants, Dublin rainfall.</li>
+          <li>In <b>System</b>, tick <b>Daily balance</b>, and set <b>Storage capacity</b> to
+            <i>Set manually</i>.</li>
+          <li>Record the coverage rate at <code>500</code>, <code>1000</code>, <code>1500</code>,
+            <code>2000</code>, <code>4000</code> and <code>10000</code>&nbsp;litres. You should get
+            <b>29.7&nbsp;%, 59.3&nbsp;%, 69.3&nbsp;%, 69.4&nbsp;%, 69.4&nbsp;%, 69.4&nbsp;%</b>.</li>
+          <li>Plot them. The first 1&nbsp;000&nbsp;litres buys 59 points of coverage. The next
+            8&nbsp;500 buys one tenth of a point.</li>
+          <li>Now switch <b>Storage capacity</b> back to <i>BS basic approach</i> and read the size it
+            proposes: <b>8&nbsp;988&nbsp;litres</b>, against a curve that flattened at 1&nbsp;500.</li>
+          <li>Untick <b>Daily balance</b> and watch every figure collapse. Explain why before reading
+            <a href="#cs-04">section 04</a>.</li>
+        </ol>
+        <p class="cs-principle"><b>The principle.</b> Storage buys reliability with sharply diminishing
+          returns, and the point of diminishing return is set by how often the tank refills — not by the
+          annual totals. A rule of thumb worked out on annual figures cannot see that point: here it
+          sizes the store six times larger than the curve justifies. <b>Size from the curve, and say
+          which time step you ran it on.</b></p>
+      </div>
+
+      <div class="cs-ex">
+        <span class="cs-ex-n">Exercise 2</span>
+        <h3>Pitch changes the roof and not the harvest</h3>
+        <ol class="cs-steps">
+          <li><b>New model</b>, and leave the block at its default 12&nbsp;&times;&nbsp;8&nbsp;m footprint,
+            gable roof, 0.5&nbsp;m overhang, pitched rough surface.</li>
+          <li>Set the pitch to <code>15</code>&deg;. Record catchment, surface area and annual yield:
+            <b>117.00&nbsp;m&sup2;, 121.13&nbsp;m&sup2;, 50.80&nbsp;m&sup3;</b>.</li>
+          <li>Take it to <code>25</code>, <code>35</code>, then <code>45</code>&deg;. The surface climbs to
+            129.10, 142.83 and <b>165.46&nbsp;m&sup2;</b>. The catchment does not move. The yield does not
+            move.</li>
+          <li>Change the roof form to <b>vault</b> and set the rise to <code>6</code>&nbsp;m. The surface
+            goes further still; the catchment stays at 117.00&nbsp;m&sup2;.</li>
+          <li>Now change the <b>overhang</b> from 0.5 to <code>1.5</code>&nbsp;m and watch the catchment
+            move for the first time.</li>
+          <li>Finally switch the form to <b>sawtooth</b> and note that the catchment drops to
+            110.50&nbsp;m&sup2; &mdash; the one form that carries its overhang on the low edge only.</li>
+        </ol>
+        <p class="cs-principle"><b>The principle.</b> Rain falls vertically, so the catchment is the
+          plan projection: <span class="cs-mono">BS EN 16941&#8209;1:2024</span> defines <i>A</i> as the
+          horizontal projection of the collection area. A 45&deg; roof buys 41&nbsp;% more covering, more
+          structure and more cost, and collects not one extra litre. <b>If you want more water, extend
+          the footprint or the overhang.</b> Pitch is a decision about weathering, daylight, form and
+          snow — never about harvest.</p>
+      </div>
+
+      <div class="cs-ex">
+        <span class="cs-ex-n">Exercise 3</span>
+        <h3>The same rainfall, arriving at the wrong time</h3>
+        <ol class="cs-steps">
+          <li>Open <b>Models &rsaquo; Arid &mdash; Dubai</b>. In <b>Climate</b>, set <b>Rainfall input</b>
+            to <b>Annual</b> and type <code>900</code>&nbsp;mm. The monthly <i>shape</i> is kept and scaled,
+            so Dubai's distribution survives at nine times the depth.</li>
+          <li>In <b>System</b>, tick <b>Daily balance</b> and leave the capacity on the basic approach.
+            Record the harvest, the proposed capacity and the coverage rate.</li>
+          <li>Repeat, exactly, with <b>Models &rsaquo; Tropical &mdash; Kuala Lumpur</b> at the same
+            <code>900</code>&nbsp;mm. The building, the demand and the harvest are identical:
+            <b>121.2&nbsp;m&sup3; collected against 148.2&nbsp;m&sup3; demanded</b> in both cases.</li>
+          <li>Compare the coverage rate. Dubai's distribution reaches <b>42.0&nbsp;%</b>; Kuala Lumpur's
+            reaches <b>79.2&nbsp;%</b>.</li>
+          <li>Now set the capacity manually and sweep it in both models. Dubai needs
+            <b>31&nbsp;871&nbsp;litres</b> to reach its knee; Kuala Lumpur needs <b>3&nbsp;984</b>. Eight
+            times the tank, for a worse result.</li>
+          <li>Look at the store-behaviour chart for each. One empties for a season; the other cycles.</li>
+        </ol>
+        <p class="cs-principle"><b>The principle.</b> Annual rainfall totals tell you almost nothing about
+          a harvesting system. What decides the tank is the longest stretch during which demand runs
+          ahead of supply, and two places with the same annual depth can differ by a factor of eight in
+          the storage needed to bridge it. This is why the standard's basic approach is parameterised by
+          a <b>dry period</b> rather than by rainfall alone, and why its detailed approach insists on a
+          daily series. <b>Quote the distribution, not just the total.</b></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="cs-footer">
+    <p>Everything on this page was read from the tool's source code, and the measured tables were
+      produced by driving its own <span class="cs-mono">GEO</span> and <span class="cs-mono">HYD</span>
+      modules. Where a figure is quoted it is measured, not estimated. Where the code names no source,
+      this page says so rather than supplying one.</p>
+    <p>Claims the code makes about <span class="cs-mono">BS EN 16941&#8209;1:2024</span> were checked
+      clause by clause against the published standard. That check found four disagreements, all since
+      corrected in the tool: four of its six surface coefficients sat below the Table 2 values while the
+      code cited Table 2 as their source; the automatic tank size was fixed at 5&nbsp;% of the lesser of
+      yield and demand, where A.2.1 parameterises it by a dry period you choose and NA.3 reduces it at
+      extreme yield-to-demand ratios; the treatment coefficient was described as a minimum the standard
+      requires when it is a fallback the standard offers; and a step-counting reliability figure was
+      presented alongside the standard's coverage rate without distinguishing the two. If you are working
+      from an older copy of the tool, those four are what to re-check.</p>
+    <p>For anything that must be built, none of this substitutes for a designer who can take
+      responsibility for the system. The tool is built to teach the relationships — catchment against
+      surface, distribution against total, storage against reliability — and it contains no water quality,
+      no hydraulics and no cost model at all, deliberately, so that what it does do stays legible.</p>
+
+    <h3>Licence</h3>
+    <p>&copy; Karam Al-Obaidi. The app is licensed <b>MIT</b>; this documentation, together with its
+      screenshots and exercises, is
+      <b><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></b>.
+      Both permit any use, including commercial, and ask only that you credit the author. The tool bundles
+      no third-party code: there is no external script, stylesheet or font in the file, and the only
+      outbound request it can make is the optional Open&#8209;Meteo fetch you start yourself from the
+      Climate panel.</p>
+    <p>A model you make with the tool is <b>yours</b>. Neither licence claims anything over your model,
+      your drawings or the images you export.</p>
+    <p>Two things are not covered by either licence and are worth knowing. Rainfall fetched from
+      Open&#8209;Meteo comes under Open-Meteo’s own terms, which place its data under
+      CC&nbsp;BY&nbsp;4.0; attribute it where you use it.
+      And <span class="cs-mono">BS EN 16941&#8209;1:2024</span> is a copyright work of BSI: this page
+      cites clause numbers and states values the tool uses, and reproduces no part of its text.</p>
+
+    <h3>How to cite</h3>
+    <p>Cite it as software. Keeping the copyright notice in the file satisfies the licence; a citation is
+      the scholarly act on top of that.</p>
+    <p class="cs-ref">Al-Obaidi, K.M. (2026). <i>Rainwater Collection Studio: a parametric 3D roof
+      modeller for rainwater harvesting</i> (Version 1.0) [Computer software]. [add your URL or DOI]</p>
+<pre>@software{alobaidi2026rainwaterstudio,
+  author  = {Al-Obaidi, Karam M.},
+  title   = {Rainwater Collection Studio: a parametric 3D roof
+             modeller for rainwater harvesting},
+  year    = {2026},
+  version = {1.0},
+  url     = {[add your URL]},
+  note    = {MIT licensed}
+}</pre>
+    <p>Report the <b>catchment area</b>, the <b>surface coefficient</b>, the <b>rainfall source</b>, the
+      <b>time step</b> and the <b>usable capacity</b> alongside any figure taken from the tool. All five
+      change the answer, and a coverage rate quoted without its time step and its rainfall source cannot
+      be checked by anyone reading you &mdash; as <a href="#cs-04">section 04</a> shows, the time step
+      alone moves it from 4.6&nbsp;% to 59.3&nbsp;%.</p>
+
+    <h3>References</h3>
+    <p>These are the sources the code itself names &mdash; all four of them, and nothing else. Two of the
+      four contribute no number to the tool and are listed with that said plainly, because a reference
+      list that implies otherwise is worse than a short one. Everything the code uses without naming a
+      source is set out in <a href="#cs-04">How exact the numbers are</a> and is deliberately absent from
+      this list.</p>
+    <ul class="cs-refs">
+      <li>British Standards Institution. (2024). <i>On-site non-potable water systems. Part 1: Systems
+        for the use of rainwater</i> (BS EN 16941-1:2024, incorporating corrigendum July 2024). BSI.
+        &mdash; the source of almost everything the tool calculates: <i>A</i> as the horizontal projection
+        of the collection area and the yield equation (6.1.2, Formula 1); the eight surface yield
+        coefficients (Table 2); the fallback treatment coefficient of 0.9 (note to 6.1.2); the demand
+        formulas (6.1.3); the store recurrence and the coverage rate (A.2.2.3, Formulas A.3&ndash;A.5);
+        capacity by the basic approach and its 15, 18 and 21-day dry periods (A.2.1); the
+        coverage-against-capacity curve (A.2.2.4); and, in the UK National Annex, 40&nbsp;l/person/day for
+        toilet and washing-machine use (NA.1.2) and the reduction of the dry period outside a
+        yield-to-demand ratio of 0.5 to 2.0 (NA.3). The tool does <b>not</b> implement the detailed
+        approach of A.2.2, which requires at least five years of measured daily rainfall (A.2.2.2), nor
+        the climate-change sensitivity analysis of NA.4, nor any part of the quality, treatment or risk
+        provisions.</li>
+      <li>British Standards Institution. (2009). <i>Rainwater harvesting systems: Code of practice</i>
+        (BS 8515:2009). BSI. &mdash; named once in the code, in the phrase "which superseded BS 8515:2009",
+        and <b>nowhere else</b>. No value, coefficient or method in the tool derives from it. It is listed
+        because the code names it, and for the reader who arrives holding the older code of practice.</li>
+      <li>British Standards Institution. (2000). <i>Gravity drainage systems inside buildings. Part 3:
+        Roof drainage, layout and calculation</i> (BS EN 12056-3:2000). BSI. &mdash; named in the code
+        <b>only as what the tool is not</b>: the comment above the drainage routine reads "indicative
+        gutter / downpipe check (NOT a substitute for BS EN 12056-3)". Neither the pipe capacity table nor
+        the 75&nbsp;mm/h design storm comes from it, or from any source the code names. BS EN 16941-1
+        makes the same distinction from the other side, noting at 6.1.2 that the surface yield coefficient
+        is not the run-off coefficient used in BS EN 12056-3 for the hydraulic design of pipes: the two
+        answer different questions. Go here for gutter and downpipe sizing; do not take it from this tool.
+        The code names no edition, so the edition above is this document's choice.</li>
+      <li>Open-Meteo. (n.d.). <i>Historical weather API</i> [Data set].
+        <a href="https://open-meteo.com/" target="_blank" rel="noopener">https://open-meteo.com/</a>
+        &mdash; the one external source the tool can reach, and the only route by which citable rainfall
+        enters it. The Climate panel requests daily precipitation for 2015-01-01 to 2024-12-31 at the
+        latitude and longitude you give, then reduces those ten years to twelve monthly means and a
+        typical depth per wet day. <b>The daily series it downloads is discarded</b>, which is worth
+        knowing: the data that the standard's detailed approach requires does arrive, and the tool throws
+        it away. The fetch is optional, user-initiated, and the file works with no network at all.
+        Open-Meteo’s own terms place its data under CC BY 4.0; check them and attribute accordingly.
+        The code gives no accession date, so record the date you fetched.</li>
+    </ul>
+    <p class="cs-cite">For anything that must be built, none of the above substitutes for a designer who
+      can take responsibility for the system. They are where the tool's method comes from, not a design
+      authority &mdash; and, in the case of the last three, mostly a record of what the tool leaves to
+      someone else.</p>
+  </div>
+
+</div>

@@ -864,6 +864,12 @@ button.rwc-tile:focus-visible { outline:2px solid var(--accent); outline-offset:
    Rainwater Collection Studio  —  Karam Al-Obaidi
    Single-file parametric roof harvesting modeller. No dependencies.
 
+   Copyright (c) 2026 Karam Al-Obaidi. MIT licensed — see LICENSE. Accompanying
+   material (documentation, screenshots, exercises) is CC BY 4.0. Nothing
+   third-party is bundled: no external script, stylesheet or font. The one
+   outbound request in the file is the optional, user-initiated Open-Meteo
+   fetch in the Climate panel.
+
    Modules, in dependency order:
      DATA    constants: materials, roof types, climate library, demo models
      GEO     parametric geometry — blocks -> faces with projected/surface areas
@@ -879,16 +885,29 @@ button.rwc-tile:focus-visible { outline:2px solid var(--accent); outline-offset:
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
 
-/* Yield (run-off) coefficients — BS EN 16941-1:2024 Table 2 */
+/* Surface yield coefficients, transcribed from BS EN 16941-1:2024 Table 2.
+   The standard gives eight surfaces; all eight are offered here, in its order,
+   with its values unaltered. Table 2 footnote a: "These coefficients can be used
+   if no other values are available." */
 const MATERIALS = {
-  tile:     { label:"Pitched tile / slate",   yc:0.80, col:"#a8593f" },
-  metal:    { label:"Smooth metal sheet",     yc:0.90, col:"#8f97a0" },
-  felt:     { label:"Flat roof, smooth felt", yc:0.50, col:"#4d5257" },
-  concrete: { label:"Concrete / asphalt",     yc:0.75, col:"#96938c" },
-  green:    { label:"Green roof (extensive)", yc:0.40, col:"#5c8a4a" },
-  gravel:   { label:"Gravel-ballasted flat",  yc:0.60, col:"#a19a8c" }
+  smooth:       { label:"Pitched roof, smooth (metal, glass, slate, glazed tile)", yc:0.90, col:"#8f97a0" },
+  rough:        { label:"Pitched roof, rough (concrete tile)",                     yc:0.80, col:"#a8593f" },
+  flatNoGravel: { label:"Flat roof, without gravel",                               yc:0.80, col:"#4d5257" },
+  flatGravel:   { label:"Flat roof, with gravel",                                  yc:0.70, col:"#a19a8c" },
+  greenInt:     { label:"Green roof, intensive (garden)",                          yc:0.30, col:"#3f6b34" },
+  greenExt:     { label:"Green roof, extensive",                                   yc:0.50, col:"#5c8a4a" },
+  sealed:       { label:"Sealed area (asphalt)",                                   yc:0.80, col:"#96938c" },
+  unsealed:     { label:"Non-sealed area (cobble stone)",                          yc:0.50, col:"#7d7468" }
 };
-const MATERIAL_ORDER = ["tile","metal","felt","concrete","green","gravel"];
+const MATERIAL_ORDER = ["smooth","rough","flatNoGravel","flatGravel","greenInt","greenExt","sealed","unsealed"];
+
+/* Models saved before the coefficients were brought to Table 2 used six keys of
+   our own. Map them onto the standard's surfaces on load. */
+const MATERIAL_ALIAS = {
+  tile:"rough", metal:"smooth", felt:"flatNoGravel",
+  concrete:"sealed", green:"greenExt", gravel:"flatGravel"
+};
+const matKey = k => (MATERIALS[k] ? k : (MATERIAL_ALIAS[k] || "rough"));
 
 /* Roof types. `profile:true` = extruded along X from a (z,y) profile.
    `radial:true` = four-sided (hip / pyramid). */
@@ -971,9 +990,9 @@ function newBlock(over) {
       rise: 3,                  // m, vault
       ridgeRatio: 1             // hip
     },
-    material: "tile",
+    material: "rough",
     downpipes: 2
-  }, over || {});
+  }, over || {}, over && over.material ? { material: matKey(over.material) } : {});
 }
 
 function newModel(over) {
@@ -1001,7 +1020,8 @@ function newModel(over) {
     system: {
       filterCoef: 0.90,
       firstFlush: 0,            // mm diverted per rain event
-      tankMode: "auto",         // auto (BS simplified) | manual
+      dryDays: 18,              // design dry period (days) for the basic approach
+      tankMode: "auto",         // auto (BS basic approach) | manual
       tank: 3000,               // litres, used when manual
       daily: false,             // daily (wet-day) balance instead of monthly
       tariff: 2.20              // currency per m3 of mains water displaced
@@ -1485,14 +1505,22 @@ const GEO = (() => {
 })();
 
 /* ═══════════════════════════ HYD ═══════════════════════════
-   Hydrology. Yield to BS EN 16941-1:2024 (which superseded BS 8515:2009):
+   Hydrology. Yield to BS EN 16941-1:2024 (which superseded BS 8515:2009),
+   clause 6.1.2, Formula (1):
 
-       Y = A · R · Yc · Fc          litres, with A in m² and R in mm
-                                    (1 mm falling on 1 m² = 1 litre)
+       Y(R,t) = Σ A(i) · e(i) · h(t) · η      litres, with A in m² and h in mm
+                                              (1 mm falling on 1 m² = 1 litre)
 
-   The store is then operated with the YAS (Yield After Spillage) rule, which is
-   the conservative convention: demand is met from what was in the tank at the
-   end of the previous step, before this step's inflow is added.
+   A is the HORIZONTAL PROJECTION of the collection area — the standard's own
+   words — which is why pitch never changes the catchment here. The sum runs over
+   surfaces, so blocks with different materials keep their own coefficient.
+   e is the surface yield coefficient (Table 2); η the hydraulic treatment
+   efficiency coefficient.
+
+   The store is then operated by Formulas (A.3) and (A.4) of Annex A.2.2.3:
+   abstraction is the lesser of the demand and the volume in the store at the end
+   of the previous step, before this step's inflow is added. That convention is
+   known as YAS (Yield After Spillage) and is the conservative one.
    ========================================================================== */
 
 const HYD = (() => {
@@ -1597,8 +1625,19 @@ const HYD = (() => {
     const annualInflow = sum(inflow);
     const annualDemand = sum(demand);
 
-    /* BS simplified store: the lesser of 5% of annual yield and 5% of annual demand */
-    const simple = Math.min(annualInflow, annualDemand) * 0.05;
+    /* Basic approach with annual time step — BS EN 16941-1:2024, A.2.1,
+       Formulas (A.1) and (A.2): the useable capacity is the lesser of the annual
+       yield and the annual demand, multiplied by the chosen dry period over 365.
+       The standard gives 15 days (Netherlands), 18 (Ireland, UK), 21 (Germany).
+
+       The UK National Annex, NA.3, adds: where the ratio of annual yield to
+       annual demand falls below 0.5 or rises above 2.0, the dry period should be
+       reduced — its worked suggestion is to halve it — because at those ratios
+       the tank spends most of the year either empty or full. */
+    const ydRatio = annualDemand > 0 ? annualInflow / annualDemand : Infinity;
+    const naHalved = ydRatio < 0.5 || ydRatio > 2.0;
+    const dryDays = Math.max(1, model.system.dryDays || 18) * (naHalved ? 0.5 : 1);
+    const simple = Math.min(annualInflow, annualDemand) * (dryDays / 365);
 
     /* optimisation sweep: water-saving efficiency against capacity */
     const capMax = Math.max(simple * 6, annualDemand / 365 * 60, 1000);
@@ -1617,7 +1656,8 @@ const HYD = (() => {
     const mainsSaved = bal.totalSupplied / 1000;                    // m3
     return {
       wd, demand, inflow, annualRain, annualInflow, annualDemand,
-      simple, knee, sweep, capacity, bal,
+      simple, knee, sweep, capacity, bal, dryDays, ydRatio, naHalved,
+      maxMonthDemand: Math.max(...demand),
       maxSaving: best,
       daysStorage: annualDemand > 0 ? capacity / (annualDemand / 365) : 0,
       mainsSaved, costSaved: mainsSaved * model.system.tariff,
@@ -2429,14 +2469,14 @@ const DEMOS = [
   make(){ const m = newModel({ name:"Six roofs, one footprint" });
     m.blocks = ["flat","gable","hip","shed","butterfly","vault"]
       .map((t,i)=>newBlock({ name:ROOFS[t].label, x:(i%3)*17-17, z:Math.floor(i/3)*13-6.5,
-        w:12, d:8, wallH:5, material:"tile",
+        w:12, d:8, wallH:5, material:"rough",
         roof:{type:t, pitch:30, overhang:0.5, parapet:0.6, bays:4, rise:3, ridgeRatio:1} }));
     m.climate = climateFor("lon"); m.demand.occupants = 24; return m; } },
 
 { group:"Typology", id:"house", name:"Detached house",
-  caption:"A four-person house on a gable roof. With WC and laundry demand only, note how small the BS simplified store is — about 18 days of the lesser of yield and demand.",
+  caption:"A four-person house on a gable roof. With WC and laundry demand only, note how small the basic-approach store is — 18 days of the lesser of yield and demand.",
   make(){ const m = newModel({ name:"Detached house" });
-    m.blocks=[newBlock({name:"House", w:11, d:8, wallH:5.2, material:"tile",
+    m.blocks=[newBlock({name:"House", w:11, d:8, wallH:5.2, material:"rough",
       roof:{type:"gable",pitch:35,overhang:0.6,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:2})];
     m.climate = climateFor("lon"); m.demand.occupants=4; m.demand.irrigArea=60; return m; } },
 
@@ -2444,18 +2484,18 @@ const DEMOS = [
   caption:"An L-shaped two-storey school with a flat main roof and a monopitch hall. High daytime occupancy, so demand and rainfall rarely coincide — watch the store empty in summer.",
   make(){ const m = newModel({ name:"School block" });
     m.blocks=[
-      newBlock({name:"Teaching wing", x:0,z:0,w:42,d:12,wallH:8, material:"felt",
+      newBlock({name:"Teaching wing", x:0,z:0,w:42,d:12,wallH:8, material:"flatNoGravel",
         roof:{type:"flat",pitch:2,overhang:0.4,parapet:0.9,bays:4,rise:3,ridgeRatio:1}, downpipes:6}),
-      newBlock({name:"Hall", x:-12,z:17.5,w:18,d:20,wallH:7, material:"metal",
+      newBlock({name:"Hall", x:-12,z:17.5,w:18,d:20,wallH:7, material:"smooth",
         roof:{type:"shed",pitch:12,overhang:0.6,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:4})];
     m.climate = climateFor("mel"); m.demand.occupants=180;
     m.demand.uses=[{id:"wc",lpd:12,on:true},{id:"laundry",lpd:0,on:false},{id:"cleaning",lpd:2,on:true},{id:"vehicle",lpd:0,on:false}];
     m.demand.irrigArea=400; m.system.tankMode="manual"; m.system.tank=45000; return m; } },
 
 { group:"Typology", id:"warehouse", name:"Warehouse / shed",
-  caption:"A large smooth-metal roof (Yc 0.90) with almost no on-site demand. Nearly everything collected spills — the classic case where the constraint is demand, not catchment.",
+  caption:"A large smooth-metal roof (e 0.90) with almost no on-site demand. Nearly everything collected spills — the classic case where the constraint is demand, not catchment.",
   make(){ const m = newModel({ name:"Warehouse / shed" });
-    m.blocks=[newBlock({name:"Warehouse", w:60, d:32, wallH:9, material:"metal",
+    m.blocks=[newBlock({name:"Warehouse", w:60, d:32, wallH:9, material:"smooth",
       roof:{type:"gable",pitch:8,overhang:0.8,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:10})];
     m.climate = climateFor("syd"); m.demand.occupants=15; m.demand.irrigArea=200; return m; } },
 
@@ -2463,9 +2503,9 @@ const DEMOS = [
   caption:"A pyramidal prayer-hall roof over a flat-roofed riwaq, in an arid climate. Ablution demand is high and constant while rainfall is concentrated in a few winter weeks.",
   make(){ const m = newModel({ name:"Mosque with courtyard" });
     m.blocks=[
-      newBlock({name:"Prayer hall", x:0,z:0,w:24,d:24,wallH:9, material:"concrete",
+      newBlock({name:"Prayer hall", x:0,z:0,w:24,d:24,wallH:9, material:"sealed",
         roof:{type:"pyramid",pitch:28,overhang:0.9,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:4}),
-      newBlock({name:"Riwaq north", x:0,z:-20,w:24,d:10,wallH:5.5, material:"concrete",
+      newBlock({name:"Riwaq north", x:0,z:-20,w:24,d:10,wallH:5.5, material:"sealed",
         roof:{type:"flat",pitch:2,overhang:0.5,parapet:0.8,bays:4,rise:3,ridgeRatio:1}, downpipes:3})];
     m.climate = climateFor("amm"); m.demand.occupants=120;
     m.demand.uses=[{id:"wc",lpd:10,on:true},{id:"laundry",lpd:0,on:false},{id:"cleaning",lpd:8,on:true},{id:"vehicle",lpd:0,on:false}];
@@ -2475,7 +2515,7 @@ const DEMOS = [
   caption:"Five houses sharing one continuous gable. A shared store serves five times the demand from five times the catchment — the ratio is unchanged, but the store gets proportionally smaller per house.",
   make(){ const m = newModel({ name:"Terraced housing row" });
     m.blocks=[0,1,2,3,4].map(i=>newBlock({name:"House "+(i+1), x:i*6.7-13.4, z:0, w:6, d:9, wallH:6,
-      material:"tile", roof:{type:"gable",pitch:38,overhang:0.35,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:2}));
+      material:"rough", roof:{type:"gable",pitch:38,overhang:0.35,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:2}));
     m.climate = climateFor("dub"); m.demand.occupants=18; return m; } },
 
 { group:"Climate", id:"clim-trop", name:"Tropical — Kuala Lumpur",
@@ -2491,9 +2531,9 @@ const DEMOS = [
   make(){ return climateStudy("lon", "Temperate — London"); } },
 
 { group:"Material", id:"green", name:"Green vs hard roof",
-  caption:"Identical massing, three surfaces: extensive green roof (Yc 0.40), pitched tile (0.80), smooth metal (0.90). A green roof more than halves the harvest — a real trade-off against its runoff-attenuation and biodiversity benefits.",
+  caption:"Identical massing, three of the standard\u2019s surfaces: extensive green roof (e 0.50), rough pitched tile (0.80), smooth pitched metal (0.90). The green roof harvests just over half what the metal does \u2014 a real trade-off against its run-off attenuation and biodiversity benefits.",
   make(){ const m = newModel({ name:"Green vs hard roof" });
-    m.blocks=[["green",-15],["tile",0],["metal",15]].map(([mat,x])=>newBlock({
+    m.blocks=[["greenExt",-15],["rough",0],["smooth",15]].map(([mat,x])=>newBlock({
       name:MATERIALS[mat].label, x, z:0, w:12, d:9, wallH:5.5, material:mat,
       roof:{type:"gable",pitch:25,overhang:0.5,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:2}));
     m.climate = climateFor("lon"); m.demand.occupants=12; return m; } }
@@ -2506,7 +2546,7 @@ function climateFor(id) {
 }
 function climateStudy(cityId, name) {
   const m = newModel({ name });
-  m.blocks=[newBlock({name:"Study block", w:16, d:10, wallH:6.5, material:"tile",
+  m.blocks=[newBlock({name:"Study block", w:16, d:10, wallH:6.5, material:"rough",
     roof:{type:"gable",pitch:30,overhang:0.5,parapet:0.6,bays:4,rise:3,ridgeRatio:1}, downpipes:2})];
   m.climate = climateFor(cityId);
   m.demand.occupants = 8; m.demand.irrigArea = 80;
@@ -2638,7 +2678,7 @@ const APP = (() => {
     $("#rwc-readout").innerHTML =
       `<b>${esc(b ? b.name : "—")}</b> · ${ROOFS[b.roof.type].label}<br>` +
       `catchment <b>${nf(p.proj, 1)} m²</b> · surface ${nf(p.surf, 1)} m² (×${nf(ratio, 2)})<br>` +
-      `model total <b>${nf(geom.catchment, 1)} m²</b> · Yc ${nf(geom.ycMean, 2)}`;
+      `model total <b>${nf(geom.catchment, 1)} m²</b> · e ${nf(geom.ycMean, 2)}`;
     $("#rwc-foot-status").textContent =
       `${model.blocks.length} block${model.blocks.length === 1 ? "" : "s"} · ${esc(model.climate.label)} · ${nf(res.annualRain, 0)} mm/yr`
       + (geom.overlaps.length ? ` · ⚠ ${geom.overlaps.length} plan overlap${geom.overlaps.length === 1 ? "" : "s"}` : "");
@@ -2665,13 +2705,13 @@ const APP = (() => {
       tile({ tag:"Input", k:"Catchment", v:nf(geom.catchment, 1), u:"m²", step:"catchment",
              s:`roof surface ${nf(geom.surface, 0)} m²` }) +
       tile({ tag:"Harvest", k:"Annual yield", v:y.v, u:y.u, step:"yield",
-             s:`${nf(res.annualRain, 0)} mm · Yc ${nf(geom.ycMean, 2)} · Fc ${nf(model.system.filterCoef, 2)}` }) +
+             s:`${nf(res.annualRain, 0)} mm · e ${nf(geom.ycMean, 2)} · η ${nf(model.system.filterCoef, 2)}` }) +
       tile({ tag:"Need", k:"Non-potable demand", v:d.v, u:d.u, step:"demand",
              s:`${model.demand.occupants} people${model.demand.irrigArea > 0 ? " + irrigation" : ""}` }) +
       tile({ tag:"Deliverable", k:"Storage capacity", v:c.v, u:c.u, step:"store", key:true,
-             s:`${nf(res.daysStorage, 0)} days · ${model.system.tankMode === "auto" ? "BS simplified" : "set manually"}` }) +
+             s:`${nf(res.daysStorage, 0)} days · ${model.system.tankMode === "auto" ? "BS A.2.1" : "set manually"}` }) +
       tile({ tag:"Justification", k:"Demand met", v:fmtPct(res.bal.saving), u:"", step:"met",
-             s:`${fmtPct(res.bal.reliability)} of ${model.system.daily ? "days" : "months"} fully supplied` }) +
+             s:`${fmtPct(res.bal.saving)} coverage · ${fmtPct(res.bal.reliability)} of ${model.system.daily ? "days" : "months"} full` }) +
       tile({ tag:"Benefit", k:"Mains displaced", v:nf(res.mainsSaved, 1), u:"m³/yr", step:"mains",
              s:`≈ ${nf(res.costSaved, 0)} per year at ${nf(model.system.tariff, 2)}/m³` }) +
       tile({ tag:"Diagnostic", k:"Overflow", v:o.v, u:o.u, step:"overflow",
@@ -2811,8 +2851,8 @@ const APP = (() => {
         </div>
         <p class="rwc-note" style="margin-top:8px"><b>${esc(ROOFS[R.type].label)}.</b> ${esc(ROOFS[R.type].tip)}</p>`) +
       grp("Roof parameters", params) +
-      grp("Surface", fSelect("Roof material", "b.material", MATERIAL_ORDER.map(k => ({ v: k, l: `${MATERIALS[k].label} — Yc ${MATERIALS[k].yc.toFixed(2)}` }))) +
-        `<p class="rwc-note">Yield coefficient <b>${mat.yc.toFixed(2)}</b> per BS EN 16941-1 Table 2. It scales the harvest, not the catchment area.</p>`) +
+      grp("Surface", fSelect("Roof material", "b.material", MATERIAL_ORDER.map(k => ({ v: k, l: `${MATERIALS[k].label} — e ${MATERIALS[k].yc.toFixed(2)}` }))) +
+        `<p class="rwc-note">Surface yield coefficient <b>e = ${mat.yc.toFixed(2)}</b>, BS EN 16941-1:2024 Table 2. It scales the harvest, not the catchment area.</p>`) +
       grp("Catchment vs surface", `
         <dl class="rwc-rep-kv" style="font-size:12px">
           <dt>Projected catchment</dt><dd>${nf(per.proj, 1)} m²</dd>
@@ -2885,14 +2925,19 @@ const APP = (() => {
           fSelect("Season starts", "demand.irrigFrom", MONTHS.map((m, i) => ({ v: i, l: m }))) +
           fSelect("Season ends", "demand.irrigTo", MONTHS.map((m, i) => ({ v: i, l: m }))) : "")) +
       grp("System",
-        fRange("Filter coefficient Fc", "system.filterCoef", 0.5, 1, 0.01, "", 2) +
-        `<p class="rwc-note">BS EN 16941-1 requires the pre-tank treatment to be at least 90% efficient, so <b>0.90</b> is the standard value.</p>` +
+        fRange("Treatment coefficient η", "system.filterCoef", 0.5, 1, 0.01, "", 2) +
+        `<p class="rwc-note">η is the hydraulic treatment efficiency coefficient in BS EN 16941-1. Where the manufacturer does not state a figure, the standard says <b>0.9</b> can be used for a system with no additional treatment — a default, not a requirement. Use the manufacturer's value when you have one.</p>` +
         fRange("First flush diverted", "system.firstFlush", 0, 3, 0.1, "mm/event", 1) +
-        fSeg("Storage capacity", "system.tankMode", [{ v: "auto", l: "BS simplified" }, { v: "manual", l: "Set manually" }]) +
+        `<p class="rwc-note">First-flush diversion is this tool's own addition. It is not part of the standard's yield formula, which has no first-flush term. Leave it at 0 to calculate strictly to BS EN 16941-1.</p>` +
+        fSeg("Storage capacity", "system.tankMode", [{ v: "auto", l: "BS basic approach" }, { v: "manual", l: "Set manually" }]) +
         (S.tankMode === "manual" ? fRange("Tank capacity", "system.tank", 0, 200000, 100, "L", 0)
-          : `<p class="rwc-note">Sized automatically at <b>${fmtVol(res.simple).v} ${fmtVol(res.simple).u}</b> — 5% of the lesser of annual yield and annual demand, about 18 days.</p>`) +
+          : fRange("Design dry period", "system.dryDays", 1, 60, 1, "days", 0) +
+            `<p class="rwc-note">Basic approach, A.2.1: the lesser of annual yield and annual demand × dry period ÷ 365. The standard's examples are <b>15</b> days (Netherlands), <b>18</b> (Ireland, UK), <b>21</b> (Germany) — choose for your location, and consider how climate change shifts it.${res.naHalved ? ` Yield ÷ demand is <b>${nf(res.ydRatio,2)}</b>, outside 0.5–2.0, so the UK National Annex NA.3 halving is applied: <b>${nf(res.dryDays,1)}</b> days used.` : ""}<br>Sized at <b>${fmtVol(res.simple).v} ${fmtVol(res.simple).u}</b>.</p>`) +
         fCheck("Daily balance (spread rain over wet days)", "system.daily") +
-        `<p class="rwc-note">Monthly stepping assumes rain falls evenly all month, which flatters reliability. The daily option spreads each month's depth over its wet days — this is why storage exists at all.</p>` +
+        `<p class="rwc-note">The balance can be stepped monthly or daily, and the choice matters more than it looks. On a <b>monthly</b> step the whole month's demand is drawn in one go against whatever the store held at the end of the previous month, so the store can never deliver more than <b>one tank-full per month</b> however often it would really refill. On a <b>daily</b> step the month's depth is spread over its wet days and the store refills between draws. Neither is the standard's detailed approach, which needs measured daily rainfall.</p>` +
+        (!S.daily && res.capacity > 0 && res.capacity < res.maxMonthDemand
+          ? `<p class="rwc-note rwc-warn">This store holds ${fmtVol(res.capacity).v} ${fmtVol(res.capacity).u} and the busiest month demands ${fmtVol(res.maxMonthDemand).v} ${fmtVol(res.maxMonthDemand).u}. On a monthly step that caps the supply at one tank-full a month, so the coverage shown here is far below what this tank would really achieve. Switch on the daily balance.</p>`
+          : "") +
         fRange("Mains water tariff", "system.tariff", 0, 20, 0.05, "/m³", 2));
   }
 
@@ -2906,9 +2951,9 @@ const APP = (() => {
     $("#panel-results").innerHTML =
       grp("Method — BS EN 16941-1", `
         <p class="rwc-note" style="font-size:11.5px;line-height:1.5">
-          <b>Y = A · R · Yc · Fc</b><br>
+          <b>Y = A · e · h · η</b> &nbsp;<span style="color:var(--ink-3)">(Formula 1)</span><br>
           ${esc(eq)} = <b>${y.v} ${y.u}/yr</b><br>
-          <span style="color:var(--ink-3)">A projected catchment · R annual depth · Yc yield coefficient · Fc filter coefficient. 1 mm on 1 m² = 1 litre.</span>
+          <span style="color:var(--ink-3)">A horizontal projection of the collection area · e surface yield coefficient · h rainfall depth · η treatment efficiency. 1 mm on 1 m² = 1 litre.</span>
         </p>`) +
       grp("Annual balance", `
         <dl class="rwc-rep-kv" style="font-size:12px">
@@ -2917,22 +2962,23 @@ const APP = (() => {
           <dt>Supplied from the store</dt><dd>${fmtVol(b.totalSupplied).v} ${fmtVol(b.totalSupplied).u}</dd>
           <dt>Mains top-up</dt><dd>${fmtVol(b.totalDeficit).v} ${fmtVol(b.totalDeficit).u}</dd>
           <dt>Overflow to drain</dt><dd>${fmtVol(b.totalOverflow).v} ${fmtVol(b.totalOverflow).u}</dd>
-          <dt>Water saving efficiency</dt><dd>${fmtPct(b.saving)}</dd>
+          <dt>Coverage rate C<sub>r</sub> (A.5)</dt><dd>${fmtPct(b.saving)}</dd>
           <dt>${model.system.daily ? "Days" : "Months"} fully supplied</dt><dd>${fmtPct(b.reliability)}</dd>
         </dl>
+        <p class="rwc-note">C<sub>r</sub> is the standard's measure — the volume supplied over the volume demanded (Formula A.5). The row below it counts <em>steps</em> where demand was met in full; that is this tool's own figure, not the standard's, and the two differ whenever a shortfall is partial.</p>
         <p class="rwc-note">Balance closes: inflow = supplied + overflow ± change in store (${nf(b.totalInflow - b.totalSupplied - b.totalOverflow, 0)} L residual).</p>`) +
       grp("Storage capacity", `
         <dl class="rwc-rep-kv" style="font-size:12px">
-          <dt>BS simplified (5% rule)</dt><dd>${fmtVol(res.simple).v} ${fmtVol(res.simple).u}</dd>
+          <dt>BS basic approach (A.2.1)</dt><dd>${fmtVol(res.simple).v} ${fmtVol(res.simple).u}</dd>
           <dt>Profile-optimised (curve knee)</dt><dd>${fmtVol(res.knee).v} ${fmtVol(res.knee).u}</dd>
           <dt>In this design</dt><dd>${fmtVol(res.capacity).v} ${fmtVol(res.capacity).u}</dd>
           <dt>Days of average demand</dt><dd>${nf(res.daysStorage, 0)}</dd>
         </dl>
         <div style="display:flex;gap:6px;margin-top:8px">
-          <button class="rwc-btn" data-apply-cap="${res.simple.toFixed(0)}" style="flex:1;justify-content:center;border-color:var(--line);background:var(--surface-2)">Use 5% rule</button>
+          <button class="rwc-btn" data-apply-cap="${res.simple.toFixed(0)}" style="flex:1;justify-content:center;border-color:var(--line);background:var(--surface-2)">Use A.2.1</button>
           <button class="rwc-btn" data-apply-cap="${res.knee.toFixed(0)}" style="flex:1;justify-content:center;border-color:var(--line);background:var(--surface-2)">Use knee</button>
         </div>
-        <p class="rwc-note">The knee is the smallest capacity reaching 95% of the best achievable saving. Beyond it, more tank buys almost nothing.</p>`) +
+        <p class="rwc-note">The standard plots coverage against capacity (A.2.2.4) and leaves the choice to the project. The <b>knee</b> — the smallest capacity reaching 95% of the best achievable coverage — is this tool\u2019s own reading of that curve, not a rule from the standard.</p>`) +
       grp("Gutters & downpipes", `
         <dl class="rwc-rep-kv" style="font-size:12px">
           <dt>Design storm</dt><dd>${nf(res.drain.intensity, 0)} mm/h</dd>
@@ -3143,7 +3189,7 @@ const APP = (() => {
       ["Rainwater Collection Studio — monthly results"],
       ["Model", model.name], ["Location", model.climate.label],
       ["Catchment m2", nf(geom.catchment, 2)], ["Roof surface m2", nf(geom.surface, 2)],
-      ["Mean yield coefficient Yc", nf(geom.ycMean, 3)], ["Filter coefficient Fc", nf(model.system.filterCoef, 2)],
+      ["Mean surface yield coefficient e", nf(geom.ycMean, 3)], ["Treatment efficiency coefficient eta", nf(model.system.filterCoef, 2)],
       ["Storage capacity L", nf(res.capacity, 0)], ["Balance step", model.system.daily ? "daily" : "monthly"],
       [],
       ["Month", "Rainfall mm", "Wet days", "Roof inflow L", "Demand L", "Supplied L", "Stored end L", "Overflow L", "Mains top-up L"]
@@ -3174,7 +3220,9 @@ const APP = (() => {
   function hydrate(data) {
     const base = newModel();
     const m = Object.assign(base, data);
-    m.blocks  = data.blocks.map(b => Object.assign(newBlock(), b, { roof: Object.assign(newBlock().roof, b.roof || {}) }));
+    m.blocks  = data.blocks.map(b => Object.assign(newBlock(), b, {
+      material: matKey(b.material),
+      roof: Object.assign(newBlock().roof, b.roof || {}) }));
     m.climate = Object.assign(base.climate, data.climate || {});
     m.demand  = Object.assign(base.demand,  data.demand  || {});
     m.system  = Object.assign(base.system,  data.system  || {});
@@ -3226,11 +3274,11 @@ const APP = (() => {
         sub:esc(model.climate.label),
         note:`1 mm falling on 1 m² is 1 litre, so ${nf(A,1)} m² under ${nf(R,0)} mm would give ${V(A*R)} if nothing were lost.` },
 
-      { id:"losses", tag:"Input", title:"Losses  Yc × Fc", val:nf(Yc*Fc,3),
-        sub:`Yc ${nf(Yc,2)} (surface) × Fc ${nf(Fc,2)} (filter)`,
-        note:`Yc is what the roof surface itself loses to wetting, evaporation and wind. Fc is what the pre-tank filter loses — BS EN 16941-1 requires at least 90% efficiency, so 0.90 is standard. You keep ${nf(Yc*Fc*100,0)}%.` },
+      { id:"losses", tag:"Input", title:"Losses  e × η", val:nf(Yc*Fc,3),
+        sub:`e ${nf(Yc,2)} (surface) × η ${nf(Fc,2)} (treatment)`,
+        note:`e is the surface yield coefficient from Table 2 of the standard — what the roof surface itself loses to wetting, evaporation and wind. η is the hydraulic treatment efficiency coefficient; where the manufacturer states nothing, the standard says 0.9 can be used for a system with no additional treatment. You keep ${nf(Yc*Fc*100,0)}%.` },
 
-      { id:"yield", tag:"Harvest", title:"Annual yield  Y = A · R · Yc · Fc", val:V(res.annualInflow),
+      { id:"yield", tag:"Harvest", title:"Annual yield  Y = A · e · h · η", val:V(res.annualInflow),
         sub:`${nf(A,1)} × ${nf(R,0)} × ${nf(Yc,2)} × ${nf(Fc,2)}`,
         note:`What the roof actually delivers to the tank in a year. This is the harvest — it is not the same as what gets used.` },
 
@@ -3283,7 +3331,7 @@ const APP = (() => {
        demand, the store is not the constraint however small it currently is. */
     if (res.maxSaving < 0.45)
       return { t:"Yield-limited", w:true,
-        d:`There is not enough water. Even with an <b>unlimited</b> tank, this roof under this rainfall could meet only <b>${fmtPct(res.maxSaving)}</b> of the demand — ${nf(res.annualRain,0)} mm a year across ${nf(geom.catchment,1)} m² simply does not add up to ${volSet([res.annualDemand])(res.annualDemand)}. A bigger tank cannot create water. <b>Biggest lever: more catchment area, a surface with a higher yield coefficient</b> (this roof is Yc ${nf(geom.ycMean,2)}; smooth metal is 0.90)<b>, or less demand.</b>` };
+        d:`There is not enough water. Even with an <b>unlimited</b> tank, this roof under this rainfall could meet only <b>${fmtPct(res.maxSaving)}</b> of the demand — ${nf(res.annualRain,0)} mm a year across ${nf(geom.catchment,1)} m² simply does not add up to ${volSet([res.annualDemand])(res.annualDemand)}. A bigger tank cannot create water. <b>Biggest lever: more catchment area, a surface with a higher yield coefficient</b> (this roof is e ${nf(geom.ycMean,2)}; smooth pitched is 0.90)<b>, or less demand.</b>` };
 
     if (res.capacity < res.knee * 0.92 && kneePt.saving > met + 0.03)
       return { t: oversized ? "Storage-limited, on an oversized roof" : "Storage-limited", w:true,
@@ -3308,7 +3356,7 @@ const APP = (() => {
     const V = v => { const f = fmtVol(v); return f.v + " " + f.u; };
     const cap = fmtVol(res.capacity);
     const kneePt = res.sweep.reduce((a, q) => Math.abs(q.cap - res.knee) < Math.abs(a.cap - res.knee) ? q : a, res.sweep[0]);
-    const method = model.system.tankMode === "auto" ? "the BS simplified 5% rule" : "set manually";
+    const method = model.system.tankMode === "auto" ? "the BS EN 16941-1 basic approach (A.2.1)" : "set manually";
     const U = volSet([res.simple, res.knee, res.capacity]);
     const E = volSet([res.annualInflow, res.annualDemand, b.totalSupplied, b.totalOverflow, b.totalDeficit]);
 
@@ -3350,11 +3398,11 @@ const APP = (() => {
           <div class="rwc-rep-box">
             <h2>Sizing the store — three answers</h2>
             <ul class="rwc-ex-list">
-              <li><b>BS simplified (5%)</b> ${U(res.simple)} — 5% of the lesser of annual yield and annual demand, about 18 days. No simulation needed; the standard's rule of thumb for consistent daily demand.</li>
-              <li><b>Profile-optimised knee</b> ${U(res.knee)} — the smallest capacity reaching 95% of the best achievable saving (${fmtPct(kneePt.saving)}). Read off the optimisation curve, so it reflects this climate's actual distribution.</li>
+              <li><b>BS basic approach (A.2.1)</b> ${U(res.simple)} — the lesser of annual yield and annual demand × ${nf(res.dryDays,1)} days ÷ 365.${res.naHalved ? " Yield ÷ demand is " + nf(res.ydRatio,2) + ", outside 0.5–2.0, so the National Annex NA.3 halving applies." : ""} No simulation needed; the standard's approach for a project with regular demand.</li>
+              <li><b>Curve knee</b> ${U(res.knee)} — the smallest capacity reaching 95% of the best achievable coverage (${fmtPct(kneePt.saving)}). The curve is the standard's C<sub>r</sub> = f(V) plot (A.2.2.4); reading a knee off it is this tool's own shortcut, not a rule from the standard.</li>
               <li><b>In this design</b> ${U(res.capacity)} — ${nf(res.daysStorage,0)} days of average demand, meeting ${fmtPct(b.saving)}.</li>
             </ul>
-            <p class="rwc-ex-note" style="margin-top:7px">The 5% rule is quick and defensible. The knee is better when rainfall is strongly seasonal, because the rule of thumb cannot see a three-month dry season.</p>
+            <p class="rwc-ex-note" style="margin-top:7px">A.2.1 is quick and defensible for regular demand. The knee is better when rainfall is strongly seasonal, because an annual-time-step rule cannot see a three-month dry season. Neither is the standard's detailed approach (A.2.2), which requires at least five years of <em>measured daily</em> rainfall — data this tool does not hold.</p>
           </div>
           <div class="rwc-rep-box${dg.w ? " rwc-ex-warn" : ""}" style="border-width:2px">
             <h2>What is limiting this design — ${esc(dg.t)}</h2>
@@ -3457,7 +3505,7 @@ const APP = (() => {
           </div>
           <div>
             <div class="rwc-rep-box"><h2>Method</h2>
-              <p style="font-size:11px;margin:0 0 6px"><b>Y = A · R · Yc · Fc</b><br>
+              <p style="font-size:11px;margin:0 0 6px"><b>Y = A · e · h · η</b><br>
                 ${nf(geom.catchment,1)} m² × ${nf(res.annualRain,0)} mm × ${nf(geom.ycMean,2)} × ${nf(model.system.filterCoef,2)}
                 = <b>${fmtVol(res.annualInflow).v} ${fmtVol(res.annualInflow).u}/yr</b></p>
               ${kv([
@@ -3466,9 +3514,10 @@ const APP = (() => {
                 ["Mains top-up", fmtVol(b.totalDeficit).v + " " + fmtVol(b.totalDeficit).u],
                 ["Overflow to drain", fmtVol(b.totalOverflow).v + " " + fmtVol(b.totalOverflow).u],
                 ["Water saving efficiency", fmtPct(b.saving)],
-                [(model.system.daily ? "Days" : "Months") + " fully supplied", fmtPct(b.reliability)],
+                ["Coverage rate Cr (A.5)", fmtPct(b.saving)],
+                [(model.system.daily ? "Days" : "Months") + " fully supplied (tool\u2019s own measure)", fmtPct(b.reliability)],
                 ["Storage capacity", fmtVol(res.capacity).v + " " + fmtVol(res.capacity).u + " (" + nf(res.daysStorage,0) + " days)"],
-                ["BS simplified (5%)", fmtVol(res.simple).v + " " + fmtVol(res.simple).u],
+                ["BS basic approach A.2.1", fmtVol(res.simple).v + " " + fmtVol(res.simple).u],
                 ["Profile-optimised knee", fmtVol(res.knee).v + " " + fmtVol(res.knee).u],
                 ["Mains displaced", nf(res.mainsSaved,1) + " m³/yr"]
               ])}
@@ -3787,10 +3836,10 @@ const APP = (() => {
       mItem("", "Click a roof to select its block", "F fits the model · arrow keys rotate") +
       mItem("", "Drag a selected block to move it", "Snaps to 0.25 m · hold Alt for free · Shift + arrows to nudge") +
       `<div class="rwc-menu-div"></div><div class="rwc-menu-head">Method</div>` +
-      mItem("", "Y = A · R · Yc · Fc", "BS EN 16941-1:2024. A is the plan-projected catchment, never the sloping surface.") +
+      mItem("", "Y = A · e · h · η", "BS EN 16941-1:2024, Formula (1). A is the horizontal projection of the collection area, never the sloping surface.") +
       mItem("", "YAS store operation", "Demand is met from the previous step's volume, before this step's inflow.") +
-      `<div class="rwc-menu-div"></div>` +
-      mItem("", "© Karam Al-Obaidi", "Rainwater Collection Studio"));
+      `<div class="rwc-menu-div"></div><div class="rwc-menu-head">Licence</div>` +
+      mItem("", "MIT licensed — © Karam Al-Obaidi", "Code MIT · documentation, screenshots and exercises CC BY 4.0 · your models are yours"));
   };
 
   document.addEventListener("click", e => {

@@ -170,11 +170,11 @@ hand in. The app is explicit about it:
 
 | Figure | Role | What it is |
 |---|---|---|
-| Catchment, rainfall, Yc × Fc | **Input** | What you are working from |
-| Annual yield | **Harvest** | What the roof delivers to the tank, `A · R · Yc · Fc` |
+| Catchment, rainfall, e × η | **Input** | What you are working from |
+| Annual yield | **Harvest** | What the roof delivers to the tank, `A · e · h · η` |
 | Non-potable demand | **Need** | What the building wants |
 | **Storage capacity** | **Deliverable** | **The answer.** The figure that goes on the drawing and into the specification |
-| Demand met % | **Justification** | Why that store size and not half or twice it. BS calls this the water saving efficiency |
+| Coverage rate C_r | **Justification** | Why that store size and not half or twice it. Supplied ÷ demanded, Formula (A.5) |
 | Mains displaced | **Benefit** | The same water, counted as what you no longer buy |
 | Overflow | **Diagnostic** | What spilled, and therefore what is limiting the design |
 
@@ -191,8 +191,8 @@ card per step in plain English — then:
 
 - **"So which number is the answer?"** — the store capacity, stated as the
   deliverable, with the other six figures placed in their roles.
-- **Sizing the store — three answers** — the BS simplified 5% rule, the
-  optimisation-curve knee, and whatever you set, side by side.
+- **Sizing the store — three answers** — the basic approach of A.2.1, the
+  coverage-curve knee, and whatever you set, side by side.
 - **What is limiting this design** — a diagnosis generated from your numbers:
   *yield-limited* (even an unlimited tank could not meet the demand, so a bigger
   tank cannot help), *storage-limited* (naming the knee capacity and the percentage
@@ -205,61 +205,108 @@ Clicking a tile opens the sheet at that step.
 
 ## Method
 
-### Yield — BS EN 16941‑1:2024 (which superseded BS 8515:2009)
+### Yield — BS EN 16941‑1:2024, clause 6.1.2, Formula (1)
 
 ```
-Y = A · R · Yc · Fc          litres per year
+Y = Σ ( A_i · e_i · h · η )          litres
 ```
 
-- `A` — **projected** catchment area, m² (plan area including the eaves overhang)
-- `R` — annual rainfall depth, mm (1 mm on 1 m² = 1 litre)
-- `Yc` — yield (run-off) coefficient of the roof surface
-- `Fc` — hydraulic filter efficiency, **0.90** by default: the standard requires
-  the pre-tank treatment to be at least 90% efficient
+- `A_i` — the **horizontal projection of the collection area**, m², which is the
+  standard's own wording. Plan area including the eaves overhang; never the
+  sloping surface. This is why pitch changes the roof and not the harvest.
+- `e_i` — surface yield coefficient of that surface (Table 2)
+- `h` — rainfall depth for the time step, mm (1 mm on 1 m² = 1 litre)
+- `η` — hydraulic treatment efficiency coefficient, **0.90** by default. The
+  standard's note to 6.1.2 says 0.9 *can be used* where the manufacturer states
+  nothing and there is no additional treatment. It is a fallback, not a minimum
+  the standard requires.
 
-Yield coefficients, per BS EN 16941‑1 Table 2:
+Surface yield coefficients, transcribed from BS EN 16941‑1:2024 Table 2 — all
+eight rows, in the standard's order, at the published values:
 
-| Surface | Yc |
+| Collection surface | e |
 |---|---|
-| Smooth metal sheet | 0.90 |
-| Pitched tile / slate | 0.80 |
-| Concrete / asphalt | 0.75 |
-| Gravel-ballasted flat | 0.60 |
-| Flat roof, smooth felt | 0.50 |
-| Green roof (extensive) | 0.40 |
+| Pitched roof, smooth — metal, glass, slate, glazed tile | 0.90 |
+| Pitched roof, rough — concrete tile | 0.80 |
+| Flat roof, without gravel | 0.80 |
+| Flat roof, with gravel | 0.70 |
+| Green roof, intensive — garden | 0.30 |
+| Green roof, extensive | 0.50 |
+| Sealed area — asphalt | 0.80 |
+| Non-sealed area — cobble stone | 0.50 |
 
-Mixed-material models weight `Yc` by each block's catchment area.
+Mixed-material models weight `e` by each block's catchment area. Models saved
+with the earlier six surface keys are mapped onto these on open.
 
-### Store operation — YAS
+The **first flush** input is the tool's own addition; Formula (1) has no
+first-flush term. Leave it at 0 to calculate strictly to the standard.
 
-The tank is operated with the **Yield After Spillage** rule, the conservative
-convention: demand is met from what was in the tank at the *end of the previous
-step*, before this step's inflow is added.
+### Store operation — Formulas (A.3) and (A.4), Annex A.2.2.3
+
+Abstraction is the lesser of the demand and the volume in the store at the *end
+of the previous step*, before this step's inflow is added; anything over the
+usable volume overflows. The convention is known as **YAS**, Yield After
+Spillage, and it is the conservative one.
 
 ```
-Yt = min(Dt, Vt−1)
-Vt = min(Vt−1 + Qt − Yt, C)
+St = min(Dt, Vt−1)
+Vt = min(Vt−1 + Qt − St, C)
 ```
 
 Three warm-up cycles run before the reported year, so the answer does not depend
 on an assumed starting level. Volume is conserved to within rounding:
 `Σ inflow = Σ supplied + Σ overflow`.
 
-**Monthly stepping assumes rain falls evenly all month, which flatters
-reliability.** Turn on *Daily balance* (Demand tab) to spread each month's depth
-over its wet days and step day by day — this is why storage exists at all, and
-the difference between the two is worth showing students.
+Coverage is reported as **C_r**, supplied ÷ demanded, which is Formula (A.5).
+A second figure counting the steps in which demand was met in full is the tool's
+own; the standard has no such measure.
+
+**The time step matters more than it looks.** On a monthly step the whole
+month's demand is drawn in one go against the previous month's closing volume,
+so the store can never supply more than **one tank-full a month** however often
+it would really refill. On the terraced-housing model a 1 000 L tank reads 4.6%
+monthly and 59.3% daily — the monthly figure is an artefact of the step, not a
+property of the tank. Turn on *Daily balance* for any store smaller than a
+month's demand; the app warns when you have not.
+
+Neither step is the standard's detailed approach (A.2.2), which requires at
+least five years of **measured daily** rainfall. The tool holds no daily series
+at any point: its daily option derives a wet-day count from the monthly total
+and spreads the month's inflow evenly across those synthetic days.
 
 ### Store sizing
 
 Three answers, shown together:
 
-1. **BS simplified (5% rule)** — 5% of the lesser of annual yield and annual
-   demand, roughly 18 days.
-2. **Profile-optimised knee** — the smallest capacity that reaches 95% of the best
-   achievable water-saving efficiency, read off the optimisation sweep. Past the
-   knee, more tank buys almost nothing.
+1. **Basic approach (A.2.1)** — the lesser of annual yield and annual demand ×
+   the design dry period ÷ 365. The standard's examples are 15 days
+   (Netherlands), 18 (Ireland, UK) and 21 (Germany); the tool defaults to 18 and
+   lets you set it. Where the ratio of annual yield to demand falls below 0.5 or
+   rises above 2.0, the UK National Annex NA.3 reduction is applied — the dry
+   period is halved.
+2. **Curve knee** — the smallest capacity reaching 95% of the best achievable
+   coverage. The curve is the standard's C_r = f(V) plot (A.2.2.4); reading a
+   knee off it is the tool's own shortcut, not a rule from the standard.
 3. **Whatever you set manually.**
+
+### Demand
+
+Per person per day from four editable end uses, times occupancy, plus an
+optional seasonal irrigation term; annual demand is daily × 365, as Formula (4).
+The WC and laundry defaults (25 and 15 l/person/day) sum to the 40 l/person/day
+the UK National Annex NA.1.2 recommends for toilet and washing-machine use; the
+split between them, and the cleaning and vehicle-wash figures, are the tool's
+own. Note 2 to 6.1.3 allows fewer than 365 days for commercial or public
+premises — the tool cannot be told that, so it overstates demand for any
+building that is not occupied all year.
+
+### Figures with no source
+
+The code names no origin for the 28-location rainfall library and its
+depth-per-wet-day figures, the downpipe capacity table, the 75 mm/h design
+storm, the cleaning and vehicle-wash demands, or the mains tariff. Replace the
+rainfall with something citable before publishing any number. The full register
+is in [`docs/method-notes.html`](docs/method-notes.html).
 
 ### What is *not* rigorous
 
@@ -291,29 +338,37 @@ Four ways in:
 
 ### Exercises
 
-1. **Pitch does not matter.** Load `forms`. Note that all six roofs report the
-   same catchment. Now change the gable's pitch from 15° to 45° and watch the
-   surface area climb 15% while the yield does not move at all.
+1. **Pitch does not matter.** Load `forms`: six roof shapes on one footprint,
+   all reporting a catchment of 117.00 m². Now take a 12 × 8 m gable from 15° to
+   45° and watch the surface climb from 121.13 to 165.46 m² while the catchment
+   stays at 117.00 m² and the yield does not move at all. Then try a sawtooth —
+   the one form whose catchment does differ, because it carries its overhang on
+   the low edge only.
 2. **The vault.** Set a barrel vault with a big rise. Surface / catchment goes
    past ×1.6. Ask what that extra 60% of material is buying.
 3. **Distribution beats total.** Compare `clim-trop`, `clim-temp` and `clim-arid`.
    Kuala Lumpur has 4× London's rainfall but does not need 4× the tank — because
    it rains every month. Then set London's annual total to Kuala Lumpur's using
    the Annual mode and see how differently it behaves.
-4. **Green roof trade-off.** Load `green`. The green roof more than halves the
-   harvest. Ask whether its runoff attenuation and biodiversity benefits are worth
+4. **Green roof trade-off.** Load `green`. At the Table 2 values the extensive
+   green roof (e 0.50) harvests just over half what smooth metal (0.90) does. Ask whether its runoff attenuation and biodiversity benefits are worth
    it — and note that attenuating runoff and harvesting runoff are partly competing
    goals.
 5. **Demand, not catchment, is usually the constraint.** Load `warehouse`: a huge
-   metal roof where most of the harvest spills because there is nobody to use it.
+   smooth-metal roof where most of the harvest spills because there is nobody to
+   use it.
    Then raise the occupancy and watch the overflow collapse.
-6. **Monthly vs daily.** Turn on the daily balance on any model and watch
-   reliability drop. Ask why.
+6. **Monthly vs daily.** Load `terrace`, set the tank manually to 1 000 L and
+   read the coverage rate with the daily balance off, then on: 4.6% becomes
+   59.3%. Ask which figure is the artefact, and why (see *Store operation*).
 7. **Read the diagnosis.** Open **Explain** on `clim-arid`, `warehouse` and
    `house` in turn. They come back yield-limited, storage-limited-on-an-oversized-roof,
    and storage-limited. Ask what you would change in each case — and notice that in
    Dubai a bigger tank is the *wrong* answer.
 8. **Save two variants** of the same building and compare them in Analysis mode.
+
+Three worked exercises with the numbers to expect, written for students to follow
+unaided, are in [`docs/method-notes.html`](docs/method-notes.html).
 
 ### Assessment
 
@@ -330,8 +385,12 @@ design, rather than quoting whichever number looks largest.
 ## Files
 
 ```
-index.html    the entire app — single file, no dependencies, no build step
-README.md     this file
+index.html                the entire app — single file, no dependencies, no build step
+docs/method-notes.html    method notes for students: what it calculates, which
+                          clause each step comes from, and every figure the code
+                          leaves unsourced. Paste into a CMS as an HTML block.
+LICENSE                   MIT for the code; CC BY 4.0 for the documentation
+README.md                 this file
 ```
 
 Nothing to install. Nothing to compile. Open the file, or upload it.
@@ -382,9 +441,41 @@ Browser support: any browser from the last few years. Uses `ResizeObserver`,
 
 ## References
 
-- BS EN 16941‑1:2024, *On-site non-potable water systems — Systems for the use of
-  rainwater* (supersedes BS 8515:2009)
-- BS EN 12056‑3, *Gravity drainage systems inside buildings — Roof drainage*
-- [DROP Rainwater Harvesting Design Software — Freeflush](https://www.freeflush.co.uk/pages/drop-rainwater-harvesting-software)
-- [Autodesk InfoDrainage](https://www.autodesk.com/products/infodrainage/features)
-- [Open-Meteo historical weather API](https://open-meteo.com/en/docs/historical-weather-api)
+The sources the code names, and what each contributes. The full treatment,
+including everything the code uses *without* naming a source, is in
+[`docs/method-notes.html`](docs/method-notes.html).
+
+- **BS EN 16941‑1:2024**, *On-site non-potable water systems. Part 1: Systems for
+  the use of rainwater* (incorporating corrigendum July 2024). BSI — the source
+  of almost everything the tool calculates: the catchment definition and yield
+  equation (6.1.2, Formula 1), Table 2, the demand formulas (6.1.3), the store
+  recurrence and coverage rate (A.2.2.3), the basic approach and its dry periods
+  (A.2.1), the coverage curve (A.2.2.4), and the UK National Annex NA.1.2 and
+  NA.3.
+- **BS 8515:2009**, *Rainwater harvesting systems: Code of practice*. BSI —
+  named once in the code, only in the phrase "which superseded BS 8515:2009".
+  Nothing in the tool derives from it.
+- **BS EN 12056‑3:2000**, *Gravity drainage systems inside buildings. Part 3:
+  Roof drainage, layout and calculation*. BSI — named in the code only as what
+  the tool is *not*. Go here for gutter and downpipe sizing; the tool's
+  litres-per-second figure is indicative and its pipe table is unsourced. The
+  code names no edition, so the edition above is this README's choice.
+- **Open-Meteo historical weather API** —
+  <https://open-meteo.com/en/docs/historical-weather-api> — the only external
+  source the tool can reach, and the only route by which citable rainfall enters
+  it. Optional and user-initiated; the file works offline. Data under CC BY 4.0
+  per Open-Meteo's terms; attribute it where you use it.
+
+Reviewed for comparison, not used as a source:
+[DROP Rainwater Harvesting Design Software](https://www.freeflush.co.uk/pages/drop-rainwater-harvesting-software)
+and [Autodesk InfoDrainage](https://www.autodesk.com/products/infodrainage/features).
+
+---
+
+## Licence
+
+© Karam Al-Obaidi. The code is **MIT** (see [`LICENSE`](LICENSE)); the
+documentation, screenshots and exercises are
+**[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**. Nothing
+third-party is bundled — no external script, stylesheet or font. A model you
+make with the tool is yours; neither licence claims anything over it.
