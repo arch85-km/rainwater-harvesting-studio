@@ -552,6 +552,25 @@ spaced evenly through the month.</div>
       <p>There is a second-order consequence worth knowing: first-flush diversion is applied per synthetic
         wet day, so the first-flush loss is a direct function of a wet-day count the tool invented.</p>
 
+      <h3>Regenerated rainfall is reanalysis, and it is a baseline</h3>
+      <p>If the library has been regenerated, two properties of the replacement data limit every number
+        built on it, and neither is a defect to be worked around &mdash; they are what the data is.</p>
+      <p><b>It is modelled, not measured.</b> The Open&#8209;Meteo archive is ERA5 reanalysis: a physical
+        model run backwards over past observations to produce a gridded estimate. It is not a rain gauge
+        at your site. A point value can differ materially from a nearby station, most of all where
+        rainfall is convective or the terrain is mountainous, because a grid cell averages over an area
+        in which a thunderstorm or a hillside is a detail. Where a station record exists for your
+        location, it is the better source and you should type it in.</p>
+      <p><b>1991&ndash;2020 is a baseline, not the present.</b> The code calls that window the
+        <b>World Meteorological Organization standard normal period</b>, and that is why it was chosen
+        over a recent decade: a thirty-year normal is the convention published climate figures are
+        quoted on, so a preset, a site you fetch yourself, and a figure from a met service are all the
+        same kind of number and can be set beside one another. But a normal
+        is an average of the past. The UK National Annex, NA.4, asks a designer to go further and test
+        the sizing against projected drier summers and wetter winters. <b>This tool has no future
+        scenario and will not prompt you for one</b>, so a tank sized here is sized for the climate of
+        1991&ndash;2020 and no other.</p>
+
       <h3>On a monthly step the store can only deliver one tank-full a month</h3>
       <p>With monthly stepping there is one draw per month, taken against the volume standing at the end
         of the previous month. A tank cannot be drawn twice, so however often it would really refill, the
@@ -728,8 +747,8 @@ spaced evenly through the month.</div>
 
       <h3>Where it will diverge</h3>
       <ul>
-        <li><b>Against a detailed-approach simulation on measured daily rainfall</b>, which is what the
-          standard asks for and what a tool such as RainCycle performs. The rainfall series is the whole
+        <li><b>Against a detailed-approach simulation on measured daily rainfall</b>, which is what
+          A.2.2 of the standard asks for. The rainfall series is the whole
           difference: real records have dry runs and cloudbursts that a month divided into equal showers
           does not. Expect this tool to show shorter deficits and less overflow than the real series
           would, and the gap to be widest for small stores and seasonal climates.</li>
@@ -909,11 +928,24 @@ spaced evenly through the month.</div>
       alone moves it from 4.6&nbsp;% to 59.3&nbsp;%.</p>
 
     <h3>References</h3>
-    <p>These are the sources the code itself names &mdash; all five of them, and nothing else. Only two
-      of the five put a number into a calculation. The other three are listed with that said plainly:
-      one is named as a predecessor, one as a standard the tool expressly is <em>not</em>, and one as a
-      cross-check that nothing is computed from. A reference list that lets a reader assume otherwise is
-      worse than a short one. Everything the code uses <em>without</em> naming a source is set out in
+    <p>These are the sources the code itself names &mdash; all seven of them, and nothing else. What
+      each one actually contributes is stated at the end of its entry, because the count is not what a
+      reader should take from a reference list. <b>As the tool stands, exactly one of the seven puts a
+      number into a calculation:</b> BS EN 16941-1:2024, which supplies the whole method. Two more do so
+      only once the rainfall library has been regenerated &mdash; Open&#8209;Meteo, and the ERA5
+      reanalysis behind it. The remaining four record a convention the tool follows, or what the tool is
+      <em>not</em>: a superseded code of practice, a drainage standard it defers to, a normal period it
+      borrows, and a national average it only checks itself against.</p>
+    <p>Two entries carry <b>[bracketed blanks]</b>. They mark details this document could not verify
+      &mdash; a primary citation and a publication reference that were not to hand when it was written.
+      They are left visibly empty rather than filled from memory, which is precisely the failure that
+      produced the unsourced rainfall library in the first place. Fill them from a copy you can check
+      before you cite either work.</p>
+    <p>A caution about access: the three BSI standards are <b>paywalled</b>. Checking what this page
+      claims about them needs a purchased copy or an institutional subscription, which most readers of a
+      teaching page will not have. That is a real limit on how far you can verify this document, and it
+      is better said than left for you to discover.</p>
+    <p>Everything the code uses <em>without</em> naming a source is set out in
       <a href="#cs-04">How exact the numbers are</a> and is deliberately absent from this list.</p>
     <ul class="cs-refs">
       <li>British Standards Institution. (2024). <i>On-site non-potable water systems. Part 1: Systems
@@ -953,6 +985,25 @@ spaced evenly through the month.</div>
         <a href="#cs-06">the comparison section</a>. If the fetch fails the field is recorded as null and
         the library is unaffected. The indicator's own metadata page states its provenance and vintage;
         read it before citing the number.</li>
+      <li>[<b>Authors, year, article title, journal, volume, pages and DOI &mdash; not verified; fill
+        from a copy you can check</b>]. The ERA5 reanalysis, produced by ECMWF for the Copernicus
+        Climate Change Service.
+        &mdash; named by <span class="cs-mono">tools/build-climate.mjs</span> as what the Open&#8209;Meteo
+        archive is built from. <b>It contributes nothing as the tool currently stands</b>, because the
+        rainfall library has not been regenerated; once it has, ERA5 is the actual origin of every
+        monthly figure and every depth per wet day, and this is the work to cite for the data rather than
+        the API that served it. It is a model reconstruction, not gauge measurement &mdash; the
+        consequence is set out in <a href="#cs-04">How exact the numbers are</a>. The citation above is
+        deliberately incomplete: the primary reference could not be checked when this page was written,
+        and a plausible-looking one written from memory would be worse than a visible gap.</li>
+      <li>World Meteorological Organization. [<b>publication reference and year &mdash; not verified;
+        fill from a copy you can check</b>]. <i>WMO guidelines on the calculation of climate normals</i>.
+        WMO. &mdash; named in <span class="cs-mono">index.html</span>, where the constant
+        <span class="cs-mono">CLIMATE_WINDOW</span> calls 1991&ndash;2020 "the WMO standard normal
+        period". It is the reason for that window rather than a recent decade, and so it decides which
+        years the regenerated rainfall would average over &mdash; but it supplies no value the tool
+        calculates with. Like the entry above, its publication details are left blank rather than
+        guessed.</li>
       <li>Open-Meteo. (n.d.). <i>Historical weather API</i> [Data set].
         <a href="https://open-meteo.com/" target="_blank" rel="noopener">https://open-meteo.com/</a>
         &mdash; the only external source the tool can reach, and the route by which citable rainfall
@@ -961,22 +1012,22 @@ spaced evenly through the month.</div>
         per wet day. The same request, the same window and the same reduction are used by
         <span class="cs-mono">tools/build-climate.mjs</span> to regenerate the 28-location preset
         library, so a fetched site and a preset are the same kind of figure and can be compared.
-        <b>Cite the window and the retrieval date, both of which the app prints</b> &mdash; the code
-        stores no accession date of its own until the generator has run, and
+        <b>Cite it as retrieved on [date you fetched]</b>, which this document cannot supply because
+        the data had not been fetched when it was written: an API archive is revisable, so a citation
+        without a retrieval date names no fixed thing. The app prints the date once the generator has
+        run, and
         <span class="cs-mono">docs/climate-source.json</span> records what each location geocoded to.
-        Two properties of this source to state rather than pass over: its archive is <b>ERA5
-        reanalysis</b> (ECMWF / Copernicus), not rain-gauge measurement, so a point value will differ
-        from a nearby station, most of all in convective and mountainous climates; and 1991&ndash;2020
-        is a <b>baseline</b> rather than current conditions, which is the gap National Annex NA.4 asks
-        a designer to close and this tool does not. The fetch is optional and user-initiated, and the
+        Its archive is <b>ERA5 reanalysis</b>, and the window is a <b>baseline</b>; both limit what
+        the data can be held to, and both are set out in <a href="#cs-04">How exact the numbers
+        are</a> rather than restated here. The fetch is optional and user-initiated, and the
         file works with no network at all. Open-Meteo&rsquo;s own terms place its data under
         CC&nbsp;BY&nbsp;4.0; check them and attribute accordingly.</li>
     </ul>
-    <p class="cs-cite">Two of the five put numbers into the calculation: BS EN 16941-1 supplies the
-      method, and Open-Meteo the rainfall once the library has been regenerated. The other three are a
-      record of what the tool is not &mdash; a superseded code of practice, a drainage standard it
-      defers to, and a national figure it only checks itself against. For anything that must be built,
-      none of the five substitutes for a designer who can take responsibility for the system.</p>
+    <p class="cs-cite">Read the list for what each work contributes, not for its length. One of the
+      seven supplies the method the tool implements; two more supply its rainfall, but only after the
+      library has been regenerated; the rest are conventions it borrows or standards it defers to. For
+      anything that must be built, none of the seven substitutes for a designer who can take
+      responsibility for the system.</p>
   </div>
 
 </div>
