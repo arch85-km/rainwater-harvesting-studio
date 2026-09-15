@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Rainwater Harvesting Studio: A parametric roof and tank sizing tool"
+authors:
+  - family-names: Al-Obaidi
+    given-names: Karam M.
+version: "1.0"
+date-released: "2026-09-15"
+license: MIT
+url: "https://karam.me.uk/applications/rainwater-harvesting-studio/"
+repository-code: "https://github.com/arch85-km/rainwater-harvesting-studio"
+type: software
+abstract: >-
+  A single-file, dependency-free parametric 3D modeller that calculates
+  rainwater harvesting yield, store capacity and reliability to
+  BS EN 16941-1:2024. Built for teaching architecture students.
+keywords:
+  - rainwater harvesting
+  - BS EN 16941-1
+  - architecture education
+  - parametric modelling

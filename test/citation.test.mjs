@@ -5,13 +5,15 @@
    Whoever does should still cite karam.me.uk rather than whatever their address
    bar shows, which only works if the app carries the citation itself.
 
-   That puts the same citation in three places: CITATION in index.html, the APA
-   entry in docs/method-notes.html, and the BibTeX block beside it. Three copies
-   drift. These assertions hold them together, and hold the <link rel="canonical">
-   to the same URL, so a future edit to one cannot silently leave the others
-   behind.
+   That puts the same citation in four places: CITATION in index.html, the APA
+   entry in docs/method-notes.html, the BibTeX block beside it, and CITATION.cff
+   — which is the only one GitHub can read, and what puts the "Cite this
+   repository" button on the repo page. Four copies drift. These assertions hold
+   them together, and hold the <link rel="canonical">, package.json's homepage
+   and the .cff's url to the same address, so a future edit to one cannot
+   silently leave the others behind.
 
-   Text assertions, not arithmetic: this suite reads the two files rather than
+   Text assertions, not arithmetic: this suite reads the files rather than
    exercising the modules. */
 
 import { readFileSync } from "node:fs";
@@ -27,6 +29,7 @@ const { CITATION, VERSION } = require("./.core.js");
 const html  = readFileSync(resolve(ROOT, "index.html"), "utf8");
 const notes = readFileSync(resolve(ROOT, "docs/method-notes.html"), "utf8");
 const pkg   = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8"));
+const cff   = readFileSync(resolve(ROOT, "CITATION.cff"), "utf8");
 
 let pass = 0, fail = 0;
 const t = (name, cond, got, want) => {
@@ -84,6 +87,47 @@ console.log("\n── 2. One address of record ──");
   const inCode = html.match(/href="https:\/\/[a-z0-9-]+\.github\.io[^"]*"/g);
   t("no github.io address is declared as the app's own", !inCode,
     inCode ? inCode.join(", ") : "none", "none");
+}
+
+console.log("\n── 3. CITATION.cff says the same thing ──");
+{
+  /* Line-oriented rather than a YAML parser: the repository has no
+     dependencies and `npm test` has to keep running on a bare Node 18. Each
+     key is read from its own top-level line, quotes optional. */
+  const field = k => {
+    const m = cff.match(new RegExp(`^${k}:[ \\t]*(.+)$`, "m"));
+    return m ? m[1].trim().replace(/^["']|["']$/g, "") : null;
+  };
+
+  t("title matches CITATION.title", field("title") === CITATION.title,
+    field("title"), CITATION.title);
+  t("version matches VERSION.number", field("version") === VERSION.number,
+    field("version"), VERSION.number);
+  t("date-released matches VERSION.date", field("date-released") === VERSION.date,
+    field("date-released"), VERSION.date);
+  t("url is the address of record, not the repo", field("url") === CITATION.url,
+    field("url"), CITATION.url);
+  t("license matches package.json", field("license") === pkg.license,
+    field("license"), pkg.license);
+
+  /* repository-code is deliberately NOT the cited address: a reader who cites
+     the GitHub mirror instead of karam.me.uk is the failure this whole suite
+     exists to prevent. */
+  t("repository-code is distinct from the cited url",
+    field("repository-code") && field("repository-code") !== CITATION.url,
+    field("repository-code"), "a different URL from " + CITATION.url);
+
+  /* Derive the APA form from the .cff's structured name and compare it with
+     CITATION.author, rather than testing that it merely looks similar:
+     "Al-Obaidi" + "Karam M." must reduce to exactly "Al-Obaidi, K.M." */
+  const author = cff.match(/family-names:[ \t]*(.+)\n\s*given-names:[ \t]*(.+)/);
+  const initials = g => g.trim().split(/\s+/).map(w => w[0].toUpperCase() + ".").join("");
+  const cffAuthor = author ? `${author[1].trim()}, ${initials(author[2])}` : null;
+  t("the author reduces to CITATION.author", cffAuthor === CITATION.author,
+    cffAuthor, CITATION.author);
+
+  for (const k of ["cff-version", "message", "type", "abstract"])
+    t(`required key "${k}" is present`, field(k) !== null, "missing", "present");
 }
 
 console.log(`\n${pass ? "✓" : "✗"} ${pass} passed, ${fail} failed\n`);

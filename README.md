@@ -450,7 +450,7 @@ design, rather than quoting whichever number looks largest.
 
 ```
 index.html                the entire app — single file, no dependencies, no build step
-test/                     247 assertions, no dependencies — see Verifying below
+test/                     258 assertions, no dependencies — see Verifying below
 package.json              scripts and metadata; there is nothing to install
 docs/method-notes.html    method notes for students: what it calculates, which
                           clause each step comes from, and every figure the code
@@ -458,6 +458,9 @@ docs/method-notes.html    method notes for students: what it calculates, which
 docs/climate-source.json  provenance of the rainfall library — written by the
                           generator, absent until it has been run
 tools/build-climate.mjs   regenerates the rainfall library from a real source
+CITATION.cff              machine-readable citation — the only format GitHub
+                          reads, and what puts "Cite this repository" on the
+                          repo page
 LICENSE                   the MIT grant for the code, on its own so GitHub's
                           licence detector reads it; the CC BY 4.0 terms for
                           the documentation are under Licence, below
@@ -474,7 +477,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**247 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**258 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.
@@ -499,9 +502,9 @@ What it covers:
   rather than eyeballing a diff, plus the country-code handling that stops
   "Athens, GR" landing in Georgia.
 - **The citation and the canonical URL** — that the citation in the app, the APA
-  entry and BibTeX block in the method notes, and `package.json` all give the
-  same work at the same address, so a mirror of the app cannot end up being the
-  one people cite.
+  entry and BibTeX block in the method notes, `CITATION.cff` and `package.json`
+  all give the same work at the same address, so a mirror of the app cannot end
+  up being the one people cite.
 
 The browser suites used during development — smoke tests at four viewport
 widths, the guided tour, PDF pagination, block dragging, iframe embedding, and
