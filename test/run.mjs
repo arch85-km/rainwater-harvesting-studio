@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 /* Run the suites that need nothing installed.
 
-   Two of them, spawned rather than imported: core.test.js is CommonJS and
-   generator.test.mjs is an ES module, and spawning keeps that difference from
-   mattering. Each prints its own results and exits non-zero on failure; this
-   aggregates the totals and the exit code.
+   Spawned rather than imported: core.test.js is CommonJS and the other two are
+   ES modules, and spawning keeps that difference from mattering. Each prints its
+   own results and exits non-zero on failure; this aggregates the totals and the
+   exit code.
 
    The browser suites used during development — smoke, tour, print, drag, embed,
    the documentation-figure checks and two pixel regressions — need Playwright
-   and are not shipped. What runs here is the arithmetic: the catchment
+   and are not shipped. What runs here is the arithmetic — the catchment
    identities, the yield equation, the water balance, the tank sizing, and the
-   climate generator's rewrite.
+   climate generator's rewrite — plus one text check holding the citation and
+   the canonical URL together across index.html, the method notes and
+   package.json.
 
    Usage:  npm test      (or: node test/run.mjs) */
 
@@ -22,7 +24,8 @@ import { extract } from "./extract-core.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SUITES = [
   ["Data, geometry and hydrology", "core.test.js"],
-  ["Climate library generator",    "generator.test.mjs"]
+  ["Climate library generator",    "generator.test.mjs"],
+  ["Citation and canonical URL",   "citation.test.mjs"]
 ];
 
 const r = extract();

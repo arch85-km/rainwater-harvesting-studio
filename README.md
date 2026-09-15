@@ -45,9 +45,14 @@ argument; a model you can shape can.
 Fully isolated from your theme's CSS and JavaScript. Nothing can break your site
 styling, and nothing in your theme can break the app.
 
-1. Upload `index.html` to your site — either through **Media Library → Add New**,
-   or by FTP to something like `/wp-content/uploads/rwc/index.html`.
-2. Copy the file's URL.
+1. Get a URL for the app. Either:
+   - **Upload `index.html` to your site** — through **Media Library → Add New**,
+     or by FTP to something like `/wp-content/uploads/rwc/index.html`; or
+   - **serve it from the repository** with GitHub Pages (Settings → Pages →
+     deploy from branch, root), which gives you
+     `https://<you>.github.io/rainwater-harvesting-studio/` and updates itself on
+     every push.
+2. Copy that URL.
 3. Add a **Custom HTML** block to your page and paste this, replacing the `src`:
 
 ```html
@@ -68,6 +73,18 @@ styling, and nothing in your theme can break the app.
 > confirmation. `allow-same-origin` lets the app remember work between visits.
 
 On phones, swap `height:82vh` for `height:88vh` if you want more of the screen.
+
+**Pick one host, not both.** An uploaded copy and a Pages copy are two files, and
+they go out of step the moment one is fixed and the other is not — with no sign
+on either page that they disagree. Serving from Pages and framing that URL keeps
+the repository as the single source of truth, which is the same reason the tests
+extract from `index.html` rather than holding a copy of it. If you would rather
+upload, leave Pages off.
+
+One thing to check rather than assume, if you frame the Pages URL: load the page
+once and confirm the app actually appears inside the frame. It is a cross-origin
+frame with the `sandbox` attribute above, and that is worth seeing work before a
+lecture depends on it.
 
 ### Option 2 — paste into a Custom HTML block
 
@@ -433,7 +450,7 @@ design, rather than quoting whichever number looks largest.
 
 ```
 index.html                the entire app — single file, no dependencies, no build step
-test/                     238 assertions, no dependencies — see Verifying below
+test/                     247 assertions, no dependencies — see Verifying below
 package.json              scripts and metadata; there is nothing to install
 docs/method-notes.html    method notes for students: what it calculates, which
                           clause each step comes from, and every figure the code
@@ -457,7 +474,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**238 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**247 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.
@@ -481,6 +498,10 @@ What it covers:
 - **The generator's rewrite** — round-tripped by re-evaluating the patched file
   rather than eyeballing a diff, plus the country-code handling that stops
   "Athens, GR" landing in Georgia.
+- **The citation and the canonical URL** — that the citation in the app, the APA
+  entry and BibTeX block in the method notes, and `package.json` all give the
+  same work at the same address, so a mirror of the app cannot end up being the
+  one people cite.
 
 The browser suites used during development — smoke tests at four viewport
 widths, the guided tour, PDF pagination, block dragging, iframe embedding, and

@@ -18,7 +18,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const CORE = resolve(ROOT, "test/.core.js");
 
 const EXPORTS = [
-  "GEO", "HYD", "CLIMATE", "CLIMATE_SOURCE", "CLIMATE_WINDOW",
+  "GEO", "HYD", "CLIMATE", "CLIMATE_SOURCE", "CLIMATE_WINDOW", "VERSION", "CITATION",
   "climateProvenance", "rainfallProvenanceFor",
   "MATERIALS", "MATERIAL_ORDER", "MATERIAL_ALIAS", "matKey",
   "ROOFS", "ROOF_ORDER", "CITIES", "CITY_BY_ID", "DEMOS",

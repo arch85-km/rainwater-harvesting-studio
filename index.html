@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Rainwater Harvesting Studio — Parametric Design Tool</title>
 <meta name="description" content="Parametric 3D modeller that calculates rainwater harvesting yield, tank size and reliability to BS EN 16941-1. For architecture teaching.">
+<link rel="canonical" href="https://karam.me.uk/applications/rainwater-harvesting-studio/">
 <style>
 /* ==========================================================================
    Rainwater Harvesting Studio
@@ -953,6 +954,22 @@ const CLIMATE_WINDOW = { from:"1991-01-01", to:"2020-12-31", label:"1991–2020"
    in three of them. Shown in Help, and stamped on every sheet and image the app
    exports so a handed-in drawing says which version produced it. */
 const VERSION = { number: "1.0", date: "2026-09-15", label: "15 September 2026" };
+
+/* How to cite. Built from VERSION so bumping the version cannot leave the
+   citation behind, and surfaced in Help because the app may well be opened from
+   somewhere that is not its address of record — a GitHub Pages copy, a file on a
+   VLE, a downloaded copy on a laptop. Whoever does should still cite the address
+   of record rather than whatever their address bar happens to show, and that is
+   only possible if the app tells them what it is. Held to the APA entry in
+   docs/method-notes.html by test/citation.test.mjs. */
+const CITATION = {
+  author: "Al-Obaidi, K.M.",
+  year:   "2026",
+  title:  "Rainwater Harvesting Studio: A parametric roof and tank sizing tool",
+  url:    "https://karam.me.uk/applications/rainwater-harvesting-studio/"
+};
+CITATION.apa = `${CITATION.author} (${CITATION.year}). ${CITATION.title} ` +
+               `(Version ${VERSION.number}) [Computer software]. ${CITATION.url}`;
 
 const CLIMATE_SOURCE = {
   sourced:  false,          // set true by the generator
@@ -3954,6 +3971,7 @@ const APP = (() => {
       mItem("", "YAS store operation", "Demand is met from the previous step's volume, before this step's inflow.") +
       `<div class="rwc-menu-div"></div><div class="rwc-menu-head">This version</div>` +
       mItem("", `Version ${VERSION.number}`, `Released ${VERSION.label}`) +
+      mItem('data-cite="1"', "How to cite this", CITATION.apa) +
       `<div class="rwc-menu-div"></div><div class="rwc-menu-head">Licence</div>` +
       mItem("", "© Karam Al-Obaidi", "Code MIT · documentation, screenshots and exercises CC BY 4.0 · your models are yours"));
   };
@@ -3971,6 +3989,15 @@ const APP = (() => {
     const m = e.target.closest("[data-m]");
     if (m) { closeMenu(); setMode(m.dataset.m); return; }
     if (e.target.closest("[data-tour]")) { closeMenu(); startTour("help"); return; }
+    if (e.target.closest("[data-cite]")) { closeMenu();
+      /* Clipboard access can be absent or refused — a sandboxed iframe, an
+         insecure origin, a browser that asks. Falling back to a message beats
+         failing silently, since the citation is readable in the menu either way. */
+      try { navigator.clipboard.writeText(CITATION.apa)
+              .then(() => toast("Citation copied"),
+                    () => toast("Select the citation in Help to copy it")); }
+      catch { toast("Select the citation in Help to copy it"); }
+      return; }
   });
 
   /* --- canvas interaction ---------------------------------------------- */
