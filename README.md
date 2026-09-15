@@ -441,7 +441,9 @@ docs/method-notes.html    method notes for students: what it calculates, which
 docs/climate-source.json  provenance of the rainfall library — written by the
                           generator, absent until it has been run
 tools/build-climate.mjs   regenerates the rainfall library from a real source
-LICENSE                   MIT for the code; CC BY 4.0 for the documentation
+LICENSE                   the MIT grant for the code, on its own so GitHub's
+                          licence detector reads it; the CC BY 4.0 terms for
+                          the documentation are under Licence, below
 README.md                 this file
 ```
 
