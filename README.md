@@ -2,6 +2,8 @@
 
 **[karam.me.uk/applications/rainwater-harvesting-studio](https://karam.me.uk/applications/rainwater-harvesting-studio/)**
 
+**Version 1.0** — 15 September 2026
+
 A parametric 3D modeller that calculates rainwater harvesting yield, store
 size and reliability to **BS EN 16941‑1:2024**. Built for teaching architecture
 students, and for embedding in a WordPress page.

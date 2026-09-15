@@ -948,6 +948,12 @@ const ROOF_ORDER = ["flat","gable","hip","shed","butterfly","sawtooth","vault","
    current conditions — see the National Annex NA.4 note in the method notes. */
 const CLIMATE_WINDOW = { from:"1991-01-01", to:"2020-12-31", label:"1991–2020" };
 
+/* Build identity. One place to bump: a single file with no build step has
+   nowhere to generate this from, and a date written out four times goes stale
+   in three of them. Shown in Help, and stamped on every sheet and image the app
+   exports so a handed-in drawing says which version produced it. */
+const VERSION = { number: "1.0", date: "2026-09-15", label: "15 September 2026" };
+
 const CLIMATE_SOURCE = {
   sourced:  false,          // set true by the generator
   name:     "",             // e.g. "Open-Meteo historical weather API (reanalysis)"
@@ -3270,7 +3276,7 @@ const APP = (() => {
     g.font = "600 11px -apple-system, Segoe UI, Roboto, sans-serif";
     g.fillText("© Karam Al-Obaidi", wPx - pad, hPx - barH + 19);
     g.fillStyle = P.ink3; g.font = "10px -apple-system, Segoe UI, Roboto, sans-serif";
-    g.fillText("Rainwater Harvesting Studio · BS EN 16941-1", wPx - pad, hPx - barH + 34);
+    g.fillText("Rainwater Harvesting Studio v" + VERSION.number + " · BS EN 16941-1", wPx - pad, hPx - barH + 34);
     return c;
   }
 
@@ -3476,7 +3482,7 @@ const APP = (() => {
           <div><h1>How this result was calculated</h1>
             <p>${esc(model.name)} · projected catchment method · BS EN 16941-1:2024</p></div>
           <div class="rwc-rep-meta">${esc(model.climate.label)} · ${nf(res.annualRain,0)} mm/yr<br>
-            <span class="rwc-rep-prov">${esc(rainfallProvenanceFor(model.climate))}</span><br>
+            <span class="rwc-rep-prov">${esc(rainfallProvenanceFor(model.climate))}<br>Version ${VERSION.number} · ${VERSION.label}</span><br>
             ${model.system.daily ? "daily" : "monthly"} water balance<br><b>© Karam Al-Obaidi</b></div>
         </div>
 
@@ -3579,7 +3585,7 @@ const APP = (() => {
           <div><h1>${esc(model.name)}</h1>
             <p>Rainwater harvesting appraisal · projected catchment method · BS EN 16941-1:2024</p></div>
           <div class="rwc-rep-meta">${esc(model.climate.label)} · ${nf(res.annualRain, 0)} mm/yr<br>
-            <span class="rwc-rep-prov">${esc(rainfallProvenanceFor(model.climate))}</span><br>
+            <span class="rwc-rep-prov">${esc(rainfallProvenanceFor(model.climate))}<br>Version ${VERSION.number} · ${VERSION.label}</span><br>
             ${now.toLocaleDateString()} · ${model.system.daily ? "daily" : "monthly"} balance<br>
             <b>© Karam Al-Obaidi</b></div>
         </div>
@@ -3946,8 +3952,10 @@ const APP = (() => {
       `<div class="rwc-menu-div"></div><div class="rwc-menu-head">Method</div>` +
       mItem("", "Y = A · e · h · η", "BS EN 16941-1:2024, Formula (1). A is the horizontal projection of the collection area, never the sloping surface.") +
       mItem("", "YAS store operation", "Demand is met from the previous step's volume, before this step's inflow.") +
+      `<div class="rwc-menu-div"></div><div class="rwc-menu-head">This version</div>` +
+      mItem("", `Version ${VERSION.number}`, `Released ${VERSION.label}`) +
       `<div class="rwc-menu-div"></div><div class="rwc-menu-head">Licence</div>` +
-      mItem("", "MIT licensed — © Karam Al-Obaidi", "Code MIT · documentation, screenshots and exercises CC BY 4.0 · your models are yours"));
+      mItem("", "© Karam Al-Obaidi", "Code MIT · documentation, screenshots and exercises CC BY 4.0 · your models are yours"));
   };
 
   document.addEventListener("click", e => {
