@@ -503,6 +503,12 @@ if (failed.length) {
 }
 
 /* ---- 3. what varies, stated before anything is written ---- */
+/* Declared before it is used. The first version of this sat below the loop
+   that reads it, which is a temporal-dead-zone error that syntax checking
+   cannot see and importing the module does not reach, because main() only runs
+   when the file is invoked directly. It took a runner to find it. */
+const usable = record.filter(c => !c.error);
+
 /* The cross-check, reported as a spread rather than a pass/fail. WWIS and the
    normals may count a rain day at different thresholds and over different
    periods, so they are not expected to agree exactly — a large gap is a
@@ -533,7 +539,6 @@ console.log(`\n  ${checked} of ${usable.length} cities cross-checked; ${wide} ou
 if (wide) console.log(`  A wide gap usually means a different rain-day threshold, a different`);
 if (wide) console.log(`  period or a different station — check the raindef recorded for those.`);
 
-const usable = record.filter(c => !c.error);
 const periods = [...new Set(usable.map(c => c.normals.period).filter(Boolean))].sort();
 const undeclared = usable.filter(c => !c.normals.period).length;
 const thresholds = [...new Set(usable.map(c => `${c.normals.raindayThreshold ?? "none"} ${c.normals.raindayThresholdUnit ?? ""}`.trim()))];

@@ -25,7 +25,8 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const SUITES = [
   ["Data, geometry and hydrology", "core.test.js"],
   ["Climate library generator",    "generator.test.mjs"],
-  ["Citation and canonical URL",   "citation.test.mjs"]
+  ["Citation and canonical URL",   "citation.test.mjs"],
+  ["WWIS generator, end to end",   "wwis-smoke.test.mjs"]
 ];
 
 const r = extract();
