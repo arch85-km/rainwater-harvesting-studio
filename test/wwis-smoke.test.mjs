@@ -21,7 +21,9 @@
    run does that. */
 
 import { spawnSync } from "node:child_process";
-import { resolve, dirname } from "node:path";
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -96,6 +98,82 @@ t("the run reports the periods it found", /Normal periods declared:/.test(out),
 
 t("a dry run writes nothing", /index\.html and docs\/climate-source\.json unchanged/.test(out),
   "wrote nothing", "wrote nothing");
+
+/* ── and again, for real, into a copy of the tree ──────────────────────────
+
+   Everything above runs --dry-run, which writes nothing — so nothing above
+   ever looks at docs/climate-source.json, the file the app points readers at
+   and the one a citation rests on. That gap hid a fault for as long as the
+   file existed: the record was built by calling matchNormals a SECOND time,
+   without the city's coordinates, so it reported a name-only search while the
+   data came from a proximity match. Kuala Lumpur shipped reading
+
+     "sourcedFrom": "wmo-normals:Subang (WMO 00048647)"
+     "crossCheck":  { "status": "no station named for Kuala Lumpur among 15 …" }
+
+   — a provenance record that contradicted itself, and no assertion could see
+   it, because no assertion had ever read the file.
+
+   So: copy what the generator reads and writes into a temp directory, run it
+   there without --dry-run, and read what it wrote. The repository is not
+   touched. */
+
+console.log("\n── the record it writes agrees with the data it wrote ──");
+{
+  const tmp = mkdtempSync(join(tmpdir(), "rwh-gen-"));
+  try {
+    mkdirSync(join(tmp, "docs"), { recursive: true });
+    cpSync(resolve(ROOT, "index.html"), join(tmp, "index.html"));
+    cpSync(resolve(ROOT, "tools"), join(tmp, "tools"), { recursive: true });
+    cpSync(resolve(ROOT, "test/fixtures"), join(tmp, "test/fixtures"), { recursive: true });
+
+    const w = spawnSync(process.execPath, [
+      "--import", join(tmp, "test/fixtures/fake-wwis.mjs"),
+      join(tmp, "tools/build-climate-wwis.mjs")
+    ], { encoding: "utf8", cwd: tmp, timeout: 60000 });
+
+    t("a real run completes", w.status === 0,
+      `exit ${w.status}${w.stderr ? "\n         " + w.stderr.trim().split("\n").slice(0, 3).join("\n         ") : ""}`, "exit 0");
+
+    const rec = JSON.parse(readFileSync(join(tmp, "docs/climate-source.json"), "utf8"));
+    const by = Object.fromEntries(rec.cities.map(c => [c.id, c]));
+
+    /* The invariant. Not "the record is present" — that was true before, and
+       wrong; "the record names the station the numbers came from". */
+    const disagree = rec.cities.filter(c => {
+      const m = /^wmo-normals:([^\s(]+)/.exec(c.sourcedFrom || "");
+      if (!m) return false;
+      const s = (c.crossCheck && c.crossCheck.stations || [])[0];
+      return !s || s.station !== m[1];
+    }).map(c => `${c.id}: ${c.sourcedFrom} vs ${(c.crossCheck || {}).status}`);
+    t("every city sourced from the normals records the station it used",
+      disagree.length === 0, disagree.join("; ") || "all agree", "all agree");
+
+    /* The specific case the old record could not express. */
+    const kul = by.kul || {};
+    t("a city matched by distance records the distance",
+      /^nearest station, \d+ km$/.test((kul.crossCheck || {}).matchedBy || ""),
+      (kul.crossCheck || {}).matchedBy || "not recorded", "nearest station, N km");
+    t("and records the WMO number and elevation of that station",
+      ((kul.crossCheck || {}).stations || [{}])[0].wmoStationId === "00048647" &&
+      ((kul.crossCheck || {}).stations || [{}])[0].elevationM === 17,
+      JSON.stringify(((kul.crossCheck || {}).stations || [{}])[0]), "WMO 00048647 at 17 m");
+
+    /* A refusal is a finding, and belongs in the file rather than only in the
+       run's console output, which nobody keeps. */
+    const bog = by.bog || {};
+    t("a refused station is recorded with its reason",
+      !!(bog.crossCheck || {}).rejectedAsUnrepresentative && bog.sourcedFrom === "wwis",
+      JSON.stringify((bog.crossCheck || {}).rejectedAsUnrepresentative) + " / " + bog.sourcedFrom,
+      "the rejection, and the city still on wwis");
+
+    t("the licence it writes is the one the app carries",
+      typeof rec.licence === "string" && rec.licence.includes("0253808"),
+      String(rec.licence).slice(0, 40), "… Accession 0253808 …");
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
 
 console.log(`\n${fail ? "✗" : "✓"} ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

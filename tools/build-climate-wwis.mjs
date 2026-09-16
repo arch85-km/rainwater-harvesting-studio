@@ -56,8 +56,8 @@ const RECORD = resolve(ROOT, "docs/climate-source.json");
 const BASE      = "https://worldweather.wmo.int/en/json";
 const CITY_LIST = `${BASE}/full_city_list.txt`;
 const SOURCE    = "WMO Climate Normals 1991-2020 (NOAA NCEI) where available; WMO World Weather Information Service (WWIS) otherwise";
-const LICENCE   = "WMO Climatological Standard Normals 1991-2020, NCEI Accession 0253808, CC0 1.0. For the cities from the WMO World Weather Information Service its terms apply: \u201cAcknowledgement must be given to the WMO World Weather Information Service (https://worldweather.wmo.int) as the source of information\u201d and \u201cThe forecast and climatological information of the WWIS website must be reproduced accurately\u201d.";
-const NOTE      = "Gauge normals. Most cities use the WMO Climate Normals 1991-2020; the rest come from WWIS, where the period and the rain-day threshold vary by city. Each city records which — see docs/climate-source.json.";
+export const LICENCE   = "WMO Climatological Standard Normals 1991-2020, NCEI Accession 0253808, CC0 1.0. For the cities from the WMO World Weather Information Service its terms apply: \u201cAcknowledgement must be given to the WMO World Weather Information Service (https://worldweather.wmo.int) as the source of information\u201d and \u201cThe forecast and climatological information of the WWIS website must be reproduced accurately\u201d.";
+export const NOTE      = "Gauge normals. Most cities use the WMO Climate Normals 1991-2020; the rest come from WWIS, where the period and the rain-day threshold vary by city. Each city records which — see docs/climate-source.json.";
 
 /* An independent check on the same quantities. The WMO Climate Normals
    1991-2020 (the official CLINO, distributed by NOAA NCEI) publish mean
@@ -566,7 +566,15 @@ for (const c of resolved) {
       sourcedFrom: from,
       monthlyRainfallMm: r,
       monthlyRainDays: rd,
-      crossCheck: normalsTable ? matchNormals(normalsTable, c.city, c.cc)
+      /* `alt` — the match that was actually made — and not a second call.
+         This used to re-run matchNormals without the city's coordinates, so
+         the record showed the result of a name-only search while the data
+         came from a proximity match the record never mentioned. Kuala Lumpur
+         read "sourcedFrom: wmo-normals:Subang (WMO 00048647)" beside
+         "no station named for Kuala Lumpur among 15 in Malaysia", and the
+         distance that justified Subang was recorded nowhere. Bogota lost the
+         reason its nearest gauge was refused. Record what happened. */
+      crossCheck: normalsTable ? alt
                                : { status: normalsError ? "not loaded: " + normalsError : "skipped" },
       annualMm: Math.round(annual * 10) / 10,
       annualRainDays: Math.round(wetDays * 10) / 10,
@@ -690,7 +698,7 @@ const meta = {
   cross_check: {
     name: NORMALS_NAME,
     endpoint: { rainfall: NORMALS_RAIN, raindays: NORMALS_DAYS },
-    what: "Mean number of precipitation days per station, 1991-2020, recorded beside each city where the composite carries its country. An independent check on the same quantity over a uniform period — nothing in the app is calculated from it.",
+    what: "The stations this city's country contributes, 1991-2020, with the WMO number, elevation and annual figures of each. Read it beside sourcedFrom: where that names a wmo-normals station, these ARE the source and stations[0] is the one used; where it says wwis, they are an independent comparison and nothing in the app is calculated from them.",
     loaded: normalsTable ? `${normalsTable.length} stations in both files` : (normalsError ? `failed: ${normalsError}` : "skipped"),
     matched: record.filter(c => c.crossCheck && c.crossCheck.status === "matched").length,
     caveat: "WWIS and the normals may define a precipitation day at different thresholds; a difference between them is not in itself an error."
