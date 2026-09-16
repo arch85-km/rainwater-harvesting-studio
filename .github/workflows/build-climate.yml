@@ -90,7 +90,7 @@ jobs:
             git --no-pager diff --stat HEAD~1
             echo '```'
             echo
-            echo "Nothing else to do — tell Claude the run finished."
+            echo "The branch is ready to review."
           } >> "$GITHUB_STEP_SUMMARY"
 
       # A fallback copy, in case the branch is not convenient.

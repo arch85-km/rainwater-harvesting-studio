@@ -2,7 +2,7 @@
 
 **[karam.me.uk/applications/rainwater-harvesting-studio](https://karam.me.uk/applications/rainwater-harvesting-studio/)**
 
-**Version 1.0** — 15 September 2026
+**Version 1.0** — 16 September 2026
 
 A parametric 3D modeller that calculates rainwater harvesting yield, store
 size and reliability to **BS EN 16941‑1:2024**. Built for teaching architecture
@@ -323,48 +323,65 @@ building that is not occupied all year.
 
 ### The rainfall library, and where it comes from
 
-The 28 presets were originally written by hand with no dataset behind them.
-`CLIMATE_SOURCE` in `index.html` records whether that is still true, and the app
-prints the answer under the location selector and on every report, explain sheet
-and CSV it exports — so an exported sheet carries its own citation.
+The 28 presets are sourced. Each carries twelve monthly rainfall normals and a
+depth per wet day, and `CLIMATE_SOURCE` in `index.html` records where from — the
+app prints it under the location selector and on every report, explain sheet and
+CSV it exports, so an exported sheet carries its own citation.
 
-To give the library a real source, run the generator once, from a machine with
-outbound HTTPS:
+**Twenty-two cities** come from the **WMO Climatological Standard Normals
+1991–2020** — the official CLINO, distributed by NOAA NCEI as accession 0253808.
+One period and one definition of a rain day for every station.
+
+**Six** — Nairobi, Athens, Amman, Baghdad, Doha and Bogotá — come from the
+**WMO World Weather Information Service**, because their countries contribute no
+station to the Normals composite. WWIS publishes city normals supplied by each
+national meteorological service, so those six carry whatever period that service
+published: from **1955–1997 to 1976–2008**, and two of them declare no period at
+all. The rain-day threshold varies with them — Baghdad counts a rain day at
+0.001 mm and four of the six declare no threshold, against the 1 mm this tool
+assumes. Recorded per city and never converted, because there is no honest way
+to convert it.
+
+**None are written from nothing.**
+
+The library is rebuilt by one button — **Actions → Build climate library → Run
+workflow**. That runs `tools/build-climate-wwis.mjs`, which needs outbound HTTPS
+to `worldweather.wmo.int` and `ncei.noaa.gov`, does a dry pass first as a gate,
+and commits to the **`climate-update`** branch, never to `main`. By hand, from a
+machine that can reach both:
 
 ```
-node tools/build-climate.mjs            # fetch and rewrite index.html
-node tools/build-climate.mjs --dry-run  # fetch and report, write nothing
+node tools/build-climate-wwis.mjs --dry-run   # fetch, report, write nothing
+node tools/build-climate-wwis.mjs             # fetch and rewrite
 ```
 
-It resolves every location first and reports them together, so a bad country code
-costs seconds rather than surfacing twenty downloads into the run. The country
-code comes from the city's own label and is mapped to ISO 3166-1 where the two
-differ — "London, UK" is geocoded as GB — so "Athens, GR" cannot land in Georgia.
-It then pulls daily precipitation for the window the app declares, reduces it with
-the app's own `CLIMATE.reduce` — the same function the in-app fetch uses, so the
-two can never drift — and rewrites the `CITIES` block with coordinates, elevation
-and a provenance record. It also writes `docs/climate-source.json` with what each
-city matched to, so a run can be checked and repeated. If any city fails it writes
-nothing at all: a half-sourced library is worse than none, because you cannot tell
-which rows are which.
+It resolves every city against the WWIS city list first and reports them
+together, so a bad country name costs seconds rather than surfacing twenty
+downloads into the run. The country filter is what stops Toronto landing in New
+South Wales: WWIS has a Toronto in Australia and none in Canada, so without it
+the wrong one is not merely preferred, it is the only one.
 
-Beside each city it records the World Bank's average annual precipitation for that
-*country*, as an independent cross-check on order of magnitude. It is a check and
-not a source: one long-term annual average per country, where the library needs
-twelve monthly figures per city. Three pairs in the list share a country — Kuala
-Lumpur with Kuching, Seattle with Phoenix, Sydney with Melbourne — and in the
-library as it stands they differ by roughly 1 500, 770 and 550 mm a year, so one
-national number cannot be right for both halves of any of them. Nothing in the app
-is calculated from it, and if the fetch fails the field is null and the library is
-unaffected.
+Where the Normals carry a city they lead, because their period and rain-day
+definition are the same everywhere. A station is matched by name, or by being
+its country's only one, or by being the nearest within 25 km — and a station
+matched only by distance has to agree with what the city's own service publishes
+to within 40 %. Bogotá's nearest gauge is 12 km away and reads 64 % wetter,
+because the city sits at 2,600 m and the gauge does not. It is refused, the
+refusal is recorded, and the city keeps its WWIS record.
 
-Two things to say when citing the result: the archive serves a **reanalysis**,
-not gauge measurement, and 1991–2020 is a baseline rather than current
-conditions. Which reanalysis dataset answered is recorded per city in
-`docs/climate-source.json` under `api` — cite that one, not an assumed one.
+`docs/climate-source.json` holds the whole account: every city's source, the
+station name and **WMO station number**, its elevation, the declared period and
+rain-day threshold, the supplying service, and the stations that were considered
+and not used.
 
-**After regenerating, every figure quoted in the method notes and the test suites
-is stale** and must be re-measured, not edited to fit.
+Two things to say when citing the result — **which source the city came from**,
+and **which station**. These are gauge measurements, and a station is not a
+city: the file's *London* is WMO 00003770 in central London, and *Heathrow* is a
+different gauge 22 km away reading a different figure.
+
+**A regeneration can move every figure** quoted in the method notes and pinned
+in the test suites. Re-derive them by measurement, never edit them to fit.
+
 
 ### Figures still with no source
 
@@ -450,18 +467,20 @@ design, rather than quoting whichever number looks largest.
 
 ```
 index.html                the entire app — single file, no dependencies, no build step
-test/                     310 assertions, no dependencies — see Verifying below
+test/                     the assertion suite, no dependencies — see Verifying below
 package.json              scripts and metadata; there is nothing to install
 docs/method-notes.html    method notes for students: what it calculates, which
                           clause each step comes from, and every figure the code
                           leaves unsourced. Paste into a CMS as an HTML block.
-docs/climate-source.json  provenance of the rainfall library — written by the
-                          generator, absent until it has been run
-tools/build-climate.mjs   regenerates the rainfall library from Open-Meteo
-                          reanalysis; also serves the app's live fetch
+docs/climate-source.json  provenance of the rainfall library — every city's
+                          source, station, WMO number, elevation, period and
+                          rain-day threshold. Written by the generator
 tools/build-climate-wwis.mjs
-                          regenerates it from WMO WWIS gauge normals, cross-
-                          checked against the WMO Climate Normals 1991–2020
+                          builds the library: the WMO Climate Normals 1991–2020
+                          where they reach, WWIS for the rest
+tools/build-climate.mjs   the earlier Open-Meteo generator. It no longer
+                          supplies any preset; it is kept because the app's
+                          live fetch and the rewrite both run through it
 .github/workflows/        one manual workflow that regenerates the rainfall
                           library on a runner with internet and commits it to
                           the climate-update branch for review
@@ -484,7 +503,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**310 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**333 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.
@@ -525,6 +544,20 @@ What it covers:
   entry and BibTeX block in the method notes, `CITATION.cff` and `package.json`
   all give the same work at the same address, so a mirror of the app cannot end
   up being the one people cite.
+- **The provenance record agrees with the data it describes** — the generator is
+  run for real into a temporary directory and the file it writes is read back,
+  because every other generator assertion runs under `--dry-run` and writes
+  nothing. The record used to be built by matching a second time without the
+  city's coordinates, so Kuala Lumpur shipped reading `wmo-normals:Subang`
+  beside `no station named for Kuala Lumpur`; reintroducing that fails four
+  assertions.
+- **The rainfall licence in the app is the generator's** — character for
+  character, with the two WWIS conditions checked as WWIS words them, so a
+  paraphrase copied into both files still fails.
+- **This README** — that the assertion count above is the number actually run,
+  that the data source named here is the one `CLIMATE_SOURCE` declares, and that
+  the version line matches the app's. It had drifted to 310 and to a source the
+  app stopped using, because nothing read it.
 
 The browser suites used during development — smoke tests at four viewport
 widths, the guided tour, PDF pagination, block dragging, iframe embedding, and
@@ -588,16 +621,31 @@ Browser support: any browser from the last few years. Uses `ResizeObserver`,
 
 ## Before you cite
 
-Five things this page cannot settle for you:
+Six things this file cannot settle for you. `docs/method-notes.html` carries the
+same six with the working behind them.
 
-- **Record the date you fetched the rainfall** — an API archive is revisable, so
-  a citation without a retrieval date names no fixed thing.
-- **Cite the reanalysis the generator recorded** in `docs/climate-source.json`,
-  not one assumed here; the archive picks by location.
+- **Record which source your city came from, and the station.** Twenty-two
+  presets are WMO Climatological Standard Normals; six are WWIS records over
+  other periods. Every city's source, station name, WMO station number,
+  elevation and period is in `docs/climate-source.json`. Cite the station, not
+  the city.
+- **Acknowledge the WMO World Weather Information Service if you quote one of
+  its six cities.** Its terms require two things, quoted here rather than
+  paraphrased: *"Acknowledgement must be given to the WMO World Weather
+  Information Service (https://worldweather.wmo.int) as the source of
+  information"* and *"The forecast and climatological information of the WWIS
+  website must be reproduced accurately"*. The underlying data is the
+  contributing national service's, named per city in the provenance file.
+- **Record the version and the date you downloaded the Normals.** The NCEI
+  accession is revised as WMO Members submit corrections — this library was
+  built from **version 6.6** on **16 September 2026**. A citation without a
+  version names a moving target.
 - **Check the Open-Meteo DOI** below on their own site — supplied by an external
-  review, not verified here.
-- **Open-Meteo's CC BY 4.0 covers non-commercial use**; commercial use needs
-  their paid API, per the same review.
+  review, not verified here. Open-Meteo no longer supplies any preset, only the
+  optional in-app fetch, so it matters less than it did; an unverified
+  identifier should still not be repeated on trust.
+- **Open-Meteo's CC BY 4.0 offer covers non-commercial use**; commercial use
+  needs their paid API, per the same review.
 - **The BSI standards are paywalled** — a real limit on how far anyone can check
   what is claimed about them.
 
@@ -614,21 +662,37 @@ corrigendum. Numbering moved from the withdrawn 2018 edition.
   capacity and dry periods (A.2.1), the coverage curve (A.2.2.4), and NA.1.2 and
   NA.3 from the BSI UK National Annex. The tool does **not** implement A.2.2,
   NA.4, or anything on water quality.
-- **Open-Meteo**, *Historical weather API* —
-  <https://open-meteo.com/en/docs/historical-weather-api> — the rainfall, once
-  the preset library has been regenerated; until then it supplies nothing, and
-  the app says so. Citable software record: Zippenfenig, P. (2023).
-  *Open-Meteo.com Weather API* [Computer software]. Zenodo.
-  `https://doi.org/10.5281/zenodo.7970649`
+- **NOAA National Centers for Environmental Information** (2023), *WMO
+  climatological standard normals for 1991–2020* (NCEI Accession 0253808,
+  version 6.6) [Data set]. <https://doi.org/10.25921/800j-vn07> — **the rainfall
+  for twenty-two of the twenty-eight presets**, from the PRCP and DP01 files of
+  the primary-parameters composite. CC0 1.0. Downloaded 16 September 2026; the
+  accession is revised as WMO Members submit corrections, so the version matters.
+- **WMO World Weather Information Service** —
+  <https://worldweather.wmo.int> — **the rainfall for the other six**, each
+  supplied by the national meteorological service named against it in
+  `docs/climate-source.json`. Its conditions, quoted rather than paraphrased:
+  *"Acknowledgement must be given to the WMO World Weather Information Service
+  (https://worldweather.wmo.int) as the source of information"* and *"The
+  forecast and climatological information of the WWIS website must be reproduced
+  accurately"*.
 - **World Meteorological Organization** (2017), *WMO guidelines on the
   calculation of climate normals* (WMO-No. 1203). WMO — defines the thirty-year
-  standard normal, so it decides which years the rainfall averages over.
+  standard normal, and names the ≥ 1 mm day-count as the principal
+  precipitation-frequency parameter, which is the one this tool divides by.
+- **Open-Meteo**, *Historical weather API* —
+  <https://open-meteo.com/en/docs/historical-weather-api> — **not a preset
+  source**: it serves only the optional in-app fetch, where a student enters
+  their own latitude and longitude. Citable software record: Zippenfenig, P.
+  (2023). *Open-Meteo.com Weather API* [Computer software]. Zenodo.
+  `https://doi.org/10.5281/zenodo.7970649` — supplied by an external review and
+  **not verified here**.
 
 ## Also named in the code
 
-Named in `index.html` or `tools/build-climate.mjs`, but **drawn on for nothing**
-— listed so every name can be traced, and kept apart so that appearing in a list
-is not mistaken for contributing a number.
+Named in `index.html` or in the generators under `tools/`, but **drawn on for
+nothing** — listed so every name can be traced, and kept apart so that appearing
+in a list is not mistaken for contributing a number.
 
 - **British Standards Institution** (2013), *Rainwater harvesting systems: Code
   of practice* (BS 8515:2009+A1:2013). BSI — the national foreword to
@@ -640,11 +704,6 @@ is not mistaken for contributing a number.
   BSI — **where to go for gutter and downpipe sizing**, which this tool does not
   do. Its own UK National Annex is where a design rainfall intensity comes from;
   the 75 mm/h here did not come from there.
-- **World Bank**, *Average precipitation in depth (mm per year)*
-  (AG.LND.PRCP.MM) — <https://data.worldbank.org/indicator/AG.LND.PRCP.MM> — a
-  country-level annual average recorded beside each city as a sanity check, never
-  an input. A republication: its metadata page names FAO (AQUASTAT) as the source.
-
 Reviewed for comparison, not used as a source:
 [DROP Rainwater Harvesting Design Software](https://www.freeflush.co.uk/pages/drop-rainwater-harvesting-software)
 and [Autodesk InfoDrainage](https://www.autodesk.com/products/infodrainage/features).

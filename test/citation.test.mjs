@@ -25,11 +25,12 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, "..");
 const require = createRequire(import.meta.url);
 
-const { CITATION, VERSION } = require("./.core.js");
+const { CITATION, VERSION, CLIMATE_SOURCE } = require("./.core.js");
 const html  = readFileSync(resolve(ROOT, "index.html"), "utf8");
 const notes = readFileSync(resolve(ROOT, "docs/method-notes.html"), "utf8");
 const pkg   = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8"));
 const cff   = readFileSync(resolve(ROOT, "CITATION.cff"), "utf8");
+const rdme  = readFileSync(resolve(ROOT, "README.md"), "utf8");
 
 let pass = 0, fail = 0;
 const t = (name, cond, got, want) => {
@@ -145,6 +146,60 @@ console.log("\n── 3. CITATION.cff says the same thing ──");
     const want = r === 10 ? "X" : String(r);
     t("the ORCID checksum is valid", d[15] === want, d[15], want);
   }
+}
+
+console.log("\n\u2500\u2500 4. The README describes the app that ships \u2500\u2500");
+{
+  /* The README is the first thing a reader meets, and on Zenodo it is the
+     landing text for a permanent DOI. Nothing read it, and it drifted: it went
+     on describing a reanalysis and a World Bank cross-check for a day after the
+     app had moved to WMO gauge normals, and it claimed an assertion count two
+     changes out of date. These are the cheapest checks that would have caught
+     it — not a review of the prose, just the handful of facts it shares with
+     the code. (The assertion count itself is checked by test/run.mjs, which is
+     the only place that knows the total.) */
+
+  /* Whatever CLIMATE_SOURCE declares, the README has to name it. Both halves:
+     a README naming only one of the two providers is the state this caught. */
+  for (const provider of ["WMO Climatological Standard Normals", "World Weather Information Service"])
+    t(`the README names "${provider}"`, rdme.includes(provider),
+      "absent", "named in the README");
+
+  /* WWIS requires the acknowledgement wherever its information is used, and the
+     README is where a reader looks for terms. Quoted, not paraphrased. */
+  t("the README quotes the WWIS acknowledgement condition",
+    rdme.includes("Acknowledgement must be given to the WMO World Weather Information Service"),
+    "absent", "the condition, verbatim");
+
+  /* The specific claim that went stale. If the library is sourced, the README
+     must not still be telling people it is not. */
+  if (CLIMATE_SOURCE.sourced) {
+    const unsourced = [
+      "written by hand with no dataset",
+      "no dataset behind them",
+      "until then it supplies nothing",
+      "the archive serves a **reanalysis**"
+    ].filter(phrase => rdme.includes(phrase));
+    t("the README does not still call the library unsourced",
+      unsourced.length === 0, unsourced.join("; ") || "none present", "none present");
+  }
+
+  /* The version line. index.html, CITATION.cff and package.json are held
+     together above; these are the two copies that were edited by hand. */
+  const ver = rdme.match(/^\*\*Version ([^*]+)\*\*\s+\u2014\s+(.+)$/m);
+  t("the README states the version and release date", !!ver,
+    ver ? ver[0] : "no '**Version N** — date' line", "**Version N** — date");
+  if (ver) {
+    t("the README's version is VERSION.number", ver[1].trim() === VERSION.number,
+      ver[1].trim(), VERSION.number);
+    t("the README's date is VERSION.label", ver[2].trim() === VERSION.label,
+      ver[2].trim(), VERSION.label);
+  }
+
+  const upd = notes.match(/<b>Updated<\/b>\s*([^<]+)</);
+  t("the method notes' Updated line is VERSION.label",
+    !!upd && upd[1].replace(/&nbsp;/g, " ").trim() === VERSION.label,
+    upd ? upd[1].trim() : "no Updated line", VERSION.label);
 }
 
 console.log(`\n${pass ? "✓" : "✗"} ${pass} passed, ${fail} failed\n`);

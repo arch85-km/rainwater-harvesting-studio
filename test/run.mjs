@@ -17,6 +17,7 @@
    Usage:  npm test      (or: node test/run.mjs) */
 
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { extract } from "./extract-core.mjs";
@@ -45,8 +46,25 @@ for (const [label, file] of SUITES) {
   if (out.status !== 0 && !m) broke = true;
 }
 
+/* The README states the size of this suite, and that number is the first thing
+   a reader checks it against. It had drifted to 310 while the suite ran 325,
+   because nothing compared them. Now something does: this is not one of the
+   assertions the suites count, it is a condition on the run as a whole. */
+const readme = readFileSync(resolve(HERE, "..", "README.md"), "utf8");
+const claimed = readme.match(/\*\*(\d+) assertions/);
+let readmeWrong = false;
+if (!claimed) {
+  readmeWrong = true;
+  console.error(`\n  !! README.md no longer states an assertion count in the form "**N assertions"`);
+} else if (Number(claimed[1]) !== pass + fail) {
+  readmeWrong = true;
+  console.error(`\n  !! README.md says ${claimed[1]} assertions; this run has ${pass + fail}.` +
+                `\n     Update the count in README.md under "## Verifying".`);
+}
+
 console.log(`\n${"═".repeat(64)}`);
-console.log(`  ${fail || broke ? "FAILED" : "OK"}   ${pass} passed, ${fail} failed` +
-            (broke ? "  (a suite did not report — see above)" : ""));
+console.log(`  ${fail || broke || readmeWrong ? "FAILED" : "OK"}   ${pass} passed, ${fail} failed` +
+            (broke ? "  (a suite did not report — see above)" : "") +
+            (readmeWrong ? "  (the README's count is wrong — see above)" : ""));
 console.log(`${"═".repeat(64)}\n`);
-process.exit(fail || broke ? 1 : 0);
+process.exit(fail || broke || readmeWrong ? 1 : 0);
