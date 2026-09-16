@@ -4,13 +4,13 @@
   "cityList": "https://worldweather.wmo.int/en/json/full_city_list.txt",
   "window": "1991-2020 for 22 cities; 6 from WWIS over other periods — see docs/climate-source.json",
   "accessed": "2026-09-16",
-  "licence": "WMO Climate Normals 1991-2020 distributed by NOAA NCEI. Acknowledgement to the WMO World Weather Information Service, and to the national meteorological service named per city, is required for the cities sourced from it. Data reproduced accurately and unaltered.",
+  "licence": "WMO Climatological Standard Normals 1991-2020, NCEI Accession 0253808, CC0 1.0. For the cities from the WMO World Weather Information Service its terms apply: “Acknowledgement must be given to the WMO World Weather Information Service (https://worldweather.wmo.int) as the source of information” and “The forecast and climatological information of the WWIS website must be reproduced accurately”.",
   "note": "Gauge normals. Most cities use the WMO Climate Normals 1991-2020; the rest come from WWIS, where the period and the rain-day threshold vary by city. Each city records which — see docs/climate-source.json.",
-  "acknowledgement": "Data from the WMO World Weather Information Service (worldweather.wmo.int), supplied by the national meteorological and hydrological service named against each city.",
+  "acknowledgement": "Data from the WMO World Weather Information Service (worldweather.wmo.int), supplied by the national meteorological and hydrological service named against each city. WWIS is operated on behalf of WMO by the Hong Kong Observatory; the acknowledgement condition names WWIS, not the operator.",
   "reduction": "r[] is climateMonth[].rainfall as published; dpd = annual rainfall / annual raindays, rounded, clamped 2-30. The rain-day threshold is whatever the supplying service declares in raindef and is recorded per city; it is NOT converted to the app's 1 mm rule.",
   "generator": "tools/build-climate-wwis.mjs",
   "cross_check": {
-    "name": "WMO Climate Normals 1991-2020 (PRCP and DP01), via NOAA NCEI",
+    "name": "WMO Climatological Standard Normals 1991-2020 (PRCP and DP01), NOAA NCEI Accession 0253808 v6.6, https://doi.org/10.25921/800j-vn07",
     "endpoint": {
       "rainfall": "https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/data-composite-primary-parameters/wmo_normals_9120_PRCP.csv",
       "raindays": "https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/data-composite-primary-parameters/wmo_normals_9120_DP01.csv"
@@ -81,7 +81,7 @@
         "generalPeriod": "1971-2000",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:Subang",
+      "sourcedFrom": "wmo-normals:Subang (WMO 00048647)",
       "monthlyRainfallMm": [
         226.7,
         192.8,
@@ -149,7 +149,7 @@
         "generalPeriod": null,
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:ChangiAirport",
+      "sourcedFrom": "wmo-normals:ChangiAirport (WMO 00048698)",
       "monthlyRainfallMm": [
         221.6,
         105,
@@ -186,8 +186,10 @@
         "stations": [
           {
             "station": "ChangiAirport",
+            "wmoStationId": "00048698",
             "latitude": 1.368,
             "longitude": 103.982,
+            "elevationM": 14,
             "annualMm": 2113.3,
             "annualRainDays": 134.5,
             "dpd": 16
@@ -235,7 +237,7 @@
         "generalPeriod": "1971-2000",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:Kuching",
+      "sourcedFrom": "wmo-normals:Kuching (WMO 00096413)",
       "monthlyRainfallMm": [
         672.3,
         501.4,
@@ -272,8 +274,10 @@
         "stations": [
           {
             "station": "Kuching",
+            "wmoStationId": "00096413",
             "latitude": 1.49,
             "longitude": 110.353,
+            "elevationM": 21,
             "annualMm": 4232.9,
             "annualRainDays": 210.5,
             "dpd": 20
@@ -321,7 +325,7 @@
         "generalPeriod": null,
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:StasiunMeteorologiKemayoran",
+      "sourcedFrom": "wmo-normals:StasiunMeteorologiKemayoran (WMO 00096745)",
       "monthlyRainfallMm": [
         373.3,
         381.4,
@@ -389,7 +393,7 @@
         "generalPeriod": "1971-2000",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:PortAreaManila",
+      "sourcedFrom": "wmo-normals:PortAreaManila (WMO 00098425)",
       "monthlyRainfallMm": [
         19.4,
         21.9,
@@ -426,8 +430,10 @@
         "stations": [
           {
             "station": "PortAreaManila",
+            "wmoStationId": "00098425",
             "latitude": 14.583,
             "longitude": 120.967,
+            "elevationM": 15,
             "annualMm": 2259.1,
             "annualRainDays": 121.8,
             "dpd": 19
@@ -475,7 +481,7 @@
         "generalPeriod": "1971-2000",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:Chittagong",
+      "sourcedFrom": "wmo-normals:Chittagong (WMO 00041978)",
       "monthlyRainfallMm": [
         9,
         21,
@@ -512,8 +518,10 @@
         "stations": [
           {
             "station": "Chittagong",
+            "wmoStationId": "00041978",
             "latitude": 22.267,
             "longitude": 91.817,
+            "elevationM": 5.5,
             "annualMm": 2964,
             "annualRainDays": 117,
             "dpd": 25
@@ -561,7 +569,7 @@
         "generalPeriod": null,
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:LagosRoof",
+      "sourcedFrom": "wmo-normals:LagosRoof (WMO 00065203)",
       "monthlyRainfallMm": [
         10.5,
         40.9,
@@ -598,8 +606,10 @@
         "stations": [
           {
             "station": "LagosRoof",
+            "wmoStationId": "00065203",
             "latitude": 6.58,
             "longitude": 3.06,
+            "elevationM": 140,
             "annualMm": 1703.3,
             "annualRainDays": 86.2,
             "dpd": 20
@@ -715,7 +725,7 @@
         "generalPeriod": "1981-2010",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:London",
+      "sourcedFrom": "wmo-normals:London (WMO 00003770)",
       "monthlyRainfallMm": [
         58.1,
         43.6,
@@ -752,8 +762,10 @@
         "stations": [
           {
             "station": "London",
+            "wmoStationId": "00003770",
             "latitude": 51.505,
             "longitude": -0.131,
+            "elevationM": 5,
             "annualMm": 615.4,
             "annualRainDays": 113.5,
             "dpd": 5
@@ -801,7 +813,7 @@
         "generalPeriod": "1981-2010",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:DublinAirport",
+      "sourcedFrom": "wmo-normals:DublinAirport (WMO 00003969)",
       "monthlyRainfallMm": [
         61.8,
         52.4,
@@ -838,8 +850,10 @@
         "stations": [
           {
             "station": "DublinAirport",
+            "wmoStationId": "00003969",
             "latitude": 53.428,
             "longitude": -6.241,
+            "elevationM": 71,
             "annualMm": 772.5,
             "annualRainDays": 137.1,
             "dpd": 6
@@ -887,7 +901,7 @@
         "generalPeriod": "1971-2000",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:Berlin-Brandenburg (1 of 4, chosen alphabetically)",
+      "sourcedFrom": "wmo-normals:Berlin-Brandenburg (WMO 00010385) (1 of 4, chosen alphabetically)",
       "monthlyRainfallMm": [
         41.5,
         30,
@@ -924,32 +938,40 @@
         "stations": [
           {
             "station": "Berlin-Brandenburg",
+            "wmoStationId": "00010385",
             "latitude": 52.381,
             "longitude": 13.531,
+            "elevationM": 45.6,
             "annualMm": 532.3,
             "annualRainDays": 100.7,
             "dpd": 5
           },
           {
             "station": "Berlin-Dahlem-FU",
+            "wmoStationId": "00010381",
             "latitude": 52.454,
             "longitude": 13.302,
+            "elevationM": 51,
             "annualMm": 582.4,
             "annualRainDays": 106,
             "dpd": 5
           },
           {
             "station": "Berlin-Tegel",
+            "wmoStationId": "00010382",
             "latitude": 52.564,
             "longitude": 13.309,
+            "elevationM": 35.5,
             "annualMm": 539.9,
             "annualRainDays": 100.9,
             "dpd": 5
           },
           {
             "station": "Berlin-Tempelhof",
+            "wmoStationId": "00010384",
             "latitude": 52.467,
             "longitude": 13.402,
+            "elevationM": 47.7,
             "annualMm": 570.2,
             "annualRainDays": 104.1,
             "dpd": 5
@@ -997,7 +1019,7 @@
         "generalPeriod": "1981-2010",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:SEATTLE_TACOMA_INTL_AP",
+      "sourcedFrom": "wmo-normals:SEATTLE_TACOMA_INTL_AP (WMO 00072793)",
       "monthlyRainfallMm": [
         146.7,
         95.6,
@@ -1034,8 +1056,10 @@
         "stations": [
           {
             "station": "SEATTLE_TACOMA_INTL_AP",
+            "wmoStationId": "00072793",
             "latitude": 47.444,
             "longitude": -122.314,
+            "elevationM": 113,
             "annualMm": 999.3,
             "annualRainDays": 125,
             "dpd": 8
@@ -1083,7 +1107,7 @@
         "generalPeriod": "1981-2010",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:CHICAGO_MIDWAY_AP (1 of 2, chosen alphabetically)",
+      "sourcedFrom": "wmo-normals:CHICAGO_MIDWAY_AP (WMO 00072534) (1 of 2, chosen alphabetically)",
       "monthlyRainfallMm": [
         37.5,
         37.2,
@@ -1120,16 +1144,20 @@
         "stations": [
           {
             "station": "CHICAGO_MIDWAY_AP",
+            "wmoStationId": "00072534",
             "latitude": 41.786,
             "longitude": -87.752,
+            "elevationM": 187,
             "annualMm": 874.6,
             "annualRainDays": 91.8,
             "dpd": 10
           },
           {
             "station": "CHICAGO_OHARE_INTL_AP",
+            "wmoStationId": "00072530",
             "latitude": 41.995,
             "longitude": -87.934,
+            "elevationM": 201,
             "annualMm": 961.7,
             "annualRainDays": 95.3,
             "dpd": 10
@@ -1177,7 +1205,7 @@
         "generalPeriod": null,
         "fromCLINO": "2002-05-21"
       },
-      "sourcedFrom": "wmo-normals:Auckland_Aero_AWS",
+      "sourcedFrom": "wmo-normals:Auckland_Aero_AWS (WMO 00093110)",
       "monthlyRainfallMm": [
         58.1,
         63.1,
@@ -1214,8 +1242,10 @@
         "stations": [
           {
             "station": "Auckland_Aero_AWS",
+            "wmoStationId": "00093110",
             "latitude": -37.009,
             "longitude": 171.804,
+            "elevationM": 7,
             "annualMm": 1118.9,
             "annualRainDays": 130,
             "dpd": 9
@@ -1263,7 +1293,7 @@
         "generalPeriod": "1981-2010",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:SydneyAirport (1 of 3, chosen alphabetically)",
+      "sourcedFrom": "wmo-normals:SydneyAirport (WMO 00094767) (1 of 3, chosen alphabetically)",
       "monthlyRainfallMm": [
         80.7,
         117.7,
@@ -1300,24 +1330,30 @@
         "stations": [
           {
             "station": "SydneyAirport",
+            "wmoStationId": "00094767",
             "latitude": -33.946,
             "longitude": 151.173,
+            "elevationM": 6,
             "annualMm": 992.9,
             "annualRainDays": 93.3,
             "dpd": 11
           },
           {
             "station": "SydneyObservatoryHill",
+            "wmoStationId": "00094768",
             "latitude": -33.861,
             "longitude": 151.205,
+            "elevationM": 39,
             "annualMm": 1148.1,
             "annualRainDays": 95.2,
             "dpd": 12
           },
           {
             "station": "SydneyOlympicPark",
+            "wmoStationId": "00095765",
             "latitude": -33.834,
             "longitude": 151.072,
+            "elevationM": 4,
             "annualMm": 945.8,
             "annualRainDays": 83.8,
             "dpd": 11
@@ -1365,7 +1401,7 @@
         "generalPeriod": "1981-2010",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:MelbourneAirport (1 of 2, chosen alphabetically)",
+      "sourcedFrom": "wmo-normals:MelbourneAirport (WMO 00094866) (1 of 2, chosen alphabetically)",
       "monthlyRainfallMm": [
         39.3,
         41.4,
@@ -1402,16 +1438,20 @@
         "stations": [
           {
             "station": "MelbourneAirport",
+            "wmoStationId": "00094866",
             "latitude": -37.665,
             "longitude": 144.832,
+            "elevationM": 113,
             "annualMm": 515.4,
             "annualRainDays": 84.1,
             "dpd": 6
           },
           {
             "station": "MelbourneOlympicPark",
+            "wmoStationId": "00095936",
             "latitude": -37.826,
             "longitude": 144.982,
+            "elevationM": 7,
             "annualMm": 588.8,
             "annualRainDays": 90.5,
             "dpd": 7
@@ -1459,7 +1499,7 @@
         "generalPeriod": "1929-2000",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:Sariyer",
+      "sourcedFrom": "wmo-normals:Sariyer (WMO 00017061)",
       "monthlyRainfallMm": [
         96.1,
         87.7,
@@ -1595,7 +1635,7 @@
         "generalPeriod": "1991-2020",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:CASABLANCAANFA",
+      "sourcedFrom": "wmo-normals:CASABLANCAANFA (WMO 00060155)",
       "monthlyRainfallMm": [
         61.9,
         49.7,
@@ -1632,8 +1672,10 @@
         "stations": [
           {
             "station": "CASABLANCAANFA",
+            "wmoStationId": "00060155",
             "latitude": 33.559,
             "longitude": -7.667,
+            "elevationM": 56,
             "annualMm": 408.2,
             "annualRainDays": 46.4,
             "dpd": 9
@@ -1817,7 +1859,7 @@
         "generalPeriod": "1981-2010",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:CairoAP",
+      "sourcedFrom": "wmo-normals:CairoAP (WMO 00062366)",
       "monthlyRainfallMm": [
         4.8,
         3.8,
@@ -1854,8 +1896,10 @@
         "stations": [
           {
             "station": "CairoAP",
+            "wmoStationId": "00062366",
             "latitude": 30.133,
             "longitude": 31.4,
+            "elevationM": 64.1,
             "annualMm": 24.8,
             "annualRainDays": 10.9,
             "dpd": 2
@@ -1903,7 +1947,7 @@
         "generalPeriod": "1974-1991",
         "fromCLINO": "2005-01-25"
       },
-      "sourcedFrom": "wmo-normals:DubaiIntlAirport",
+      "sourcedFrom": "wmo-normals:DubaiIntlAirport (WMO 00041194)",
       "monthlyRainfallMm": [
         20.8,
         9.9,
@@ -1940,8 +1984,10 @@
         "stations": [
           {
             "station": "DubaiIntlAirport",
+            "wmoStationId": "00041194",
             "latitude": 25.25,
             "longitude": 55.333,
+            "elevationM": 8,
             "annualMm": 79.1,
             "annualRainDays": 21.4,
             "dpd": 4
@@ -2057,7 +2103,7 @@
         "generalPeriod": "1982-2011",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:RiyadhNew (1 of 2, chosen alphabetically)",
+      "sourcedFrom": "wmo-normals:RiyadhNew (WMO 00040437) (1 of 2, chosen alphabetically)",
       "monthlyRainfallMm": [
         14.8,
         8.3,
@@ -2094,16 +2140,20 @@
         "stations": [
           {
             "station": "RiyadhNew",
+            "wmoStationId": "00040437",
             "latitude": 24.925,
             "longitude": 46.722,
+            "elevationM": 614,
             "annualMm": 107.5,
             "annualRainDays": 15,
             "dpd": 7
           },
           {
             "station": "RiyadhOld",
+            "wmoStationId": "00040438",
             "latitude": 24.711,
             "longitude": 46.738,
+            "elevationM": 620,
             "annualMm": 99.9,
             "annualRainDays": 14,
             "dpd": 7
@@ -2151,7 +2201,7 @@
         "generalPeriod": "1981-2010",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:PHOENIX_SKY_HARBOR_INTL_AP",
+      "sourcedFrom": "wmo-normals:PHOENIX_SKY_HARBOR_INTL_AP (WMO 00072278)",
       "monthlyRainfallMm": [
         22.1,
         22.1,
@@ -2188,8 +2238,10 @@
         "stations": [
           {
             "station": "PHOENIX_SKY_HARBOR_INTL_AP",
+            "wmoStationId": "00072278",
             "latitude": 33.428,
             "longitude": -112.004,
+            "elevationM": 337,
             "annualMm": 183.5,
             "annualRainDays": 24,
             "dpd": 8
@@ -2305,7 +2357,7 @@
         "generalPeriod": "1981-2010",
         "fromCLINO": ""
       },
-      "sourcedFrom": "wmo-normals:Pudahuelaeropuertosantiago (1 of 2, chosen alphabetically)",
+      "sourcedFrom": "wmo-normals:Pudahuelaeropuertosantiago (WMO 00085574) (1 of 2, chosen alphabetically)",
       "monthlyRainfallMm": [
         0.3,
         0.9,
@@ -2342,16 +2394,20 @@
         "stations": [
           {
             "station": "Pudahuelaeropuertosantiago",
+            "wmoStationId": "00085574",
             "latitude": -33.378,
             "longitude": -70.788,
+            "elevationM": 482,
             "annualMm": 221.5,
             "annualRainDays": 21.8,
             "dpd": 10
           },
           {
             "station": "Quintanormalsantiago",
+            "wmoStationId": "00085577",
             "latitude": -33.445,
             "longitude": -70.683,
+            "elevationM": 520,
             "annualMm": 286.3,
             "annualRainDays": 23.8,
             "dpd": 12
