@@ -87,6 +87,7 @@ const isMissing = v => !isFinite(v) || Math.abs(v - MISSING) < 1e-9;
 export const NORMALS_COUNTRY = {
   MY:"Malaysia", SG:"Singapore", ID:"Indonesia", PH:"Philippines", IN:"India",
   NG:"Nigeria", KE:"Kenya", UK:"United_Kingdom", IE:"Ireland", DE:"Germany",
+  BD:"Bangladesh",
   US:"United_States", CA:"Canada", NZ:"New_Zealand", AU:"Australia", TR:"Turkiye",
   GR:"Greece", MA:"Morocco", JO:"Jordan", IQ:"Iraq", EG:"Egypt",
   AE:"United_Arab_Emirates", QA:"Qatar", SA:"Saudi_Arabia", CO:"Colombia", CL:"Chile"
@@ -247,7 +248,16 @@ export function matchNormals(table, city, cc) {
 
   const n = normKey(city);
   const named = pool.filter(d => normKey(d.station) === n);
-  const cands = named.length ? named : pool.filter(d => normKey(d.station).includes(n));
+  let cands = named.length ? named : pool.filter(d => normKey(d.station).includes(n));
+
+  /* A station need not carry its city's name: Singapore's is "ChangiAirport".
+     Where a country contributes exactly one station there is nothing to choose
+     between, so the name is not required — but the fact that the match was made
+     on the country rather than the name is reported, because it is a weaker
+     claim and a reader should be able to see which kind of match they have. */
+  let matchedBy = named.length ? "exact name" : (cands.length ? "partial name" : null);
+  if (!cands.length && pool.length === 1) { cands = pool; matchedBy = "sole station in country"; }
+
   if (!cands.length) return { status: `no station named for ${city} among ${pool.length} in ${country}` };
 
   const usable = cands.filter(d => d.complete);
@@ -266,6 +276,7 @@ export function matchNormals(table, city, cc) {
   return {
     status: "matched",
     country,
+    matchedBy,
     stations,
     annualMmRange: [Math.min(...mm), Math.max(...mm)],
     rejectedForMissingMonths: cands.filter(d => !d.complete).map(d => d.station)
@@ -382,9 +393,33 @@ for (const c of resolved) {
     }
     if (r.some(v => v === null)) throw new Error("not all twelve months present");
 
-    const annual = r.reduce((s, v) => s + v, 0);
-    const wetDays = rd.reduce((s, v) => s + v, 0);
-    if (!(wetDays > 0)) throw new Error("annual rain days total zero — dpd undefined");
+    let annual = r.reduce((s, v) => s + v, 0);
+    let wetDays = rd.reduce((s, v) => s + v, 0);
+    let from = "wwis";
+
+    /* Some national services publish rainfall but no precipitation-day counts,
+       which leaves dpd undefined. Where that happens the whole city falls back
+       to the WMO Climate Normals rather than borrowing only the missing half:
+       rainfall from one provider and rain days from another, for one city, over
+       two different periods, is a number nobody could describe in a sentence.
+       Whole-city fallback keeps each city internally consistent, and which
+       source served it is recorded per city. */
+    if (!(wetDays > 0)) {
+      const alt = normalsTable ? matchNormals(normalsTable, c.city, c.cc) : { status: "no cross-check loaded" };
+      const one = alt.status === "matched" && alt.stations.length === 1 ? alt.stations[0] : null;
+      if (!one) {
+        throw new Error(alt.status === "matched"
+          ? `no rain days in WWIS, and the normals offer ${alt.stations.length} stations — ambiguous, not guessing`
+          : `no rain days in WWIS, and the normals cannot supply them (${alt.status})`);
+      }
+      const src = normalsTable.find(d => d.station === one.station);
+      r.length = 0; r.push(...src.rainfallMonths.map(v => Math.round(v * 10) / 10));
+      rd.length = 0; rd.push(...src.raindayMonths);
+      annual = r.reduce((s, v) => s + v, 0);
+      wetDays = rd.reduce((s, v) => s + v, 0);
+      from = `wmo-normals:${one.station}`;
+      if (!(wetDays > 0)) throw new Error("the normals have no rain days either");
+    }
     const dpd = clamp(Math.round(annual / wetDays), 2, 30);
 
     out.push({ id: c.id, name: c.name, zone: c.zone,
@@ -411,6 +446,7 @@ for (const c of resolved) {
         generalPeriod:  (cl.datab && cl.datae)         ? `${cl.datab}-${cl.datae}`         : null,
         fromCLINO: cl.climatefromclino ?? null
       },
+      sourcedFrom: from,
       monthlyRainfallMm: r,
       monthlyRainDays: rd,
       crossCheck: normalsTable ? matchNormals(normalsTable, c.city, c.cc)
@@ -429,7 +465,8 @@ for (const c of resolved) {
       warnings.push(`${c.name}: raintype is "${cl.raintype}" — may include snow, which a roof does not collect when it falls`);
 
     console.log(`${String(Math.round(annual)).padStart(5)} mm/yr  ${String(Math.round(wetDays)).padStart(3)} days  dpd ${String(dpd).padStart(2)}  ` +
-                `${record.at(-1).normals.period ?? "no period declared"}`);
+                `${from === "wwis" ? (record.at(-1).normals.period ?? "no period declared")
+                                  : "via " + from}`);
   } catch (e) {
     console.log(`FAILED — ${e.message}`);
     record.push({ id: c.id, name: c.name, error: e.message });

@@ -286,12 +286,36 @@ console.log('\n\u2500\u2500 WWIS cross-check against the WMO Climate Normals \u2
     /every candidate has missing months/.test(m('Toronto', 'CA').status),
     m('Toronto', 'CA').status, 'rejected for missing months');
 
+  /* A station need not carry its city's name — Singapore's is ChangiAirport —
+     so a country contributing exactly one station is unambiguous even with no
+     name match. The kind of match is reported, because matching on the country
+     alone is a weaker claim than matching on the name. */
+  t('the sole station in a country matches even without the name',
+    (() => { const r = m('Singapore', 'SG');
+             return r.status === 'matched' && r.stations[0].station === 'Changi'; })(),
+    JSON.stringify(m('Singapore', 'SG')), 'Changi');
+
+  t('and says it matched on the country, not the name',
+    m('Singapore', 'SG').matchedBy === 'sole station in country',
+    m('Singapore', 'SG').matchedBy, 'sole station in country');
+
+  t('an exact name match says so',
+    m('London', 'UK').matchedBy === 'exact name', m('London', 'UK').matchedBy, 'exact name');
+
+  /* The sole-station rule must not fire where there is a real choice: two
+     German stations means the name still has to do the work. */
+  t('the sole-station rule does not fire when a country has several',
+    m('Nowhere', 'DE').status !== 'matched', m('Nowhere', 'DE').status, 'no match');
+
   t('a country with no stations is reported, not silently skipped',
     /absent from the normals/.test(m('Nairobi', 'KE').status), m('Nairobi', 'KE').status, 'absent');
 
+  /* Where the country has a real choice and none of them is named for the city,
+     the failure names how many were considered — Singapore no longer serves as
+     this case, because it has exactly one station and now matches on that. */
   t('a present country with no matching station says how many it looked at',
-    /among 1 in Singapore/.test(m('Singapore', 'SG').status), m('Singapore', 'SG').status,
-    'no station named for Singapore among 1 in Singapore');
+    /among 2 in Germany/.test(m('Nowhere', 'DE').status), m('Nowhere', 'DE').status,
+    'no station named for Nowhere among 2 in Germany');
 
   t('an unmapped country code is reported rather than guessed',
     /no country mapping/.test(m('Reykjavik', 'IS').status), m('Reykjavik', 'IS').status, 'no mapping');

@@ -184,7 +184,7 @@ console.log('\n── 3. Mixed materials weight by area ──');
 
 console.log('\n── 4. Water balance conserves volume ──');
 {
-  for(const [name,city,cap] of [['London auto','lon',null],['Kuala Lumpur','kul',5000],['Dubai','dxb',20000],['Mumbai monsoon','bom',60000]]){
+  for(const [name,city,cap] of [['London auto','lon',null],['Kuala Lumpur','kul',5000],['Dubai','dxb',20000],['Chittagong monsoon','cgp',60000]]){
     const m=mk({w:16,d:10,wallH:6},{type:'gable',pitch:30,overhang:0.5});
     m.climate=C.climateFor(city); m.demand.occupants=8;
     if(cap!==null){m.system.tankMode='manual';m.system.tank=cap;}
