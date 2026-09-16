@@ -3985,7 +3985,13 @@ const APP = (() => {
       mItem("", `Version ${VERSION.number}`, `Released ${VERSION.label}`) +
       mItem('data-cite="1"', "How to cite this", CITATION.apa) +
       `<div class="rwc-menu-div"></div><div class="rwc-menu-head">Licence</div>` +
-      mItem("", "© Karam Al-Obaidi", "Code MIT · documentation, screenshots and exercises CC BY 4.0 · your models are yours"));
+      mItem("", "© Karam Al-Obaidi", "Code MIT · documentation, screenshots and exercises CC BY 4.0 · your models are yours") +
+      /* The rainfall carries its own condition. WWIS requires acknowledgement
+         wherever its information is used, so it belongs in the app and not only
+         in the provenance file. Read from CLIMATE_SOURCE so it cannot drift from
+         what the data actually is. */
+      (CLIMATE_SOURCE.sourced && CLIMATE_SOURCE.licence
+        ? mItem("", "Rainfall data", CLIMATE_SOURCE.licence) : ""));
   };
 
   document.addEventListener("click", e => {

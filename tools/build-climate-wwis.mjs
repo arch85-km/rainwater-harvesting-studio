@@ -56,7 +56,7 @@ const RECORD = resolve(ROOT, "docs/climate-source.json");
 const BASE      = "https://worldweather.wmo.int/en/json";
 const CITY_LIST = `${BASE}/full_city_list.txt`;
 const SOURCE    = "WMO Climate Normals 1991-2020 (NOAA NCEI) where available; WMO World Weather Information Service (WWIS) otherwise";
-const LICENCE   = "WMO Climate Normals 1991-2020 distributed by NOAA NCEI. Acknowledgement to the WMO World Weather Information Service, and to the national meteorological service named per city, is required for the cities sourced from it. Data reproduced accurately and unaltered.";
+const LICENCE   = "WMO Climatological Standard Normals 1991-2020, NCEI Accession 0253808, CC0 1.0. For the cities from the WMO World Weather Information Service its terms apply: \u201cAcknowledgement must be given to the WMO World Weather Information Service (https://worldweather.wmo.int) as the source of information\u201d and \u201cThe forecast and climatological information of the WWIS website must be reproduced accurately\u201d.";
 const NOTE      = "Gauge normals. Most cities use the WMO Climate Normals 1991-2020; the rest come from WWIS, where the period and the rain-day threshold vary by city. Each city records which — see docs/climate-source.json.";
 
 /* An independent check on the same quantities. The WMO Climate Normals
@@ -71,7 +71,7 @@ const NOTE      = "Gauge normals. Most cities use the WMO Climate Normals 1991-2
 const NORMALS_DIR = "https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/data-composite-primary-parameters";
 const NORMALS_RAINDAYS = `${NORMALS_DIR}/wmo_normals_9120_DP01.csv`;
 const NORMALS_RAINFALL = `${NORMALS_DIR}/wmo_normals_9120_PRCP.csv`;
-const NORMALS_NAME = "WMO Climate Normals 1991-2020 (PRCP and DP01), via NOAA NCEI";
+const NORMALS_NAME = "WMO Climatological Standard Normals 1991-2020 (PRCP and DP01), NOAA NCEI Accession 0253808 v6.6, https://doi.org/10.25921/800j-vn07";
 
 /* The dataset's missing-month marker. 525 of PRCP's values and 186 of DP01's
    carry it, and it is negative, so summing a series without rejecting it
@@ -237,7 +237,7 @@ export async function loadNormals(src, read) {
     const months = r.slice(9, 21).map(Number);
     out.set(r[2], {
       id: r[2], country: r[7], station: r[8],
-      lat: Number(r[4]), lon: Number(r[5]),
+      lat: Number(r[4]), lon: Number(r[5]), elev: Number(r[6]),
       months,
       complete: months.every(v => !isMissing(v)),
       annual: months.every(v => !isMissing(v)) ? months.reduce((a, b) => a + b, 0) : null
@@ -257,7 +257,7 @@ export async function loadNormalsPair(rainfallSrc, raindaySrc, read) {
     const d = days.get(id);
     if (!d) continue;
     out.push({
-      id, country: p.country, station: p.station, lat: p.lat, lon: p.lon,
+      id, country: p.country, station: p.station, lat: p.lat, lon: p.lon, elev: p.elev,
       rainfallMonths: p.months, raindayMonths: d.months,
       annualMm: p.annual, annualDays: d.annual,
       complete: p.complete && d.complete
@@ -334,8 +334,13 @@ export function matchNormals(table, city, cc, near) {
     return { status: `every candidate has missing months: ${cands.map(d => d.station).join(", ")}`,
              rejected: cands.map(d => d.station) };
 
+  /* The WMO station number, not just the name. "London" in this file is a
+     station, and Heathrow is a different row 2 km away with a different figure —
+     so a name alone does not identify what a preset was built from. Elevation
+     comes too: it is what makes a nearby station wrong in mountains. */
   const stations = usable.map(d => ({
-    station: d.station, latitude: d.lat, longitude: d.lon,
+    station: d.station, wmoStationId: d.id,
+    latitude: d.lat, longitude: d.lon, elevationM: d.elev,
     annualMm: Math.round(d.annualMm * 10) / 10,
     annualRainDays: Math.round(d.annualDays * 10) / 10,
     dpd: d.annualDays > 0 ? Math.min(30, Math.max(2, Math.round(d.annualMm / d.annualDays))) : null
@@ -527,7 +532,7 @@ for (const c of resolved) {
       annual = r.reduce((s, v) => s + v, 0);
       wetDays = rd.reduce((s, v) => s + v, 0);
       if (!(wetDays > 0)) throw new Error(`the normals station ${prefer.station} has no rain days`);
-      from = `wmo-normals:${prefer.station}` +
+      from = `wmo-normals:${prefer.station} (WMO ${prefer.wmoStationId})` +
              (alt.stations.length > 1 ? ` (1 of ${alt.stations.length}, chosen alphabetically)` : "");
     } else if (!(wetDays > 0)) {
       throw new Error(`WWIS has no rain days and the normals cannot supply them (${alt.status})`);
@@ -679,7 +684,7 @@ const meta = {
   accessed: new Date().toISOString().slice(0, 10),
   licence: LICENCE,
   note: NOTE,
-  acknowledgement: "Data from the WMO World Weather Information Service (worldweather.wmo.int), supplied by the national meteorological and hydrological service named against each city.",
+  acknowledgement: "Data from the WMO World Weather Information Service (worldweather.wmo.int), supplied by the national meteorological and hydrological service named against each city. WWIS is operated on behalf of WMO by the Hong Kong Observatory; the acknowledgement condition names WWIS, not the operator.",
   reduction: "r[] is climateMonth[].rainfall as published; dpd = annual rainfall / annual raindays, rounded, clamped 2-30. The rain-day threshold is whatever the supplying service declares in raindef and is recorded per city; it is NOT converted to the app's 1 mm rule.",
   generator: "tools/build-climate-wwis.mjs",
   cross_check: {

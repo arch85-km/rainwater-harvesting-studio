@@ -285,19 +285,30 @@
         <span class="cs-mono">docs/climate-source.json</span> names the source, station and period for
         every city. Cite that file rather than this sentence, and check which column your city is in
         before you quote its rainfall.</li>
-      <li><b>For those six, depth per wet day means something slightly different.</b> This tool counts a
-        wet day as 1&nbsp;mm or more. The services behind the six count one at their own threshold —
-        Baghdad at <b>0.001&nbsp;mm</b>, and four of the six declare no threshold at all. A lower
-        threshold counts more days, so the depth per day comes out lower, and the daily step is built on
-        that figure. It is recorded per city rather than converted, because there is no honest way to
-        convert it. Comparing the daily-step reliability of Baghdad with that of Berlin is not comparing
-        like with like.</li>
-      <li><b>A station is not the city.</b> Several cities are represented by the nearest station rather
-        than one bearing their name: Kuala Lumpur by Subang 2&nbsp;km away, Jakarta by Stasiun
-        Meteorologi Kemayoran at 5&nbsp;km, Istanbul by Sariyer at 20&nbsp;km. The distance is recorded
-        for each. Bogot&aacute; shows why it matters: its nearest station is 12&nbsp;km away and reads
-        64&nbsp;% wetter, because the city sits at 2,600&nbsp;m and the station does not, so it was
-        refused and the city kept its older record.</li>
+      <li><b>Depth per wet day is on the tool's own footing for twenty-two cities, and not for six.</b>
+        This tool counts a wet day as 1&nbsp;mm or more. The WMO Climate Normals parameter it divides by,
+        <span class="cs-mono">DP01</span>, is defined by the archive as the number of days with
+        <b>at least 1&nbsp;mm</b> of precipitation — the same threshold, and the one WMO-No.&nbsp;1203
+        names as the principal precipitation-frequency parameter, so every country's submission to that
+        file is on it. For those twenty-two, depth per wet day is the published annual rainfall divided by
+        a day-count defined exactly as this tool defines one.
+        The six on WWIS are not: Baghdad counts a rain day at <b>0.001&nbsp;mm</b>, and four of the six
+        declare no threshold at all. A lower threshold counts more days, so the depth per day comes out
+        lower, and the daily step is built on that figure. It is recorded per city rather than converted,
+        because there is no honest way to convert it. Comparing the daily-step reliability of Baghdad with
+        that of Berlin is not comparing like with like; comparing Berlin with London is.</li>
+      <li><b>A station is not a city.</b> Every preset on the Normals is one gauge, recorded by name,
+        WMO station number and elevation. <i>London</i> in that file is the station at
+        51.505,&nbsp;&minus;0.131 &mdash; WMO&nbsp;00003770, 5&nbsp;m &mdash; reading 113.5 rain days a
+        year. <i>Heathrow</i> is a different row 22&nbsp;km west, WMO&nbsp;00003772 at 25&nbsp;m, reading
+        111.6. Both are real and both are London in ordinary speech. This tool uses the first; if you
+        quote a figure, quote the station, not the city.
+        Several cities are represented by the nearest gauge rather than one bearing their name &mdash;
+        Kuala Lumpur by Subang at 2&nbsp;km, Jakarta by Stasiun Meteorologi Kemayoran at 5&nbsp;km,
+        Istanbul by Sariyer at 20&nbsp;km &mdash; and the distance is recorded for each. Bogot&aacute;
+        shows the limit of that: its nearest gauge is 12&nbsp;km away and reads 64&nbsp;% wetter, because
+        the city sits at 2,600&nbsp;m and the gauge does not, so it was refused and the city kept its
+        older record.</li>
       <li><b>The litres-per-second figure is not a design.</b> The gutter and downpipe check uses a
         75&nbsp;mm/h storm and a seven-row pipe capacity table, and the code names a source for neither.
         Its own comment marks it as <i>not a substitute for</i> <span class="cs-mono">BS EN 12056&#8209;3</span>.
@@ -958,22 +969,36 @@ spaced evenly through the month.</div>
       alone moves it from 4.6&nbsp;% to 49.5&nbsp;%.</p>
 
     <h3>Before you cite</h3>
-    <p>Five things this page cannot settle for you. They are gathered here because they are
+    <p>Six things this page cannot settle for you. They are gathered here because they are
       instructions, and instructions buried inside a reference entry do not get read.</p>
     <ul class="cs-refs">
-      <li><b>Record the date you fetched the rainfall.</b> An API archive is revisable, so a citation
-        without a retrieval date names no fixed thing. The app prints the date once the generator has
-        run.</li>
-      <li><b>Cite the reanalysis the generator recorded</b>, in
-        <span class="cs-mono">docs/climate-source.json</span>, not one assumed here. The archive draws
-        on more than one dataset and picks by location.</li>
-      <li><b>Check the Open&#8209;Meteo DOI</b> below on their own site. It was supplied by an external
-        review and not verified for this page.</li>
+      <li><b>Record which source your city came from, and the station.</b> Twenty-two presets are WMO
+        Climatological Standard Normals; six are WWIS records over other periods. Every city's source,
+        station name, WMO station number, elevation and period is in
+        <span class="cs-mono">docs/climate-source.json</span>. Cite the station, not the city: the file's
+        <i>London</i> is WMO&nbsp;00003770 in central London, and <i>Heathrow</i> is a different gauge
+        22&nbsp;km away with a different figure.</li>
+      <li><b>Acknowledge the WMO World Weather Information Service if you quote one of its six cities.</b>
+        Its terms require two things, and they are quoted here rather than paraphrased:
+        <i>&ldquo;Acknowledgement must be given to the WMO World Weather Information Service
+        (https://worldweather.wmo.int) as the source of information&rdquo;</i> and <i>&ldquo;The forecast
+        and climatological information of the WWIS website must be reproduced accurately&rdquo;</i>. The
+        underlying data is the contributing national meteorological service's, named per city in the
+        provenance file.</li>
+      <li><b>Record the version and the date you downloaded the Normals.</b> The NCEI accession is
+        revised as WMO Members submit corrections &mdash; this library was built from <b>version
+        6.6</b> on <b>16 September 2026</b>, and the accession has been updated since first publication.
+        A citation without a version names a moving target.</li>
+      <li><b>Check the Open&#8209;Meteo DOI on their own site before you use it.</b> It was supplied by
+        an external review and has <b>not</b> been verified for this page. Open&#8209;Meteo no longer
+        supplies any preset &mdash; only the in-app fetch &mdash; so it matters less than it did, but an
+        unverified identifier should not be repeated on trust.</li>
       <li><b>Open&#8209;Meteo's CC&nbsp;BY&nbsp;4.0 offer covers non-commercial use.</b> Commercial use
         needs their paid API, per the same review. Do not cite this page for an unconditional
         CC&nbsp;BY claim.</li>
       <li><b>The BSI standards are paywalled.</b> Checking what this page says about them needs a
-        purchased copy or an institutional subscription — a real limit on how far you can verify it.</li>
+        purchased copy or an institutional subscription &mdash; a real limit on how far you can verify
+        it.</li>
     </ul>
 
     <h3>References</h3>
@@ -989,21 +1014,50 @@ spaced evenly through the month.</div>
         periods (A.2.1), the coverage curve (A.2.2.4), and NA.1.2 and NA.3 from the BSI UK National
         Annex. The tool does <b>not</b> implement the detailed approach of A.2.2, the climate-change
         analysis of NA.4, or anything on water quality.</li>
+      <li>NOAA National Centers for Environmental Information. (2022). <i>WMO climatological standard
+        normals for 1991&ndash;2020</i> (NCEI Accession 0253808, version 6.6) [Data set].
+        <a href="https://doi.org/10.25921/800j-vn07" target="_blank" rel="noopener">https://doi.org/10.25921/800j-vn07</a>
+        &mdash; <b>the rainfall for twenty-two of the twenty-eight presets</b>, from
+        <span class="cs-mono">data_composite_primary_parameters/wmo_normals_9120_PRCP.csv</span> and
+        <span class="cs-mono">wmo_normals_9120_DP01.csv</span>. The accession readme defines
+        <span class="cs-mono">DP01</span> as the number of days with <b>at least 1&nbsp;mm</b> of
+        precipitation, which is the threshold this tool uses for a wet day, so depth per wet day is on
+        the same footing as the source for those cities. Version 6.6 was downloaded on 16 September 2026;
+        the accession is revised as Members submit corrections. CC0&nbsp;1.0. A sibling file,
+        <span class="cs-mono">wmo_normals_9120_DP01_min24.csv</span>, restricts the normals to stations
+        with at least 24 of the 30 years &mdash; this library uses the unfiltered composite, so a station
+        here may rest on fewer years than another.</li>
+      <li>World Meteorological Organization. (n.d.). <i>World Weather Information Service</i> [Data set].
+        <a href="https://worldweather.wmo.int/" target="_blank" rel="noopener">https://worldweather.wmo.int/</a>
+        &mdash; <b>the rainfall for the six presets</b> whose countries contribute no station to the
+        Normals composite: Nairobi, Athens, Amman, Baghdad, Doha and Bogot&aacute;. The figures are the
+        contributing national meteorological service's, named per city in
+        <span class="cs-mono">docs/climate-source.json</span>; the service is operated on behalf of WMO by
+        the Hong Kong Observatory, and its acknowledgement condition names WWIS rather than the operator.
+        The record structure is published at
+        <span class="cs-mono">worldweather.wmo.int/en/json/WWIS_json_schema_v2.json</span>, and each
+        city's record carries its own period and rain-day threshold, which is what the generator logs.</li>
       <li>Open-Meteo. (n.d.). <i>Historical weather API</i> [Data set].
         <a href="https://open-meteo.com/" target="_blank" rel="noopener">https://open-meteo.com/</a>
-        &mdash; the rainfall, once the preset library has been regenerated; until then it supplies
-        nothing, and the app says so wherever it prints a location. A citable software record exists:
-        Zippenfenig, P. (2023). <i>Open-Meteo.com Weather API</i> [Computer software]. Zenodo.
+        &mdash; <b>the in-app fetch only</b>, when you ask for rainfall at your own coordinates. It
+        supplies no preset. It serves a reanalysis, so a fetched figure and a preset are different kinds
+        of number and the app labels which produced any figure it prints. A software record exists but
+        <b>has not been verified for this page</b>: Zippenfenig, P. (2023). <i>Open-Meteo.com Weather
+        API</i> [Computer software]. Zenodo.
         <span class="cs-mono">https://doi.org/10.5281/zenodo.7970649</span></li>
       <li>World Meteorological Organization. (2017). <i>WMO guidelines on the calculation of climate
         normals</i> (WMO-No.&nbsp;1203). WMO. &mdash; defines the thirty-year standard normal, of which
-        1991&ndash;2020 is the current one, so it decides which years the rainfall averages over.
-        Supplied by an external review and not verified for this page.</li>
+        1991&ndash;2020 is the current one, so it decides which years the rainfall averages over. It
+        also names days with at least 1&nbsp;mm as the principal precipitation-frequency parameter,
+        which is why every country's submission to the Normals file uses that threshold and why
+        depth per wet day is comparable across those cities. Supplied by an external review and not
+        verified for this page.</li>
     </ul>
 
     <h3>Also named in the code</h3>
-    <p>Named in <span class="cs-mono">index.html</span> or
-      <span class="cs-mono">tools/build-climate.mjs</span>, but <b>drawn on for nothing</b>. They are
+    <p>Named in <span class="cs-mono">index.html</span>,
+      <span class="cs-mono">tools/build-climate.mjs</span> or
+      <span class="cs-mono">tools/build-climate-wwis.mjs</span>, but <b>drawn on for nothing</b>. They are
       listed so every name a reader meets can be traced, and kept apart from the references so that
       appearing in a list is not mistaken for contributing a number.</p>
     <ul class="cs-refs">
