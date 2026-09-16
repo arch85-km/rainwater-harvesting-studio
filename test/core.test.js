@@ -182,6 +182,34 @@ console.log('\n── 3. Mixed materials weight by area ──');
   t('area-weighted Yc = (0.50+0.90)/2 = 0.70', near(g.ycMean,0.70,1e-9), g.ycMean, 0.70);
 }
 
+console.log('\n── 3b. Annual totals carry no float noise ──');
+{
+  /* Monthly rainfall is published to one decimal, so a year's total is exact to
+     one decimal — but summing twelve binary floats is not. Ten of the twenty-eight
+     cities produced tails like 79.10000000000001 and 1024.1999999999998, and they
+     reached the location list verbatim. */
+  const noisy = C.CITIES.filter(c => {
+    const frac = String(C.sum(c.r)).split('.')[1] || '';
+    return frac.length > 1;
+  });
+  t('raw sums really are noisy, so this test is about something',
+    noisy.length > 0, noisy.length, '> 0');
+
+  const stillNoisy = C.CITIES.filter(c => {
+    const a = C.climateFor(c.id).annual;
+    const frac = String(a).split('.')[1] || '';
+    return frac.length > 1;
+  });
+  t('climateFor().annual is clean for every city',
+    stillNoisy.length === 0,
+    stillNoisy.map(c => c.name + ' ' + C.climateFor(c.id).annual).join(', ') || 'none', 'none');
+
+  /* Rounding must not move the number, only its representation. */
+  const moved = C.CITIES.filter(c => Math.abs(C.climateFor(c.id).annual - C.sum(c.r)) > 0.05);
+  t('rounding changes no annual total by more than 0.05 mm',
+    moved.length === 0, moved.map(c => c.name).join(', ') || 'none', 'none');
+}
+
 console.log('\n── 4. Water balance conserves volume ──');
 {
   for(const [name,city,cap] of [['London auto','lon',null],['Kuala Lumpur','kul',5000],['Dubai','dxb',20000],['Chittagong monsoon','cgp',60000]]){
