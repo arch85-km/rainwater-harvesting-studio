@@ -109,6 +109,62 @@ async function get(url, what) {
   return r.text();
 }
 
+/* ---- the WWIS city list ----
+
+   The real format, from a run rather than from a guess:
+
+     "Country";"City";"CityId"
+     "Afghanistan";"Kabul";"1"
+
+   Semicolon-separated and every field wrapped in double quotes. The first
+   version of this compared an unquoted city name against a quoted field, so
+   nothing matched and all 28 presets reported NOT FOUND — a failure that was at
+   least loud, because the generator refuses to write a partial library.
+
+   Columns are located by their header name rather than by position, so a
+   reordering upstream is survivable; a missing column is not, and says so. */
+export function parseCityList(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) throw new Error("city list is empty");
+
+  const seps = [";", ",", "\t", "|"];
+  const sep = seps.reduce((b, c) => lines[0].split(c).length > lines[0].split(b).length ? c : b);
+
+  const unquote = f => f.trim().replace(/^"(.*)"$/s, "$1").trim();
+  const split = l => l.split(sep).map(unquote);
+
+  const head = split(lines[0]).map(h => h.toLowerCase());
+  const at = name => {
+    const i = head.indexOf(name);
+    if (i < 0) throw new Error(`city list has no "${name}" column — found: ${head.join(", ")}`);
+    return i;
+  };
+  const ci = at("country"), cy = at("city"), id = at("cityid");
+
+  const rows = [];
+  for (const line of lines.slice(1)) {
+    const f = split(line);
+    if (f.length <= Math.max(ci, cy, id)) continue;
+    if (!f[id]) continue;
+    rows.push({ country: f[ci], city: f[cy], cityId: f[id] });
+  }
+  if (!rows.length) throw new Error("city list parsed to no rows");
+  return { separator: sep === "\t" ? "tab" : sep, columns: head, rows };
+}
+
+/* A preset's city name against the list. WWIS names are the plain city, so an
+   exact match is the norm; the loose pass is a fallback for "Kuala Lumpur" vs
+   "Kuala_Lumpur" style differences. Country is not filtered on here because the
+   preset label carries an ISO code and the list carries a country name, and
+   inventing that mapping is how "Athens, GR" ends up in Georgia — instead every
+   candidate is returned and an ambiguous city is reported rather than guessed. */
+export function findCity(list, city) {
+  const n = normKey(city);
+  const exact = list.rows.filter(r => normKey(r.city) === n);
+  if (exact.length) return exact;
+  return list.rows.filter(r => normKey(r.city).includes(n));
+}
+
 /* ---- the cross-check table, loaded once ---- */
 export const normKey = s => s.toLowerCase().replace(/[^a-z]/g, "");
 
@@ -225,33 +281,33 @@ console.log(`${presets.length} presets read from index.html${DRY ? "   — DRY R
 
 /* ---- 1. resolve every preset to a WWIS cityId ---- */
 console.log("Fetching the city list …");
-const listRaw = await get(CITY_LIST, "city list");
-const lines = listRaw.split(/\r?\n/).filter(l => l.trim());
-console.log(`  ${lines.length} lines\n`);
-
-/* The separator is detected, not assumed: whatever splits the first line into
-   the most fields wins, and the choice is printed so a wrong guess is visible. */
-const seps = [[";", "semicolon"], [",", "comma"], ["\t", "tab"], ["|", "pipe"]];
-const [sep, sepName] = seps.reduce((b, s) =>
-  lines[0].split(s[0]).length > lines[0].split(b[0]).length ? s : b);
-const rows = lines.map(l => l.split(sep).map(s => s.trim()));
-console.log(`Separator detected: ${sepName} (${rows[0].length} fields). First line verbatim:`);
-console.log(`  | ${lines[0]}\n`);
+const list = parseCityList(await get(CITY_LIST, "city list"));
+console.log(`  ${list.rows.length} cities, ${list.separator}-separated, columns: ${list.columns.join(", ")}\n`);
 
 console.log("Resolving presets to WWIS cities:");
-const resolved = [], unresolved = [];
+const resolved = [], unresolved = [], ambiguous = [];
 for (const p of presets) {
-  const needle = p.city.toLowerCase();
-  const hit = rows.find(r => r.some(f => f.toLowerCase() === needle))
-           || rows.find(r => r.some(f => f.toLowerCase().includes(needle)));
-  const cityId = hit && hit.find(f => /^\d{1,6}$/.test(f));
-  if (hit && cityId) {
-    resolved.push({ ...p, cityId, listRow: hit.join(" | ") });
-    console.log(`  ${p.name.padEnd(22)} id ${String(cityId).padStart(6)}   ${hit.join(" | ").slice(0, 70)}`);
-  } else {
+  const hits = findCity(list, p.city);
+  if (!hits.length) {
     unresolved.push(p);
     console.log(`  ${p.name.padEnd(22)} NOT FOUND`);
+    continue;
   }
+  /* More than one country has a Springfield. The preset label carries an ISO
+     code and the list a country name, so rather than invent a mapping between
+     them the ambiguity is printed and the first is taken — with every candidate
+     recorded, so the choice is auditable instead of invisible. */
+  if (hits.length > 1) ambiguous.push({ preset: p.name, hits });
+  const h = hits[0];
+  resolved.push({ ...p, cityId: h.cityId, wwisCountry: h.country, wwisCity: h.city,
+                  candidates: hits.map(x => `${x.city}, ${x.country} (${x.cityId})`) });
+  console.log(`  ${p.name.padEnd(22)} id ${String(h.cityId).padStart(6)}   ${h.city}, ${h.country}` +
+              (hits.length > 1 ? `   ${hits.length} candidates` : ""));
+}
+
+if (ambiguous.length) {
+  console.log(`\n${ambiguous.length} preset(s) matched more than one WWIS city — first taken, all recorded:`);
+  for (const a of ambiguous) console.log(`  ${a.preset}: ${a.hits.map(h => `${h.city}, ${h.country}`).join(" | ")}`);
 }
 
 if (unresolved.length) {
@@ -324,7 +380,8 @@ for (const c of resolved) {
       wwis: { cityId: Number(city.cityId), cityName: city.cityName,
               stationName: city.stationName ?? null,
               latitude: city.cityLatitude, longitude: city.cityLongitude,
-              listRow: c.listRow },
+              candidates: c.candidates,
+              listCountry: c.wwisCountry, listCity: c.wwisCity },
       supplier: { memId: city.member?.memId ?? null, memName: city.member?.memName ?? null,
                   orgName: city.member?.orgName ?? null, url: city.member?.url ?? null },
       normals: {

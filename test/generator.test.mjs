@@ -151,6 +151,50 @@ console.log('\n── the rewrite round-trips ──');
   t('patching an already-patched file is stable', twice === patched, 'identical', 'identical');
 }
 
+console.log('\n\u2500\u2500 WWIS city list \u2500\u2500');
+{
+  /* The header verbatim from a real run. Every field is double-quoted, which
+     the first version of this did not strip — so an unquoted "london" was
+     compared against the literal string "London" with the quotes still on it,
+     and all 28 presets reported NOT FOUND. The fixture keeps the quoting
+     exactly as WWIS sends it so that regression cannot return silently. */
+  const LIST = [
+    '"Country";"City";"CityId"',
+    '"Afghanistan";"Kabul";"1"',
+    '"United Kingdom";"London";"316"',
+    '"Canada";"London";"2019"',
+    '"Malaysia";"Kuala Lumpur";"244"',
+    '"Egypt";"Cairo";"124"'
+  ].join('\n');
+
+  const list = W.parseCityList(LIST);
+
+  t('the city list parses as semicolon-separated', list.separator === ';', list.separator, ';');
+  t('surrounding double quotes are stripped from every field',
+    list.rows[0].city === 'Kabul' && list.rows[0].country === 'Afghanistan',
+    JSON.stringify(list.rows[0]), '{country:"Afghanistan",city:"Kabul",cityId:"1"}');
+  t('the city id is a bare value, not a quoted one',
+    list.rows[0].cityId === '1', JSON.stringify(list.rows[0].cityId), '"1"');
+  t('columns are found by name, not by position',
+    JSON.stringify(list.columns) === JSON.stringify(['country', 'city', 'cityid']),
+    JSON.stringify(list.columns), '[country,city,cityid]');
+
+  t('a city that exists is found — the bug that failed all 28',
+    W.findCity(list, 'London').length > 0, W.findCity(list, 'London').length, '> 0');
+  t('a two-word city name matches across the space',
+    W.findCity(list, 'Kuala Lumpur')[0].cityId === '244',
+    JSON.stringify(W.findCity(list, 'Kuala Lumpur')), 'cityId 244');
+  t('a city name in two countries returns both, rather than one silently',
+    W.findCity(list, 'London').length === 2, W.findCity(list, 'London').length, 2);
+  t('an absent city returns nothing rather than a near miss',
+    W.findCity(list, 'Atlantis').length === 0, W.findCity(list, 'Atlantis').length, 0);
+
+  t('a list missing a required column is rejected by name',
+    (() => { try { W.parseCityList('"A";"B"\n"1";"2"'); return false; }
+             catch (e) { return /no "country" column/.test(e.message); } })(),
+    'threw', 'threw naming the missing column');
+}
+
 console.log('\n\u2500\u2500 WWIS cross-check against the WMO Climate Normals \u2500\u2500');
 {
   /* A canned table, not the 1.5 MB pair: the point is the matching rule, and a
