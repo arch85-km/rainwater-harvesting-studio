@@ -109,6 +109,22 @@ async function get(url, what) {
   return r.text();
 }
 
+/* WWIS gives the normal period in up to three places, and most cities fill in
+   none of them. Reporting only rainfallb/e made almost every city print
+   "period?" when a general period was often present — a misleading diagnostic,
+   and the reason the first full run looked worse than it was. This returns the
+   most specific period available and says which field it came from, so an
+   undeclared period is distinguishable from one this code failed to look for. */
+export function bestPeriod(cl) {
+  const span = (b, e) => (b && e) ? `${b}-${e}` : null;
+  const rainfall = span(cl.rainfallb, cl.rainfalle);
+  if (rainfall) return { period: rainfall, from: "rainfallb/rainfalle" };
+  const general = span(cl.datab, cl.datae);
+  if (general) return { period: general, from: "datab/datae" };
+  if (cl.climatefromclino) return { period: String(cl.climatefromclino), from: "climatefromclino" };
+  return { period: null, from: "not declared" };
+}
+
 /* ---- the WWIS city list ----
 
    The real format, from a run rather than from a guess:
@@ -388,6 +404,8 @@ for (const c of resolved) {
         raintype: cl.raintype ?? null,
         raindayThreshold: cl.raindef ?? null,
         raindayThresholdUnit: cl.rainunit ?? null,
+        period: bestPeriod(cl).period,
+        periodFrom: bestPeriod(cl).from,
         rainfallPeriod: (cl.rainfallb && cl.rainfalle) ? `${cl.rainfallb}-${cl.rainfalle}` : null,
         raindayPeriod:  (cl.rdayb && cl.rdaye)         ? `${cl.rdayb}-${cl.rdaye}`         : null,
         generalPeriod:  (cl.datab && cl.datae)         ? `${cl.datab}-${cl.datae}`         : null,
@@ -411,7 +429,7 @@ for (const c of resolved) {
       warnings.push(`${c.name}: raintype is "${cl.raintype}" — may include snow, which a roof does not collect when it falls`);
 
     console.log(`${String(Math.round(annual)).padStart(5)} mm/yr  ${String(Math.round(wetDays)).padStart(3)} days  dpd ${String(dpd).padStart(2)}  ` +
-                `${record.at(-1).normals.rainfallPeriod ?? "period?"}`);
+                `${record.at(-1).normals.period ?? "no period declared"}`);
   } catch (e) {
     console.log(`FAILED — ${e.message}`);
     record.push({ id: c.id, name: c.name, error: e.message });
@@ -421,10 +439,30 @@ for (const c of resolved) {
 
 const failed = record.filter(x => x.error);
 if (failed.length) {
-  console.error(`\n${failed.length} city/cities failed: ${failed.map(f => f.name).join(", ")}`);
-  console.error(`A half-sourced library is worse than none — you cannot tell which rows`);
-  console.error(`are which. Nothing written.`);
-  process.exit(1);
+  console.log(`\n${failed.length} of ${record.length} cities could not be used:\n`);
+  for (const f of failed) console.log(`  ${f.name.padEnd(22)} ${f.error}`);
+
+  /* Where WWIS has rainfall but no rain days, the cross-check may still carry a
+     rain-day count for the same city. Whether to use it is a judgement — it
+     would mean one city's two numbers coming from two providers — so it is
+     reported here and decided deliberately, not taken automatically. */
+  if (normalsTable) {
+    console.log(`\n  Does the WMO Climate Normals cross-check have rain days for them?`);
+    for (const f of failed) {
+      const p = presets.find(x => x.name === f.name);
+      const x = p ? matchNormals(normalsTable, p.city, p.cc) : { status: "?" };
+      console.log(`  ${f.name.padEnd(22)} ${x.status === "matched"
+        ? x.stations.map(st => `${st.station} ${st.annualRainDays} d/yr`).join(" | ")
+        : x.status}`);
+    }
+  }
+
+  if (!DRY) {
+    console.error(`\nA half-sourced library is worse than none — you cannot tell which rows`);
+    console.error(`are which. Nothing written.`);
+    process.exit(1);
+  }
+  console.log(`\n  Dry run: surveying the rest rather than stopping here.`);
 }
 
 /* ---- 3. what varies, stated before anything is written ---- */
@@ -434,7 +472,7 @@ if (failed.length) {
    prompt to look, not a verdict. */
 console.log(`\nCross-check against the WMO Climate Normals 1991-2020:\n`);
 let checked = 0, wide = 0;
-for (const c of record) {
+for (const c of usable) {
   const x = c.crossCheck || {};
   if (x.status !== "matched") { console.log(`  ${c.name.padEnd(22)} —   ${x.status || "no check"}`); continue; }
   checked++;
@@ -454,14 +492,17 @@ for (const c of record) {
   if (x.rejectedForMissingMonths?.length)
     console.log(`  ${"".padEnd(22)} dropped for missing months: ${x.rejectedForMissingMonths.join(", ")}`);
 }
-console.log(`\n  ${checked} of ${record.length} cities cross-checked; ${wide} outside the normals' own range by more than 25%.`);
+console.log(`\n  ${checked} of ${usable.length} cities cross-checked; ${wide} outside the normals' own range by more than 25%.`);
 if (wide) console.log(`  A wide gap usually means a different rain-day threshold, a different`);
 if (wide) console.log(`  period or a different station — check the raindef recorded for those.`);
 
-const periods = [...new Set(record.map(c => c.normals.rainfallPeriod).filter(Boolean))].sort();
-const thresholds = [...new Set(record.map(c => `${c.normals.raindayThreshold} ${c.normals.raindayThresholdUnit ?? ""}`.trim()))];
+const usable = record.filter(c => !c.error);
+const periods = [...new Set(usable.map(c => c.normals.period).filter(Boolean))].sort();
+const undeclared = usable.filter(c => !c.normals.period).length;
+const thresholds = [...new Set(usable.map(c => `${c.normals.raindayThreshold ?? "none"} ${c.normals.raindayThresholdUnit ?? ""}`.trim()))];
 
-console.log(`\nNormal periods present: ${periods.join(", ") || "none declared"}`);
+console.log(`\nNormal periods declared: ${periods.join(", ") || "none"}`);
+if (undeclared) console.log(`${undeclared} of ${usable.length} cities declare no period at all.`);
 console.log(`Rain-day thresholds present: ${thresholds.join(", ") || "none declared"}`);
 if (warnings.length) {
   console.log(`\n${warnings.length} thing(s) to know — recorded, not adjusted:`);

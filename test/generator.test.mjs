@@ -195,6 +195,39 @@ console.log('\n\u2500\u2500 WWIS city list \u2500\u2500');
     'threw', 'threw naming the missing column');
 }
 
+console.log('\n\u2500\u2500 WWIS normal period \u2500\u2500');
+{
+  /* Most cities declare no rainfall-specific period, and the first full run
+     printed "period?" for almost all of them — which read as "WWIS has no
+     period" when it often meant "this code only looked in one of three
+     places". Jakarta really does declare 1930-1960, and that is worth seeing
+     rather than losing in a wall of question marks. */
+  const bp = W.bestPeriod;
+
+  t('a rainfall-specific period wins',
+    bp({ rainfallb: 1991, rainfalle: 2020, datab: 1961, datae: 1990 }).period === '1991-2020',
+    bp({ rainfallb: 1991, rainfalle: 2020, datab: 1961, datae: 1990 }).period, '1991-2020');
+
+  t('the general period is used when there is no rainfall one',
+    bp({ datab: 1930, datae: 1960 }).period === '1930-1960',
+    bp({ datab: 1930, datae: 1960 }).period, '1930-1960');
+
+  t('it says which field the period came from',
+    bp({ datab: 1930, datae: 1960 }).from === 'datab/datae',
+    bp({ datab: 1930, datae: 1960 }).from, 'datab/datae');
+
+  t('a CLINO date is the last resort',
+    bp({ climatefromclino: '1961-1990' }).from === 'climatefromclino',
+    bp({ climatefromclino: '1961-1990' }).from, 'climatefromclino');
+
+  t('no period at all is reported as undeclared, not as an empty string',
+    bp({}).period === null && bp({}).from === 'not declared',
+    JSON.stringify(bp({})), '{period:null,from:"not declared"}');
+
+  t('a half-declared period is not treated as declared',
+    bp({ rainfallb: 1991 }).period === null, bp({ rainfallb: 1991 }).period, null);
+}
+
 console.log('\n\u2500\u2500 WWIS cross-check against the WMO Climate Normals \u2500\u2500');
 {
   /* A canned table, not the 1.5 MB pair: the point is the matching rule, and a
