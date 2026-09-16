@@ -105,6 +105,40 @@ const app = G.loadFromApp();
     parsed.filter(p => p.cc !== p.shown).map(p => p.shown + '->' + p.cc).join(',') || 'none', 'UK->GB');
 }
 
+console.log('\n\u2500\u2500 the app quotes the licence the generator wrote \u2500\u2500');
+{
+  /* Two copies of one string: the generator's constant, and the value patch()
+     last wrote into index.html. They went out of step once already — the app
+     shipped a paraphrase of a licence condition while docs/method-notes.html
+     quoted it verbatim — and nothing caught it, because nothing compared them.
+
+     These hold the app to the generator's own definition rather than to a
+     third copy of the text written here, so the only way to change the licence
+     is to change it at the source and run the generator. */
+  const S = app.CLIMATE_SOURCE;
+  t('index.html carries a licence at all', typeof S.licence === 'string' && S.licence.length > 0,
+    typeof S.licence, 'a non-empty string');
+  t('the app\'s licence is the generator\'s, character for character',
+    S.licence === W.LICENCE, S.licence, W.LICENCE);
+  t('the app\'s note is the generator\'s too', S.note === W.NOTE, S.note, W.NOTE);
+
+  /* WWIS requires its two conditions to be given as it words them. Quoting
+     them means the curly quotes around them are load-bearing: a paraphrase
+     that happened to be copied into both files would still pass the equality
+     checks above, and would still be wrong. */
+  const conditions = [
+    '\u201cAcknowledgement must be given to the WMO World Weather Information Service (https://worldweather.wmo.int) as the source of information\u201d',
+    '\u201cThe forecast and climatological information of the WWIS website must be reproduced accurately\u201d'
+  ];
+  for (const [i, c] of conditions.entries())
+    t(`WWIS condition ${i + 1} is quoted verbatim, not paraphrased`,
+      S.licence.includes(c), S.licence, '\u2026 ' + c + ' \u2026');
+
+  /* The normals are CC0, but only if the reader can find which deposit. */
+  t('the licence names the NCEI accession the normals came from',
+    S.licence.includes('0253808') && /CC0/.test(S.licence), S.licence, '\u2026 Accession 0253808 \u2026 CC0 \u2026');
+}
+
 console.log('\n── the rewrite round-trips ──');
 {
   const meta = { name:'Test source', endpoint:'https://example.invalid/v1', window:'1991-01-01 to 2020-12-31',

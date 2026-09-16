@@ -78,7 +78,7 @@ export function loadFromApp() {
      the city list. Everything after the GEO module is irrelevant here. */
   const cut = js[1].indexOf("const GEO =");
   const prelude = js[1].slice(0, cut > 0 ? cut : undefined);
-  const fn = new Function(prelude + "\nreturn { CLIMATE, CLIMATE_WINDOW, CITIES };");
+  const fn = new Function(prelude + "\nreturn { CLIMATE, CLIMATE_WINDOW, CITIES, CLIMATE_SOURCE };");
   return { html, ...fn() };
 }
 
