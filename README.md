@@ -450,14 +450,18 @@ design, rather than quoting whichever number looks largest.
 
 ```
 index.html                the entire app — single file, no dependencies, no build step
-test/                     261 assertions, no dependencies — see Verifying below
+test/                     270 assertions, no dependencies — see Verifying below
 package.json              scripts and metadata; there is nothing to install
 docs/method-notes.html    method notes for students: what it calculates, which
                           clause each step comes from, and every figure the code
                           leaves unsourced. Paste into a CMS as an HTML block.
 docs/climate-source.json  provenance of the rainfall library — written by the
                           generator, absent until it has been run
-tools/build-climate.mjs   regenerates the rainfall library from a real source
+tools/build-climate.mjs   regenerates the rainfall library from Open-Meteo
+                          reanalysis; also serves the app's live fetch
+tools/build-climate-wwis.mjs
+                          regenerates it from WMO WWIS gauge normals, cross-
+                          checked against the WMO Climate Normals 1991–2020
 .github/workflows/        one manual workflow that regenerates the rainfall
                           library on a runner with internet, and uploads the
                           result rather than committing it
@@ -480,7 +484,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**261 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**270 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.
@@ -504,6 +508,11 @@ What it covers:
 - **The generator's rewrite** — round-tripped by re-evaluating the patched file
   rather than eyeballing a diff, plus the country-code handling that stops
   "Athens, GR" landing in Georgia.
+- **The cross-check matcher** — that a station named for a city in the wrong
+  country is never accepted. "Athens" is a station in the United States,
+  "Berlin" one in Colombia and "Sydney" one in Canada; a matcher that ignores
+  the country finds all three and is confidently wrong. Removing the country
+  filter fails five assertions.
 - **The citation and the canonical URL** — that the citation in the app, the APA
   entry and BibTeX block in the method notes, `CITATION.cff` and `package.json`
   all give the same work at the same address, so a mirror of the app cannot end

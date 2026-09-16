@@ -37,6 +37,7 @@ const RECORD = resolve(ROOT, "docs/climate-source.json");
    of the response, not of this script. Whatever the API reports is recorded per
    city under `api` in docs/climate-source.json, and that is what to cite. */
 const SOURCE_NAME = "Open-Meteo historical weather API (reanalysis)";
+const SOURCE_NOTE = "Reanalysis, not gauge measurements. Expect a difference from a nearby station.";
 const ARCHIVE     = "https://archive-api.open-meteo.com/v1/archive";
 const GEOCODE     = "https://geocoding-api.open-meteo.com/v1/search";
 const LICENCE     = "CC BY 4.0 (Open-Meteo terms)";
@@ -194,7 +195,7 @@ export function patch(html, rows, meta) {
   window:   ${JSON.stringify(meta.window)},
   accessed: ${JSON.stringify(meta.accessed)},
   licence:  ${JSON.stringify(meta.licence)},
-  note:     "Reanalysis, not gauge measurements. Expect a difference from a nearby station."
+  note:     ${JSON.stringify(meta.note)}
 };`;
   return html.replace(src[0], filled);
 }
@@ -301,6 +302,7 @@ const meta = {
   window: `${CLIMATE_WINDOW.from} to ${CLIMATE_WINDOW.to}`,
   accessed: new Date().toISOString().slice(0, 10),
   licence: LICENCE,
+  note: SOURCE_NOTE,
   reduction: "monthly totals / distinct years; wet day = 1 mm or more; dpd = annual rain / annual wet days, rounded, clamped 2-30",
   generator: "tools/build-climate.mjs",
   dataset_note: "Open-Meteo's archive draws on more than one reanalysis dataset and selects by location. This file records the archive's own response metadata per city under `api`; cite the dataset named there, not a dataset assumed here.",

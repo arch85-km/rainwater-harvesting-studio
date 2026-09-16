@@ -16,6 +16,13 @@ name: Build climate library
 on:
   workflow_dispatch:
     inputs:
+      source:
+        description: "Where the preset rainfall comes from."
+        type: choice
+        default: wwis
+        options:
+          - wwis
+          - openmeteo
       dry_run:
         description: "Fetch and report only — write nothing. Leave true for the first run."
         type: boolean
@@ -39,12 +46,32 @@ jobs:
         with:
           node-version: "20"
 
+      # The WMO Climate Normals live in a NOAA NCEI archive directory. Printing
+      # its listing is how the exact filenames get established rather than
+      # guessed — the rain-days file is known, the precipitation file is not.
+      - name: List the WMO Normals archive
+        if: ${{ inputs.source == 'wwis' }}
+        continue-on-error: true
+        run: |
+          url="https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/data-composite-primary-parameters/"
+          echo "### Files in the WMO Normals archive" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          curl -sSL --max-time 60 "$url" \
+            | grep -oE 'href="[^"]+\.csv"' | sed 's/href="//; s/"$//' \
+            | sort -u | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run the generator
         run: |
+          case "${{ inputs.source }}" in
+            wwis)      gen=tools/build-climate-wwis.mjs ;;
+            openmeteo) gen=tools/build-climate.mjs ;;
+            *) echo "unknown source"; exit 1 ;;
+          esac
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            node tools/build-climate.mjs --dry-run
+            node "$gen" --dry-run
           else
-            node tools/build-climate.mjs
+            node "$gen"
           fi
 
       - name: Report what changed

@@ -5,6 +5,7 @@
 /* no filesystem writes: the patch round-trip is checked in memory, so running the
    suite never touches index.html */
 import * as G from '../tools/build-climate.mjs';
+import * as W from '../tools/build-climate-wwis.mjs';
 
 let pass = 0, fail = 0;
 const t = (n, c, got, want) => { if (c) { pass++; console.log('  PASS  ' + n); }
@@ -148,6 +149,61 @@ console.log('\n── the rewrite round-trips ──');
   /* patching the result again must be stable, or a second run corrupts the file */
   const twice = G.patch(patched, rows, meta);
   t('patching an already-patched file is stable', twice === patched, 'identical', 'identical');
+}
+
+console.log('\n\u2500\u2500 WWIS cross-check against the WMO Climate Normals \u2500\u2500');
+{
+  /* A canned table, not the 1.3 MB file: the point is the matching rule, and a
+     test that needs a large download is a test that gets skipped.
+
+     The case that matters is the one this project has already been bitten by —
+     a city name that exists in the wrong country. "Athens" is a station in the
+     United States; "Berlin" is one in Colombia; "Sydney" is one in Canada. A
+     matcher that ignores the country finds all three and is confidently wrong. */
+  const table = [
+    { country: 'United_Kingdom', station: 'London',             lat: 51.5, lon: -0.1, months: [], annual: 113.5 },
+    { country: 'United_States',  station: 'ATHENS_BEN_EPPS_AP', lat: 33.9, lon: -83.3, months: [], annual: 92.0 },
+    { country: 'Colombia',       station: 'Berlin_Automatica',  lat: 7.2,  lon: -72.9, months: [], annual: 114.9 },
+    { country: 'Germany',        station: 'Berlin-Brandenburg', lat: 52.4, lon: 13.5, months: [], annual: 100.6 },
+    { country: 'Canada',         station: 'Sydney_Cs',          lat: 46.2, lon: -60.0, months: [], annual: 141.2 },
+    { country: 'Australia',      station: 'SydneyAirport',      lat: -33.9, lon: 151.2, months: [], annual: 93.2 },
+    { country: 'Singapore',      station: 'Changi',             lat: 1.4,  lon: 103.9, months: [], annual: 160.0 }
+  ];
+
+  const m = (city, cc) => W.matchNormals(table, city, cc);
+
+  t('an exact station name in the right country matches',
+    m('London', 'UK').station === 'London', m('London', 'UK').status, 'London');
+
+  t('Athens, GR does NOT match the Athens in the United States',
+    m('Athens', 'GR').status !== 'matched' && !('station' in m('Athens', 'GR')),
+    JSON.stringify(m('Athens', 'GR')), 'no match — Greece is absent');
+
+  t('Berlin, DE matches Germany and not Colombia',
+    m('Berlin', 'DE').country === 'Germany', m('Berlin', 'DE').country, 'Germany');
+
+  t('Sydney, AU matches Australia and not Canada',
+    m('Sydney', 'AU').country === 'Australia', m('Sydney', 'AU').country, 'Australia');
+
+  t('a country with no stations is reported, not silently skipped',
+    /absent from the normals/.test(m('Nairobi', 'KE').status), m('Nairobi', 'KE').status, 'absent');
+
+  t('a present country with no matching station says how many it looked at',
+    /among 1 in Singapore/.test(m('Singapore', 'SG').status), m('Singapore', 'SG').status,
+    'no station named for Singapore among 1 in Singapore');
+
+  t('an unmapped country code is reported rather than guessed',
+    /no country mapping/.test(m('Reykjavik', 'IS').status), m('Reykjavik', 'IS').status, 'no mapping');
+
+  /* Turkey is spelled Turkiye in that file. Writing the map from memory gets
+     this wrong, and the failure is silent: every Turkish city just misses. */
+  t('the country map uses the spellings the file actually uses',
+    W.NORMALS_COUNTRY.TR === 'Turkiye' && W.NORMALS_COUNTRY.UK === 'United_Kingdom',
+    W.NORMALS_COUNTRY.TR, 'Turkiye');
+
+  t('normKey ignores case, spaces and punctuation',
+    W.normKey('KUALA LUMPUR') === W.normKey('kuala-lumpur') && W.normKey('St. John\'s') === 'stjohns',
+    W.normKey('St. John\'s'), 'stjohns');
 }
 
 console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed`);
