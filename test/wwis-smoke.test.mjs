@@ -60,6 +60,19 @@ t("a city with no rain days falls back to the normals",
 t("the fallback names the station it used",
   /via wmo-normals:\w/.test(out), "named", "a station name");
 
+/* The normals lead where they reach; WWIS covers the rest. If this inverts
+   silently, every city's period and rain-day threshold changes meaning. */
+t("the WMO Normals are preferred over WWIS where they have the city",
+  (out.match(/via wmo-normals:/g) || []).length >= 4,
+  (out.match(/via wmo-normals:/g) || []).length + " cities", "at least 4");
+
+/* London, Ontario is real and sits ahead of London, England in the fixture.
+   Without the country filter the first match wins and the app's London becomes
+   Canadian — the same fault that put Toronto, Canada in New South Wales. */
+t("a city name shared across countries resolves to the right one",
+  /London, United Kingdom/.test(out) && !/London, Canada/.test(out),
+  (out.match(/London, \w[^\n]*/) || ["not resolved"])[0], "London, United Kingdom…");
+
 t("the cross-check section is reached", /cities cross-checked/.test(out),
   /cities cross-checked/.test(out) ? "reached" : "not reached", "reached");
 

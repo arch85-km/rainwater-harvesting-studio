@@ -55,9 +55,9 @@ const RECORD = resolve(ROOT, "docs/climate-source.json");
 
 const BASE      = "https://worldweather.wmo.int/en/json";
 const CITY_LIST = `${BASE}/full_city_list.txt`;
-const SOURCE    = "WMO World Weather Information Service (WWIS)";
-const LICENCE   = "Acknowledgement to the WMO World Weather Information Service, and to the national meteorological service named per city, is required. Data reproduced accurately and unaltered.";
-const NOTE      = "Gauge normals from national meteorological services. The normal period and the rain-day threshold vary by city — see docs/climate-source.json.";
+const SOURCE    = "WMO Climate Normals 1991-2020 (NOAA NCEI) where available; WMO World Weather Information Service (WWIS) otherwise";
+const LICENCE   = "WMO Climate Normals 1991-2020 distributed by NOAA NCEI. Acknowledgement to the WMO World Weather Information Service, and to the national meteorological service named per city, is required for the cities sourced from it. Data reproduced accurately and unaltered.";
+const NOTE      = "Gauge normals. Most cities use the WMO Climate Normals 1991-2020; the rest come from WWIS, where the period and the rain-day threshold vary by city. Each city records which — see docs/climate-source.json.";
 
 /* An independent check on the same quantities. The WMO Climate Normals
    1991-2020 (the official CLINO, distributed by NOAA NCEI) publish mean
@@ -109,6 +109,26 @@ async function get(url, what) {
   if (!r.ok) throw new Error(`${what}: ${r.status} ${r.statusText}`);
   return r.text();
 }
+
+/* WWIS country names, taken from a real run's output rather than guessed —
+   it writes the United Kingdom out in full and spells Türkiye with the umlaut.
+
+   Without this filter the matcher took the first city of a given name in the
+   whole list, and put Toronto, Canada in New South Wales: WWIS has a Toronto in
+   Australia and none in Canada, so the wrong one was not merely preferred, it
+   was the only one. Santiago matched three — Chile, the Dominican Republic and
+   Panama — and got Chile by luck. A city that cannot be found in its own
+   country now fails loudly instead of being silently relocated. */
+export const WWIS_COUNTRY = {
+  MY: "Malaysia", SG: "Singapore", ID: "Indonesia", PH: "Philippines",
+  BD: "Bangladesh", NG: "Nigeria", KE: "Kenya",
+  UK: "United Kingdom of Great Britain and Northern Ireland",
+  IE: "Ireland", DE: "Germany", US: "United States of America",
+  CA: "Canada", NZ: "New Zealand", AU: "Australia", TR: "Türkiye",
+  GR: "Greece", MA: "Morocco", JO: "Jordan", IQ: "Iraq", EG: "Egypt",
+  AE: "United Arab Emirates", QA: "Qatar", SA: "Saudi Arabia",
+  CO: "Colombia", CL: "Chile"
+};
 
 /* WWIS gives the normal period in up to three places, and most cities fill in
    none of them. Reporting only rainfallb/e made almost every city print
@@ -175,11 +195,25 @@ export function parseCityList(text) {
    preset label carries an ISO code and the list carries a country name, and
    inventing that mapping is how "Athens, GR" ends up in Georgia — instead every
    candidate is returned and an ambiguous city is reported rather than guessed. */
-export function findCity(list, city) {
+export function findCity(list, city, cc) {
   const n = normKey(city);
-  const exact = list.rows.filter(r => normKey(r.city) === n);
-  if (exact.length) return exact;
-  return list.rows.filter(r => normKey(r.city).includes(n));
+  const byName = list.rows.filter(r => normKey(r.city) === n).length
+    ? list.rows.filter(r => normKey(r.city) === n)
+    : list.rows.filter(r => normKey(r.city).includes(n));
+
+  if (!cc) return byName;
+
+  const country = WWIS_COUNTRY[cc];
+  if (!country) return { error: `no WWIS country name mapped for ${cc}` };
+
+  const inCountry = byName.filter(r => normKey(r.country) === normKey(country));
+  if (inCountry.length) return inCountry;
+
+  /* Found the name, but never in the right country. Saying where it WAS found
+     is the difference between a puzzling failure and an obvious one. */
+  return { error: byName.length
+    ? `${city} is not in ${country} in WWIS — found only in ${[...new Set(byName.map(r => r.country))].join(", ")}`
+    : `${city} is not in the WWIS city list at all` };
 }
 
 /* ---- the cross-check table, loaded once ---- */
@@ -314,9 +348,14 @@ console.log(`  ${list.rows.length} cities, ${list.separator}-separated, columns:
 console.log("Resolving presets to WWIS cities:");
 const resolved = [], unresolved = [], ambiguous = [];
 for (const p of presets) {
-  const hits = findCity(list, p.city);
+  const hits = findCity(list, p.city, p.cc);
+  if (hits.error) {
+    unresolved.push({ ...p, why: hits.error });
+    console.log(`  ${p.name.padEnd(22)} ${hits.error}`);
+    continue;
+  }
   if (!hits.length) {
-    unresolved.push(p);
+    unresolved.push({ ...p, why: "not in the city list" });
     console.log(`  ${p.name.padEnd(22)} NOT FOUND`);
     continue;
   }
@@ -338,7 +377,8 @@ if (ambiguous.length) {
 }
 
 if (unresolved.length) {
-  console.error(`\n${unresolved.length} preset(s) not found in WWIS: ${unresolved.map(u => u.name).join(", ")}`);
+  console.error(`\n${unresolved.length} preset(s) could not be resolved in WWIS:`);
+  for (const u of unresolved) console.error(`  ${u.name.padEnd(22)} ${u.why}`);
   console.error(`WWIS covers selected cities only. A partial library cannot carry a`);
   console.error(`provenance record, so nothing is written. Either drop those presets`);
   console.error(`or source them separately — do not mix silently.`);
@@ -404,21 +444,35 @@ for (const c of resolved) {
        two different periods, is a number nobody could describe in a sentence.
        Whole-city fallback keeps each city internally consistent, and which
        source served it is recorded per city. */
-    if (!(wetDays > 0)) {
-      const alt = normalsTable ? matchNormals(normalsTable, c.city, c.cc) : { status: "no cross-check loaded" };
-      const one = alt.status === "matched" && alt.stations.length === 1 ? alt.stations[0] : null;
-      if (!one) {
-        throw new Error(alt.status === "matched"
-          ? `no rain days in WWIS, and the normals offer ${alt.stations.length} stations — ambiguous, not guessing`
-          : `no rain days in WWIS, and the normals cannot supply them (${alt.status})`);
-      }
-      const src = normalsTable.find(d => d.station === one.station);
+    /* The normals lead where they reach.
+
+       WWIS is city-curated and covers every preset, which is why it was chosen
+       first. Running it showed why that was wrong: its rain-day threshold is
+       declared as 0.001 mm in Baghdad, 0.01 in Cairo, 0.2 in Dubai and not at
+       all in sixteen cities, against the 1 mm this app assumes — so dpd is not
+       comparable between cities. Its normal periods run from 1929-2000 to
+       1991-2020. The WMO Climate Normals are one period and one definition for
+       every station, so where they carry a city they are the better source, and
+       WWIS covers the rest with its period and threshold recorded per city.
+
+       Where a city has several stations the alphabetically first is taken and
+       every candidate is recorded. That choice is arbitrary and is labelled
+       arbitrary; Berlin's four span 9% on the annual total and agree exactly on
+       dpd, which is the figure the app uses. */
+    const alt = normalsTable ? matchNormals(normalsTable, c.city, c.cc) : { status: "no normals loaded" };
+    const prefer = alt.status === "matched" ? alt.stations[0] : null;
+
+    if (prefer) {
+      const src = normalsTable.find(d => d.station === prefer.station);
       r.length = 0; r.push(...src.rainfallMonths.map(v => Math.round(v * 10) / 10));
       rd.length = 0; rd.push(...src.raindayMonths);
       annual = r.reduce((s, v) => s + v, 0);
       wetDays = rd.reduce((s, v) => s + v, 0);
-      from = `wmo-normals:${one.station}`;
-      if (!(wetDays > 0)) throw new Error("the normals have no rain days either");
+      if (!(wetDays > 0)) throw new Error(`the normals station ${prefer.station} has no rain days`);
+      from = `wmo-normals:${prefer.station}` +
+             (alt.stations.length > 1 ? ` (1 of ${alt.stations.length}, chosen alphabetically)` : "");
+    } else if (!(wetDays > 0)) {
+      throw new Error(`WWIS has no rain days and the normals cannot supply them (${alt.status})`);
     }
     const dpd = clamp(Math.round(annual / wetDays), 2, 30);
 
@@ -456,12 +510,14 @@ for (const c of resolved) {
       dpd
     });
 
-    /* Recorded, and said out loud. Neither is converted. */
-    const def = Number(cl.raindef);
+    /* Recorded, and said out loud. Neither is converted. Only relevant for
+       cities the normals could not serve — the rest carry the normals' single
+       definition, whatever the WWIS record happens to say. */
+    const def = from === "wwis" ? Number(cl.raindef) : NaN;
     if (isFinite(def) && def !== 1)
       warnings.push(`${c.name}: rain days counted at >= ${cl.raindef} ${cl.rainunit ?? ""}`.trim() +
                     `, not the 1 mm the app assumes — dpd means something slightly different here`);
-    if (cl.raintype && /snow|precipitation/i.test(cl.raintype) && !/^rainfall$/i.test(cl.raintype))
+    if (from === "wwis" && cl.raintype && /snow|precipitation/i.test(cl.raintype) && !/^rainfall$/i.test(cl.raintype))
       warnings.push(`${c.name}: raintype is "${cl.raintype}" — may include snow, which a roof does not collect when it falls`);
 
     console.log(`${String(Math.round(annual)).padStart(5)} mm/yr  ${String(Math.round(wetDays)).padStart(3)} days  dpd ${String(dpd).padStart(2)}  ` +
@@ -551,9 +607,11 @@ if (warnings.length) {
   for (const w of warnings) console.log(`  · ${w}`);
 }
 
-const windowLabel = periods.length === 1
-  ? periods[0]
-  : `varies by city (${periods[0]} to ${periods.at(-1)}) — see docs/climate-source.json`;
+const fromNormals = usable.filter(c => c.sourcedFrom && c.sourcedFrom.startsWith("wmo-normals")).length;
+const fromWwis = usable.length - fromNormals;
+const windowLabel = fromWwis === 0
+  ? "1991-2020"
+  : `1991-2020 for ${fromNormals} cities; ${fromWwis} from WWIS over other periods — see docs/climate-source.json`;
 
 const meta = {
   name: SOURCE,

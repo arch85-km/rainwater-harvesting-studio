@@ -64,9 +64,14 @@ jobs:
       # the change is reviewed before it reaches the app.
       - name: Commit to the climate-update branch
         run: |
+          # -A, not -am: docs/climate-source.json is a NEW file, and `commit -am`
+          # only stages files git already tracks. The first successful run wrote
+          # the provenance record and then threw it away — while CLIMATE_SOURCE
+          # pointed the reader at it.
+          git add -A
           git -c user.name="Karam Al-Obaidi" \
               -c user.email="karam.arch85@gmail.com" \
-              commit -am "Source the rainfall library from WMO WWIS normals
+              commit -m "Source the rainfall library from WMO gauge normals
 
           Written by .github/workflows/build-climate.yml. Figures quoted in
           docs/method-notes.html and pinned in the test suites were measured on

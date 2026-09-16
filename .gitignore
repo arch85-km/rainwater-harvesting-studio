@@ -5,3 +5,9 @@ test/.core.js
 node_modules/
 .DS_Store
 *.log
+
+# Local copies of the WMO normals, ~3 MB, used only to exercise the generator
+# against real data. test/fixtures/fake-wwis.mjs falls back to a small built-in
+# stand-in when they are absent, so the suite runs without them.
+test/fixtures/prcp.csv
+test/fixtures/dp01.csv
