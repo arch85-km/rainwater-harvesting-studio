@@ -450,7 +450,7 @@ design, rather than quoting whichever number looks largest.
 
 ```
 index.html                the entire app — single file, no dependencies, no build step
-test/                     270 assertions, no dependencies — see Verifying below
+test/                     279 assertions, no dependencies — see Verifying below
 package.json              scripts and metadata; there is nothing to install
 docs/method-notes.html    method notes for students: what it calculates, which
                           clause each step comes from, and every figure the code
@@ -484,7 +484,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**270 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**279 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.
@@ -513,6 +513,9 @@ What it covers:
   "Berlin" one in Colombia and "Sydney" one in Canada; a matcher that ignores
   the country finds all three and is confidently wrong. Removing the country
   filter fails five assertions.
+- **The missing-month sentinel** — that `-99.9` is never summed as rainfall.
+  Toronto's only station lacks April, August and December and totals −99.9 mm a
+  year; a loader that takes it at face value puts negative rainfall in the app.
 - **The citation and the canonical URL** — that the citation in the app, the APA
   entry and BibTeX block in the method notes, `CITATION.cff` and `package.json`
   all give the same work at the same address, so a mirror of the app cannot end

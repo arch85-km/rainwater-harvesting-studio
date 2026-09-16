@@ -153,37 +153,61 @@ console.log('\n── the rewrite round-trips ──');
 
 console.log('\n\u2500\u2500 WWIS cross-check against the WMO Climate Normals \u2500\u2500');
 {
-  /* A canned table, not the 1.3 MB file: the point is the matching rule, and a
+  /* A canned table, not the 1.5 MB pair: the point is the matching rule, and a
      test that needs a large download is a test that gets skipped.
 
-     The case that matters is the one this project has already been bitten by —
-     a city name that exists in the wrong country. "Athens" is a station in the
-     United States; "Berlin" is one in Colombia; "Sydney" is one in Canada. A
-     matcher that ignores the country finds all three and is confidently wrong. */
-  const table = [
-    { country: 'United_Kingdom', station: 'London',             lat: 51.5, lon: -0.1, months: [], annual: 113.5 },
-    { country: 'United_States',  station: 'ATHENS_BEN_EPPS_AP', lat: 33.9, lon: -83.3, months: [], annual: 92.0 },
-    { country: 'Colombia',       station: 'Berlin_Automatica',  lat: 7.2,  lon: -72.9, months: [], annual: 114.9 },
-    { country: 'Germany',        station: 'Berlin-Brandenburg', lat: 52.4, lon: 13.5, months: [], annual: 100.6 },
-    { country: 'Canada',         station: 'Sydney_Cs',          lat: 46.2, lon: -60.0, months: [], annual: 141.2 },
-    { country: 'Australia',      station: 'SydneyAirport',      lat: -33.9, lon: 151.2, months: [], annual: 93.2 },
-    { country: 'Singapore',      station: 'Changi',             lat: 1.4,  lon: 103.9, months: [], annual: 160.0 }
-  ];
+     The case that matters is one this project has already been bitten by — a
+     city name that exists in the wrong country. "Athens" is a station in the
+     United States, "Berlin" one in Colombia, "Sydney" one in Canada. A matcher
+     that ignores the country finds all three and is confidently wrong. */
+  const st = (country, station, mm, days, complete = true) =>
+    ({ id: station, country, station, lat: 0, lon: 0,
+       rainfallMonths: [], raindayMonths: [], annualMm: mm, annualDays: days, complete });
 
+  const table = [
+    st('United_Kingdom', 'London', 615.4, 113.5),
+    st('United_States',  'ATHENS_BEN_EPPS_AP', 1200, 92),
+    st('Colombia',       'Berlin_Automatica', 900, 114.9),
+    st('Germany',        'Berlin-Brandenburg', 532.3, 100.7),
+    st('Germany',        'Berlin-Tempelhof',   570.2, 104.1),
+    st('Canada',         'Sydney_Cs', 1500, 141.2),
+    st('Australia',      'SydneyAirport', 992.9, 93.3),
+    st('Canada',         'Toronto_City', 814, 104.6, false),   // missing months
+    st('Singapore',      'Changi', 1700, 160)
+  ];
   const m = (city, cc) => W.matchNormals(table, city, cc);
 
   t('an exact station name in the right country matches',
-    m('London', 'UK').station === 'London', m('London', 'UK').status, 'London');
+    m('London', 'UK').stations[0].station === 'London', m('London', 'UK').status, 'London');
 
   t('Athens, GR does NOT match the Athens in the United States',
-    m('Athens', 'GR').status !== 'matched' && !('station' in m('Athens', 'GR')),
-    JSON.stringify(m('Athens', 'GR')), 'no match — Greece is absent');
+    m('Athens', 'GR').status !== 'matched', JSON.stringify(m('Athens', 'GR')), 'Greece absent');
 
   t('Berlin, DE matches Germany and not Colombia',
     m('Berlin', 'DE').country === 'Germany', m('Berlin', 'DE').country, 'Germany');
 
   t('Sydney, AU matches Australia and not Canada',
-    m('Sydney', 'AU').country === 'Australia', m('Sydney', 'AU').country, 'Australia');
+    m('Sydney', 'AU').stations.every(s => s.station === 'SydneyAirport'),
+    JSON.stringify(m('Sydney', 'AU').stations.map(s => s.station)), '[SydneyAirport]');
+
+  /* Every candidate, not one arbitrary pick — the choice between Berlin's
+     stations moves the annual total by 9% and must not be made silently. */
+  t('all candidate stations are returned, not just the first',
+    m('Berlin', 'DE').stations.length === 2, m('Berlin', 'DE').stations.length, 2);
+
+  t('the range spans the candidates',
+    JSON.stringify(m('Berlin', 'DE').annualMmRange) === JSON.stringify([532.3, 570.2]),
+    JSON.stringify(m('Berlin', 'DE').annualMmRange), '[532.3,570.2]');
+
+  t('candidates come back in a stable order',
+    m('Berlin', 'DE').stations[0].station === 'Berlin-Brandenburg',
+    m('Berlin', 'DE').stations[0].station, 'Berlin-Brandenburg');
+
+  /* -99.9 is the dataset's missing-month marker. Summing it produces negative
+     rainfall: Toronto_City reads -99.9 mm a year. */
+  t('a station with missing months is rejected, and said so',
+    /every candidate has missing months/.test(m('Toronto', 'CA').status),
+    m('Toronto', 'CA').status, 'rejected for missing months');
 
   t('a country with no stations is reported, not silently skipped',
     /absent from the normals/.test(m('Nairobi', 'KE').status), m('Nairobi', 'KE').status, 'absent');
@@ -200,6 +224,31 @@ console.log('\n\u2500\u2500 WWIS cross-check against the WMO Climate Normals \u2
   t('the country map uses the spellings the file actually uses',
     W.NORMALS_COUNTRY.TR === 'Turkiye' && W.NORMALS_COUNTRY.UK === 'United_Kingdom',
     W.NORMALS_COUNTRY.TR, 'Turkiye');
+
+  /* The sentinel is detected in the LOADER, so it has to be tested there. A
+     canned table with complete:false set by hand proves nothing — it skips the
+     only code that looks at -99.9. Found by deleting the check and watching
+     every assertion still pass. */
+  {
+    const HEAD = 'Elem,Rgn,ID,      WIGOS_ID        ,Latitude,Longitude,Elevation,   Country,                 Station                        , Jan  , Feb   , Mar   , Apr   , May   , Jun   , Jul   , Aug   , Sep   , Oct   , Nov   , Dec   , Annual';
+    const row = (id, station, apr) =>
+      `001,1,${id},0-20000-0-${id}     ,  51.500,  -0.100,   25.0,United_Kingdom                ,${station}                        ,  50.0,  40.0,  45.0,  ${apr},  50.0,  45.0,  45.0,  50.0,  49.0,  69.0,  59.0,  55.0,  600.0`;
+    const csv = [HEAD, row('00000001', 'Whole', '44.0'), row('00000002', 'Gappy', '-99.9')].join('\n');
+    const fake = async () => csv;
+
+    const table = await W.loadNormals('https://example.invalid/x.csv', fake);
+    const whole = table.get('00000001'), gappy = table.get('00000002');
+
+    t('a full twelve months loads as complete', whole.complete === true, whole.complete, true);
+    t('a -99.9 month marks the station incomplete', gappy.complete === false, gappy.complete, false);
+    t('an incomplete station gets no annual total', gappy.annual === null, gappy.annual, null);
+    t('a complete station sums its own months',
+      Math.abs(whole.annual - 601) < 1e-9, whole.annual, 601);
+    t('the loader rejects a file whose columns are not the expected ones',
+      await W.loadNormals('https://example.invalid/y.csv', async () => 'a,b,c\n1,2,3')
+        .then(() => false, e => /unexpected columns/.test(e.message)),
+      'threw', 'threw on bad columns');
+  }
 
   t('normKey ignores case, spaces and punctuation',
     W.normKey('KUALA LUMPUR') === W.normKey('kuala-lumpur') && W.normKey('St. John\'s') === 'stjohns',

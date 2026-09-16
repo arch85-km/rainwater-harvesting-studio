@@ -70,7 +70,16 @@ const NOTE      = "Gauge normals from national meteorological services. The norm
    so a city without a match records null and nothing else changes. */
 const NORMALS_DIR = "https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/data-composite-primary-parameters";
 const NORMALS_RAINDAYS = `${NORMALS_DIR}/wmo_normals_9120_DP01.csv`;
-const NORMALS_NAME = "WMO Climate Normals 1991-2020, mean number of precipitation days (DP01), via NOAA NCEI";
+const NORMALS_RAINFALL = `${NORMALS_DIR}/wmo_normals_9120_PRCP.csv`;
+const NORMALS_NAME = "WMO Climate Normals 1991-2020 (PRCP and DP01), via NOAA NCEI";
+
+/* The dataset's missing-month marker. 525 of PRCP's values and 186 of DP01's
+   carry it, and it is negative, so summing a series without rejecting it
+   produces a negative annual rainfall — Toronto_City is missing April, August
+   and December and totals -99.9 mm a year. A station missing any month cannot
+   supply a twelve-month profile and is dropped, not patched. */
+const MISSING = -99.9;
+const isMissing = v => !isFinite(v) || Math.abs(v - MISSING) < 1e-9;
 
 /* Country names exactly as that file spells them, checked against its own
    country column rather than written from memory — it spells Turkey "Turkiye",
@@ -84,8 +93,12 @@ export const NORMALS_COUNTRY = {
 };
 
 const DRY = process.argv.includes("--dry-run");
-const normArg = process.argv[process.argv.indexOf("--normals") + 1];
-const NORMALS = process.argv.includes("--normals") && normArg ? normArg : NORMALS_RAINDAYS;
+const argAfter = flag => {
+  const i = process.argv.indexOf(flag);
+  return i >= 0 ? process.argv[i + 1] : null;
+};
+const NORMALS_RAIN = argAfter("--normals-rainfall") || NORMALS_RAINFALL;
+const NORMALS_DAYS = argAfter("--normals-raindays") || NORMALS_RAINDAYS;
 const NO_NORMALS = process.argv.includes("--no-normals");
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -99,49 +112,98 @@ async function get(url, what) {
 /* ---- the cross-check table, loaded once ---- */
 export const normKey = s => s.toLowerCase().replace(/[^a-z]/g, "");
 
-export async function loadNormals(src) {
+export async function loadNormals(src, read) {
   const text = /^https?:/.test(src)
-    ? await get(src, "WMO normals")
+    ? await (read || get)(src, "WMO normals")
     : readFileSync(resolve(ROOT, src), "utf8");
 
-  /* Fixed-ish CSV: Elem,Rgn,ID,WIGOS_ID,Latitude,Longitude,Elevation,Country,
-     Station,Jan..Dec,Annual — fields padded with spaces, so everything is
-     trimmed and nothing is positional beyond the column order. */
+  /* Elem,Rgn,ID,WIGOS_ID,Latitude,Longitude,Elevation,Country,Station,
+     Jan..Dec,Annual — space-padded, so every field is trimmed. */
   const rows = text.split(/\r?\n/).filter(l => l.trim()).map(l => l.split(",").map(f => f.trim()));
   const head = rows.shift();
   if (!head || head[7] !== "Country" || head[8] !== "Station")
     throw new Error(`unexpected columns: ${head && head.slice(0, 10).join(",")}`);
 
-  return rows.filter(r => r.length > 21).map(r => ({
-    country: r[7], station: r[8],
-    lat: Number(r[4]), lon: Number(r[5]),
-    months: r.slice(9, 21).map(Number),
-    annual: Number(r[21])
-  }));
+  const out = new Map();
+  for (const r of rows) {
+    if (r.length < 22) continue;
+    const months = r.slice(9, 21).map(Number);
+    out.set(r[2], {
+      id: r[2], country: r[7], station: r[8],
+      lat: Number(r[4]), lon: Number(r[5]),
+      months,
+      complete: months.every(v => !isMissing(v)),
+      annual: months.every(v => !isMissing(v)) ? months.reduce((a, b) => a + b, 0) : null
+    });
+  }
+  return out;
 }
 
+/* Both halves, keyed by WMO station id. A station is only usable if BOTH files
+   carry it with all twelve months intact. */
+export async function loadNormalsPair(rainfallSrc, raindaySrc, read) {
+  const [rain, days] = await Promise.all([
+    loadNormals(rainfallSrc, read), loadNormals(raindaySrc, read)
+  ]);
+  const out = [];
+  for (const [id, p] of rain) {
+    const d = days.get(id);
+    if (!d) continue;
+    out.push({
+      id, country: p.country, station: p.station, lat: p.lat, lon: p.lon,
+      rainfallMonths: p.months, raindayMonths: d.months,
+      annualMm: p.annual, annualDays: d.annual,
+      complete: p.complete && d.complete
+    });
+  }
+  return out;
+}
+
+/* Every valid station for the city, not one arbitrary pick.
+
+   Five of this app's presets have more than one station and the choice moves
+   the number a long way: Berlin has four, Sydney three. Choosing "the first
+   match" is arbitrary and unreproducible, and for a cross-check there is no
+   need to choose at all — the honest output is the span across the candidates,
+   which is itself information about how well any single station represents
+   the city. */
 export function matchNormals(table, city, cc) {
   const country = NORMALS_COUNTRY[cc];
   if (!country) return { status: "no country mapping for " + cc };
   const pool = table.filter(d => d.country === country);
   if (!pool.length) return { status: `country ${country} absent from the normals` };
+
   const n = normKey(city);
-  const hits = pool.filter(d => normKey(d.station) === n);
-  const loose = hits.length ? hits : pool.filter(d => normKey(d.station).includes(n));
-  if (!loose.length) return { status: `no station named for ${city} among ${pool.length} in ${country}` };
-  const d = loose[0];
+  const named = pool.filter(d => normKey(d.station) === n);
+  const cands = named.length ? named : pool.filter(d => normKey(d.station).includes(n));
+  if (!cands.length) return { status: `no station named for ${city} among ${pool.length} in ${country}` };
+
+  const usable = cands.filter(d => d.complete);
+  if (!usable.length)
+    return { status: `every candidate has missing months: ${cands.map(d => d.station).join(", ")}`,
+             rejected: cands.map(d => d.station) };
+
+  const stations = usable.map(d => ({
+    station: d.station, latitude: d.lat, longitude: d.lon,
+    annualMm: Math.round(d.annualMm * 10) / 10,
+    annualRainDays: Math.round(d.annualDays * 10) / 10,
+    dpd: d.annualDays > 0 ? Math.min(30, Math.max(2, Math.round(d.annualMm / d.annualDays))) : null
+  })).sort((a, b) => a.station.localeCompare(b.station));
+
+  const mm = stations.map(x => x.annualMm);
   return {
     status: "matched",
-    station: d.station, country: d.country, latitude: d.lat, longitude: d.lon,
-    monthlyRainDays: d.months, annualRainDays: d.annual,
-    candidates: loose.length
+    country,
+    stations,
+    annualMmRange: [Math.min(...mm), Math.max(...mm)],
+    rejectedForMissingMonths: cands.filter(d => !d.complete).map(d => d.station)
   };
 }
 
 /* ── run ──────────────────────────────────────────────────────────────────
    Guarded, so importing this module for its pure functions does not fire 29
    requests at WWIS. The same guard build-climate.mjs uses, and for the same
-   reason: the matcher below is exactly where an "Athens, GR lands in Georgia"
+   reason: the matcher above is exactly where an "Athens, GR lands in Georgia"
    bug lives, so it has to be reachable from a test. */
 const invokedDirectly = process.argv[1] &&
   resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
@@ -208,8 +270,9 @@ if (NO_NORMALS) {
 } else {
   process.stdout.write(`Loading the cross-check (${NORMALS_NAME}) … `);
   try {
-    normalsTable = await loadNormals(NORMALS);
-    console.log(`${normalsTable.length} stations`);
+    normalsTable = await loadNormalsPair(NORMALS_RAIN, NORMALS_DAYS);
+    const complete = normalsTable.filter(d => d.complete).length;
+    console.log(`${normalsTable.length} stations in both files, ${complete} with all twelve months`);
     console.log(`  ${[...new Set(normalsTable.map(d => d.country))].length} countries. Six of this app's` +
                 ` countries are not among them; those cities simply record null.\n`);
   } catch (e) {
@@ -318,16 +381,25 @@ for (const c of record) {
   const x = c.crossCheck || {};
   if (x.status !== "matched") { console.log(`  ${c.name.padEnd(22)} —   ${x.status || "no check"}`); continue; }
   checked++;
-  const diff = x.annualRainDays > 0 ? (c.annualRainDays - x.annualRainDays) / x.annualRainDays : null;
-  const pct = diff === null ? "  n/a" : `${diff >= 0 ? "+" : ""}${Math.round(diff * 100)}%`;
-  const flag = diff !== null && Math.abs(diff) > 0.25 ? "  <-- look at this one" : "";
+  const [lo, hi] = x.annualMmRange;
+  const span = lo === hi ? `${Math.round(lo)}` : `${Math.round(lo)}-${Math.round(hi)}`;
+  /* Compared against the nearest end of the span: a city with several stations
+     genuinely has a range, and calling WWIS wrong for sitting inside it would
+     be the wrong conclusion. */
+  const gap = c.annualMm < lo ? (c.annualMm - lo) / lo
+            : c.annualMm > hi ? (c.annualMm - hi) / hi : 0;
+  const pct = `${gap >= 0 ? "+" : ""}${Math.round(gap * 100)}%`;
+  const flag = Math.abs(gap) > 0.25 ? "  <-- look at this one" : "";
   if (flag) wide++;
-  console.log(`  ${c.name.padEnd(22)} WWIS ${String(Math.round(c.annualRainDays)).padStart(3)} d/yr` +
-              `   normals ${String(Math.round(x.annualRainDays)).padStart(3)} d/yr  (${x.station})  ${pct}${flag}`);
+  const names = x.stations.length > 1 ? `  [${x.stations.length} stations]` : `  (${x.stations[0].station})`;
+  console.log(`  ${c.name.padEnd(22)} WWIS ${String(Math.round(c.annualMm)).padStart(5)} mm/yr` +
+              `   normals ${span.padStart(9)} mm/yr  ${pct.padStart(5)}${names}${flag}`);
+  if (x.rejectedForMissingMonths?.length)
+    console.log(`  ${"".padEnd(22)} dropped for missing months: ${x.rejectedForMissingMonths.join(", ")}`);
 }
-console.log(`\n  ${checked} of ${record.length} cities cross-checked; ${wide} differ by more than 25%.`);
-if (wide) console.log(`  A wide gap usually means a different rain-day threshold or a different`);
-if (wide) console.log(`  station, not an error. Check the raindef recorded for those cities.`);
+console.log(`\n  ${checked} of ${record.length} cities cross-checked; ${wide} outside the normals' own range by more than 25%.`);
+if (wide) console.log(`  A wide gap usually means a different rain-day threshold, a different`);
+if (wide) console.log(`  period or a different station — check the raindef recorded for those.`);
 
 const periods = [...new Set(record.map(c => c.normals.rainfallPeriod).filter(Boolean))].sort();
 const thresholds = [...new Set(record.map(c => `${c.normals.raindayThreshold} ${c.normals.raindayThresholdUnit ?? ""}`.trim()))];
@@ -356,9 +428,9 @@ const meta = {
   generator: "tools/build-climate-wwis.mjs",
   cross_check: {
     name: NORMALS_NAME,
-    endpoint: NORMALS,
+    endpoint: { rainfall: NORMALS_RAIN, raindays: NORMALS_DAYS },
     what: "Mean number of precipitation days per station, 1991-2020, recorded beside each city where the composite carries its country. An independent check on the same quantity over a uniform period — nothing in the app is calculated from it.",
-    loaded: normalsTable ? `${normalsTable.length} stations` : (normalsError ? `failed: ${normalsError}` : "skipped"),
+    loaded: normalsTable ? `${normalsTable.length} stations in both files` : (normalsError ? `failed: ${normalsError}` : "skipped"),
     matched: record.filter(c => c.crossCheck && c.crossCheck.status === "matched").length,
     caveat: "WWIS and the normals may define a precipitation day at different thresholds; a difference between them is not in itself an error."
   },
