@@ -1,0 +1,84 @@
+# Give the rainfall library a source.
+#
+# The 28 preset cities in index.html were originally written by hand from no
+# dataset. tools/build-climate.mjs replaces them with figures that have a
+# source, a window and a retrieval date — but it needs outbound HTTPS to
+# open-meteo.com, which not every environment allows. This runs it somewhere
+# that does, with nothing to install.
+#
+# It UPLOADS the result; it does not commit. A committing workflow would author
+# commits as github-actions[bot], and the history of this repository is
+# deliberately the author's alone. Download the artifact, check it, commit it
+# yourself.
+
+name: Build climate library
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Fetch and report only — write nothing. Leave true for the first run."
+        type: boolean
+        default: true
+
+# Read-only: the job fetches data and uploads files. It cannot alter the
+# repository even if something goes wrong.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # 28 cities x 30 years, fetched one at a time and politely.
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run the generator
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            node tools/build-climate.mjs --dry-run
+          else
+            node tools/build-climate.mjs
+          fi
+
+      - name: Report what changed
+        if: ${{ inputs.dry_run == false }}
+        run: |
+          echo "## Climate library rebuilt" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if grep -q 'sourced: *true' index.html; then
+            echo "- \`CLIMATE_SOURCE.sourced\` is now **true** — the app will stop showing the amber disclaimer." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- **\`CLIMATE_SOURCE.sourced\` is still false.** The library was not replaced; do not use this artifact." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "- \`docs/climate-source.json\` written, $(wc -c < docs/climate-source.json) bytes" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Download the **climate-data** artifact below and send both files back." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Every figure quoted in \`docs/method-notes.html\` and pinned in the test" >> "$GITHUB_STEP_SUMMARY"
+          echo "suites was measured on the old data and is now stale. They must be" >> "$GITHUB_STEP_SUMMARY"
+          echo "re-derived, not edited to fit." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show the diff, so nothing lands unseen
+        if: ${{ inputs.dry_run == false }}
+        run: git --no-pager diff --stat
+
+      - name: Upload the regenerated files
+        if: ${{ inputs.dry_run == false }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-data
+          path: |
+            index.html
+            docs/climate-source.json
+          if-no-files-found: error
+          retention-days: 30

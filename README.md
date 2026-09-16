@@ -450,7 +450,7 @@ design, rather than quoting whichever number looks largest.
 
 ```
 index.html                the entire app — single file, no dependencies, no build step
-test/                     258 assertions, no dependencies — see Verifying below
+test/                     261 assertions, no dependencies — see Verifying below
 package.json              scripts and metadata; there is nothing to install
 docs/method-notes.html    method notes for students: what it calculates, which
                           clause each step comes from, and every figure the code
@@ -458,6 +458,9 @@ docs/method-notes.html    method notes for students: what it calculates, which
 docs/climate-source.json  provenance of the rainfall library — written by the
                           generator, absent until it has been run
 tools/build-climate.mjs   regenerates the rainfall library from a real source
+.github/workflows/        one manual workflow that regenerates the rainfall
+                          library on a runner with internet, and uploads the
+                          result rather than committing it
 CITATION.cff              machine-readable citation — the only format GitHub
                           reads, and what puts "Cite this repository" on the
                           repo page
@@ -477,7 +480,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**258 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**261 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.

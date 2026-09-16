@@ -128,6 +128,23 @@ console.log("\n── 3. CITATION.cff says the same thing ──");
 
   for (const k of ["cff-version", "message", "type", "abstract"])
     t(`required key "${k}" is present`, field(k) !== null, "missing", "present");
+
+  /* The ORCID is checked by its own checksum (ISO 7064 MOD 11-2), not merely
+     for being present and the right shape. A transposed digit produces a
+     perfectly well-formed identifier that belongs to someone else, or to
+     nobody — and a citation record is the worst place to discover that. */
+  const orcid = (cff.match(/orcid:[ \t]*["']?(https:\/\/orcid\.org\/([\dX-]+))["']?/) || [])[2];
+  t("the author carries an ORCID", !!orcid, orcid || "none", "an orcid: line");
+
+  if (orcid) {
+    const d = orcid.replace(/-/g, "");
+    t("the ORCID is 16 characters", d.length === 16, d.length, 16);
+    let total = 0;
+    for (const ch of d.slice(0, 15)) total = (total + Number(ch)) * 2 % 11;
+    const r = (12 - total % 11) % 11;
+    const want = r === 10 ? "X" : String(r);
+    t("the ORCID checksum is valid", d[15] === want, d[15], want);
+  }
 }
 
 console.log(`\n${pass ? "✓" : "✗"} ${pass} passed, ${fail} failed\n`);
