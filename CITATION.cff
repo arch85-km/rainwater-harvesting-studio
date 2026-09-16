@@ -7,6 +7,14 @@ authors:
     orcid: "https://orcid.org/0000-0002-4379-6964"
 version: "1.0"
 date-released: "2026-09-16"
+doi: "10.5281/zenodo.22801122"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22801122"
+    description: "The concept DOI, resolving to the latest version"
+  - type: doi
+    value: "10.5281/zenodo.22801123"
+    description: "The DOI for version 1.0"
 license: MIT
 url: "https://karam.me.uk/applications/rainwater-harvesting-studio/"
 repository-code: "https://github.com/arch85-km/rainwater-harvesting-studio"

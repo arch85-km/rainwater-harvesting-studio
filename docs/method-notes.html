@@ -951,17 +951,28 @@ spaced evenly through the month.</div>
     <p>Cite it as software. Keeping the copyright notice in the file satisfies the licence; a citation is
       the scholarly act on top of that.</p>
     <p class="cs-ref">Al-Obaidi, K.M. (2026). <i>Rainwater Harvesting Studio: A parametric roof and
-      tank sizing tool</i> (Version 1.0) [Computer software].
-      <a href="https://karam.me.uk/applications/rainwater-harvesting-studio/" target="_blank" rel="noopener">https://karam.me.uk/applications/rainwater-harvesting-studio/</a></p>
+      tank sizing tool</i> (Version 1.0) [Computer software]. Zenodo.
+      <a href="https://doi.org/10.5281/zenodo.22801122" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.22801122</a></p>
 <pre>@software{alobaidi2026rainwaterstudio,
-  author  = {Al-Obaidi, Karam M.},
-  title   = {Rainwater Harvesting Studio: A parametric roof and
-             tank sizing tool},
-  year    = {2026},
-  version = {1.0},
-  url     = {https://karam.me.uk/applications/rainwater-harvesting-studio/},
-  note    = {MIT licensed}
+  author    = {Al-Obaidi, Karam M.},
+  title     = {Rainwater Harvesting Studio: A parametric roof and
+               tank sizing tool},
+  year      = {2026},
+  version   = {1.0},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.22801122},
+  url       = {https://karam.me.uk/applications/rainwater-harvesting-studio/},
+  note      = {MIT licensed}
 }</pre>
+    <p><b>Two DOIs, and they are not interchangeable.</b>
+      <span class="cs-mono">10.5281/zenodo.22801122</span> is the <i>concept</i> DOI: it resolves to
+      whichever version is newest, which is what a citation of the tool should point at.
+      <span class="cs-mono">10.5281/zenodo.22801123</span> is version&nbsp;1.0, frozen. If you are
+      reporting figures someone should be able to reproduce, cite the version DOI &mdash; it names the
+      exact code and the exact rainfall library those figures came from.
+      <a href="https://karam.me.uk/applications/rainwater-harvesting-studio/" target="_blank" rel="noopener">karam.me.uk</a>
+      remains where the tool is used; the DOI is where the archived copy lives, and it is the one that
+      will still resolve when a personal site does not.</p>
     <p>Report the <b>catchment area</b>, the <b>surface coefficient</b>, the <b>rainfall source</b>, the
       <b>time step</b> and the <b>usable capacity</b> alongside any figure taken from the tool. All five
       change the answer, and a coverage rate quoted without its time step and its rainfall source cannot
@@ -969,9 +980,16 @@ spaced evenly through the month.</div>
       alone moves it from 4.6&nbsp;% to 49.5&nbsp;%.</p>
 
     <h3>Before you cite</h3>
-    <p>Six things this page cannot settle for you. They are gathered here because they are
+    <p>Seven things this page cannot settle for you. They are gathered here because they are
       instructions, and instructions buried inside a reference entry do not get read.</p>
     <ul class="cs-refs">
+      <li><b>Cite the DOI, and pick the right one.</b>
+        <span class="cs-mono">10.5281/zenodo.22801122</span> is the concept DOI and resolves to the
+        newest version &mdash; cite that for the tool.
+        <span class="cs-mono">10.5281/zenodo.22801123</span> is version&nbsp;1.0, frozen; cite that when
+        you report figures someone should be able to reproduce, because it names the exact code and the
+        exact rainfall library they came from. Citing only &ldquo;the tool&rdquo; without a version names
+        a moving target, and this one has already moved once.</li>
       <li><b>Record which source your city came from, and the station.</b> Twenty-two presets are WMO
         Climatological Standard Normals; six are WWIS records over other periods. Every city's source,
         station name, WMO station number, elevation and period is in

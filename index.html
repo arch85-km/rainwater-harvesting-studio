@@ -971,10 +971,23 @@ const CITATION = {
   author: "Al-Obaidi, K.M.",
   year:   "2026",
   title:  "Rainwater Harvesting Studio: A parametric roof and tank sizing tool",
-  url:    "https://karam.me.uk/applications/rainwater-harvesting-studio/"
+  url:    "https://karam.me.uk/applications/rainwater-harvesting-studio/",
+  publisher: "Zenodo",
+  /* Two DOIs, and the difference matters. The concept DOI resolves to whichever
+     version is newest, so a citation written against it keeps pointing at the
+     living work; the version DOI is frozen on this release and is what someone
+     reproducing a specific result needs. A citation takes the first; a methods
+     section reproducing figures should name the second. */
+  doi:        "10.5281/zenodo.22801122",
+  doiVersion: "10.5281/zenodo.22801123"
 };
+CITATION.doiUrl = `https://doi.org/${CITATION.doi}`;
+/* The locator is the DOI, not the address bar. karam.me.uk is where the tool
+   lives and is still the canonical link; the DOI is where the archived copy
+   lives, and it is the one that will still resolve when the site does not. */
 CITATION.apa = `${CITATION.author} (${CITATION.year}). ${CITATION.title} ` +
-               `(Version ${VERSION.number}) [Computer software]. ${CITATION.url}`;
+               `(Version ${VERSION.number}) [Computer software]. ` +
+               `${CITATION.publisher}. ${CITATION.doiUrl}`;
 
 const CLIMATE_SOURCE = {
   sourced:  true,

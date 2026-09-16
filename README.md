@@ -4,6 +4,8 @@
 
 **Version 1.0** — 16 September 2026
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22801122.svg)](https://doi.org/10.5281/zenodo.22801122)
+
 A parametric 3D modeller that calculates rainwater harvesting yield, store
 size and reliability to **BS EN 16941‑1:2024**. Built for teaching architecture
 students, and for embedding in a WordPress page.
@@ -505,7 +507,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**346 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**361 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.
@@ -556,6 +558,10 @@ What it covers:
 - **The rainfall licence in the app is the generator's** — character for
   character, with the two WWIS conditions checked as WWIS words them, so a
   paraphrase copied into both files still fails.
+- **The DOI, in every copy of it** — the concept DOI and the version DOI are one
+  digit apart and both resolve, so swapping them is a silent error. Each is
+  checked where it belongs, across `index.html`, `CITATION.cff`, the method
+  notes' APA entry and BibTeX block, and the README badge.
 - **The Zenodo record** — that `.zenodo.json` gives the same title, version,
   date, licence, author and ORCID as `CITATION.cff`. It is the one file whose
   mistakes become permanent, because a DOI is minted against whatever it says.
@@ -626,9 +632,14 @@ Browser support: any browser from the last few years. Uses `ResizeObserver`,
 
 ## Before you cite
 
-Six things this file cannot settle for you. `docs/method-notes.html` carries the
-same six with the working behind them.
+Seven things this file cannot settle for you. `docs/method-notes.html` carries the
+same seven with the working behind them.
 
+- **Cite the DOI, and pick the right one.** `10.5281/zenodo.22801122` is the
+  concept DOI and resolves to the newest version — cite that for the tool.
+  `10.5281/zenodo.22801123` is version 1.0, frozen; cite that when you are
+  reporting figures someone should be able to reproduce, because it names the
+  exact code and the exact rainfall library they came from.
 - **Record which source your city came from, and the station.** Twenty-two
   presets are WMO Climatological Standard Normals; six are WWIS records over
   other periods. Every city's source, station name, WMO station number,

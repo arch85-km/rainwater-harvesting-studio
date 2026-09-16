@@ -53,10 +53,12 @@ console.log("\n── 1. The app's citation matches the method notes ──");
   t("the notes carry an APA entry for the app", !!m, m ? "found" : "no cs-ref entry", "one entry");
 
   if (m) {
-    /* The entry ends with the URL twice — once as the link text, once as the
-       href — so the anchor text is dropped and the href compared on its own. */
+    /* The entry ends with the locator twice — once as the link text, once as the
+       href — so the anchor text is dropped and the href compared on its own.
+       The locator is the DOI, not the site: APA takes one, and the archived copy
+       outlives a personal domain. */
     const entry = norm(m[1].replace(/<a [^>]*>[\s\S]*?<\/a>/, ""))
-                    .replace(/\s*$/, " " + CITATION.url);
+                    .replace(/\s*$/, " " + CITATION.doiUrl);
     t("APA entry is character-identical to CITATION.apa", entry === apa, entry, apa);
   }
 
@@ -262,6 +264,68 @@ console.log("\n\u2500\u2500 5. The Zenodo record says the same as the citation \
   t("the description carries the WWIS acknowledgement",
     /Acknowledgement must be given to the WMO World Weather Information Service/.test(zen.description),
     "absent", "the condition, verbatim");
+}
+
+console.log("\n\u2500\u2500 6. The DOI, in every copy of the citation \u2500\u2500");
+{
+  /* A DOI is only worth minting if the work carries it. It now lives in five
+     files, which is five chances to paste it wrong — and a wrong DOI is worse
+     than none: it resolves, to someone else's record.
+
+     Two of them, and the pair is the point. The concept DOI resolves to the
+     newest version and is what a citation of the tool should say; the version
+     DOI is frozen on 1.0 and is what reproducing a figure needs. Swapping them
+     is a silent error — both resolve, to different things — so each is checked
+     where it belongs rather than "a DOI is present". */
+  const DOI = /^10\.5281\/zenodo\.\d+$/;
+  const cffDoi = (cff.match(/^doi:[ \t]*["']?([^"'\n]+)/m) || [])[1];
+
+  t("CITATION.cff carries a doi", !!cffDoi, cffDoi || "none", "a doi: line");
+  t("it is shaped like a Zenodo DOI", DOI.test(cffDoi || ""), cffDoi, "10.5281/zenodo.<digits>");
+  t("the .cff's doi is the concept DOI, not the version's",
+    cffDoi === CITATION.doi, cffDoi, CITATION.doi + " (concept)");
+
+  /* The two must differ. Zenodo mints them one apart, and a copy-paste that
+     takes the same number twice passes every other check here. */
+  t("the two DOIs are different", CITATION.doi !== CITATION.doiVersion,
+    CITATION.doi + " / " + CITATION.doiVersion, "two distinct DOIs");
+  t("the version DOI is shaped like one too", DOI.test(CITATION.doiVersion),
+    CITATION.doiVersion, "10.5281/zenodo.<digits>");
+
+  /* The .cff lists both under identifiers:, so a reader of that file alone can
+     find the frozen version. */
+  for (const [what, doi] of [["concept", CITATION.doi], ["version", CITATION.doiVersion]])
+    t(`CITATION.cff lists the ${what} DOI under identifiers`,
+      new RegExp(`value:[ \\t]*["']?${doi.replace(/[.\/]/g, "\\$&")}`).test(cff),
+      "absent", doi);
+
+  /* The app builds its own APA line, so the DOI has to be in the file that
+     ships, not only in the repository around it. */
+  t("the app's citation resolves through doi.org",
+    CITATION.doiUrl === `https://doi.org/${CITATION.doi}`, CITATION.doiUrl,
+    `https://doi.org/${CITATION.doi}`);
+  t("the app's APA line ends with the DOI", CITATION.apa.endsWith(CITATION.doiUrl),
+    CITATION.apa.slice(-60), "\u2026 " + CITATION.doiUrl);
+  t("the app names the archive as publisher", CITATION.apa.includes(". Zenodo. "),
+    CITATION.apa.slice(-80), "\u2026 [Computer software]. Zenodo. \u2026");
+
+  /* The BibTeX block a student copies. */
+  const bibDoi = notes.match(/doi\s*=\s*\{([^}]+)\}/);
+  t("the BibTeX block carries the concept DOI",
+    !!bibDoi && bibDoi[1].trim() === CITATION.doi,
+    bibDoi ? bibDoi[1].trim() : "no doi field", CITATION.doi);
+
+  /* And the README badge, which is the first thing seen and the easiest to
+     leave pointing at a previous deposit. */
+  t("the README badge links to the concept DOI",
+    rdme.includes(`](https://doi.org/${CITATION.doi})`),
+    "absent or different", `](https://doi.org/${CITATION.doi})`);
+  t("the README names the version DOI too",
+    rdme.includes(CITATION.doiVersion), "absent", CITATION.doiVersion);
+
+  /* Both DOIs, in the notes, distinguished. */
+  for (const [what, doi] of [["concept", CITATION.doi], ["version", CITATION.doiVersion]])
+    t(`the method notes name the ${what} DOI`, notes.includes(doi), "absent", doi);
 }
 
 console.log(`\n${pass ? "✓" : "✗"} ${pass} passed, ${fail} failed\n`);
