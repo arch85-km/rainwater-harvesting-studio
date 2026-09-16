@@ -1,0 +1,2371 @@
+{
+  "name": "WMO Climate Normals 1991-2020 (NOAA NCEI) where available; WMO World Weather Information Service (WWIS) otherwise",
+  "endpoint": "https://worldweather.wmo.int/en/json/{cityId}_en.json",
+  "cityList": "https://worldweather.wmo.int/en/json/full_city_list.txt",
+  "window": "1991-2020 for 22 cities; 6 from WWIS over other periods — see docs/climate-source.json",
+  "accessed": "2026-09-16",
+  "licence": "WMO Climate Normals 1991-2020 distributed by NOAA NCEI. Acknowledgement to the WMO World Weather Information Service, and to the national meteorological service named per city, is required for the cities sourced from it. Data reproduced accurately and unaltered.",
+  "note": "Gauge normals. Most cities use the WMO Climate Normals 1991-2020; the rest come from WWIS, where the period and the rain-day threshold vary by city. Each city records which — see docs/climate-source.json.",
+  "acknowledgement": "Data from the WMO World Weather Information Service (worldweather.wmo.int), supplied by the national meteorological and hydrological service named against each city.",
+  "reduction": "r[] is climateMonth[].rainfall as published; dpd = annual rainfall / annual raindays, rounded, clamped 2-30. The rain-day threshold is whatever the supplying service declares in raindef and is recorded per city; it is NOT converted to the app's 1 mm rule.",
+  "generator": "tools/build-climate-wwis.mjs",
+  "cross_check": {
+    "name": "WMO Climate Normals 1991-2020 (PRCP and DP01), via NOAA NCEI",
+    "endpoint": {
+      "rainfall": "https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/data-composite-primary-parameters/wmo_normals_9120_PRCP.csv",
+      "raindays": "https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/data-composite-primary-parameters/wmo_normals_9120_DP01.csv"
+    },
+    "what": "Mean number of precipitation days per station, 1991-2020, recorded beside each city where the composite carries its country. An independent check on the same quantity over a uniform period — nothing in the app is calculated from it.",
+    "loaded": "5184 stations in both files",
+    "matched": 19,
+    "caveat": "WWIS and the normals may define a precipitation day at different thresholds; a difference between them is not in itself an error."
+  },
+  "periods_present": [
+    "1929-2000",
+    "1930-1960",
+    "1955-1997",
+    "1962-1992",
+    "1971-2000",
+    "1974-1991",
+    "1976-2008",
+    "1981-2010",
+    "1982-2011",
+    "1991-2020"
+  ],
+  "rainday_thresholds_present": [
+    "1 mm",
+    "mm",
+    "0.1 mm",
+    ".001 mm",
+    "0.01 mm",
+    "0.2 mm"
+  ],
+  "warnings": [
+    "Nairobi, KE: rain days counted at >=  mm, not the 1 mm the app assumes — dpd means something slightly different here",
+    "Athens, GR: rain days counted at >=  mm, not the 1 mm the app assumes — dpd means something slightly different here",
+    "Amman, JO: rain days counted at >=  mm, not the 1 mm the app assumes — dpd means something slightly different here",
+    "Baghdad, IQ: rain days counted at >= .001 mm, not the 1 mm the app assumes — dpd means something slightly different here",
+    "Bogota, CO: nearest normals station La_Bolsa is 12 km away but reads 1309 mm against WWIS's 799 mm (64% apart) — not adopted, WWIS kept",
+    "Bogota, CO: rain days counted at >=  mm, not the 1 mm the app assumes — dpd means something slightly different here"
+  ],
+  "cities": [
+    {
+      "id": "kul",
+      "name": "Kuala Lumpur, MY",
+      "wwis": {
+        "cityId": 82,
+        "cityName": "Kuala Lumpur",
+        "stationName": "Kuala Lumpur",
+        "latitude": "3.116667000",
+        "longitude": "101.550000000",
+        "candidates": [
+          "Kuala Lumpur, Malaysia (82)"
+        ],
+        "listCountry": "Malaysia",
+        "listCity": "Kuala Lumpur"
+      },
+      "supplier": {
+        "memId": 20,
+        "memName": "Malaysia",
+        "orgName": "Malaysian Meteorological Department",
+        "url": "www.met.gov.my"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "1",
+        "raindayThresholdUnit": "mm",
+        "period": "1971-2000",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1971-2000",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:Subang",
+      "monthlyRainfallMm": [
+        226.7,
+        192.8,
+        270.4,
+        301.5,
+        229.9,
+        145.8,
+        165.2,
+        174.3,
+        220.3,
+        283.8,
+        355.8,
+        280.6
+      ],
+      "monthlyRainDays": [
+        13.6,
+        11.9,
+        15,
+        16.8,
+        13.2,
+        9.6,
+        10.6,
+        10.9,
+        13.3,
+        16.3,
+        19.7,
+        16.3
+      ],
+      "crossCheck": {
+        "status": "no station named for Kuala Lumpur among 15 in Malaysia"
+      },
+      "annualMm": 2847.1,
+      "annualRainDays": 167.2,
+      "dpd": 17
+    },
+    {
+      "id": "sin",
+      "name": "Singapore, SG",
+      "wwis": {
+        "cityId": 234,
+        "cityName": "Singapore",
+        "stationName": "Singapore / Changi Airport",
+        "latitude": "1.366667000",
+        "longitude": "103.916667000",
+        "candidates": [
+          "Singapore, Singapore (234)"
+        ],
+        "listCountry": "Singapore",
+        "listCity": "Singapore"
+      },
+      "supplier": {
+        "memId": 81,
+        "memName": "Singapore",
+        "orgName": "Meteorological Service Singapore",
+        "url": "www.weather.gov.sg"
+      },
+      "normals": {
+        "raintype": "PPT",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1991-2020",
+        "periodFrom": "rainfallb/rainfalle",
+        "rainfallPeriod": "1991-2020",
+        "raindayPeriod": null,
+        "generalPeriod": null,
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:ChangiAirport",
+      "monthlyRainfallMm": [
+        221.6,
+        105,
+        151.1,
+        163.8,
+        163.8,
+        137.1,
+        144.8,
+        148.9,
+        124.6,
+        166.4,
+        254.1,
+        332.1
+      ],
+      "monthlyRainDays": [
+        10.7,
+        6.5,
+        9.4,
+        11.3,
+        11.2,
+        10.4,
+        10.4,
+        11.1,
+        9.8,
+        12,
+        15.4,
+        16.3
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Singapore",
+        "matchedBy": "sole station in country",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "ChangiAirport",
+            "latitude": 1.368,
+            "longitude": 103.982,
+            "annualMm": 2113.3,
+            "annualRainDays": 134.5,
+            "dpd": 16
+          }
+        ],
+        "annualMmRange": [
+          2113.3,
+          2113.3
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 2113.3,
+      "annualRainDays": 134.5,
+      "dpd": 16
+    },
+    {
+      "id": "kch",
+      "name": "Kuching, MY",
+      "wwis": {
+        "cityId": 80,
+        "cityName": "Kuching",
+        "stationName": "Kuching",
+        "latitude": "1.480000000",
+        "longitude": "110.330000000",
+        "candidates": [
+          "Kuching, Malaysia (80)"
+        ],
+        "listCountry": "Malaysia",
+        "listCity": "Kuching"
+      },
+      "supplier": {
+        "memId": 20,
+        "memName": "Malaysia",
+        "orgName": "Malaysian Meteorological Department",
+        "url": "www.met.gov.my"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "1",
+        "raindayThresholdUnit": "mm",
+        "period": "1971-2000",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1971-2000",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:Kuching",
+      "monthlyRainfallMm": [
+        672.3,
+        501.4,
+        340.2,
+        303.2,
+        267.8,
+        255.4,
+        200.9,
+        263.7,
+        245.3,
+        343.1,
+        341.5,
+        498.1
+      ],
+      "monthlyRainDays": [
+        21.4,
+        17,
+        17.6,
+        17.4,
+        15.9,
+        14.5,
+        13.1,
+        14.7,
+        15.8,
+        19.1,
+        21.2,
+        22.8
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Malaysia",
+        "matchedBy": "exact name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "Kuching",
+            "latitude": 1.49,
+            "longitude": 110.353,
+            "annualMm": 4232.9,
+            "annualRainDays": 210.5,
+            "dpd": 20
+          }
+        ],
+        "annualMmRange": [
+          4232.9,
+          4232.9
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 4232.9,
+      "annualRainDays": 210.5,
+      "dpd": 20
+    },
+    {
+      "id": "jkt",
+      "name": "Jakarta, ID",
+      "wwis": {
+        "cityId": 310,
+        "cityName": "Jakarta",
+        "stationName": "Jakarta",
+        "latitude": "-6.170000000",
+        "longitude": "106.800000000",
+        "candidates": [
+          "Jakarta, Indonesia (310)"
+        ],
+        "listCountry": "Indonesia",
+        "listCity": "Jakarta"
+      },
+      "supplier": {
+        "memId": 43,
+        "memName": "Indonesia",
+        "orgName": "Meteorological, Climatological and Geophysical Agency (BMKG)",
+        "url": "www.bmkg.go.id"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1930-1960",
+        "periodFrom": "rainfallb/rainfalle",
+        "rainfallPeriod": "1930-1960",
+        "raindayPeriod": null,
+        "generalPeriod": null,
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:StasiunMeteorologiKemayoran",
+      "monthlyRainfallMm": [
+        373.3,
+        381.4,
+        210.4,
+        164.1,
+        103.2,
+        80.4,
+        77.7,
+        51.5,
+        61,
+        112.2,
+        134.8,
+        183.3
+      ],
+      "monthlyRainDays": [
+        17.5,
+        17.9,
+        14.1,
+        11.5,
+        8.2,
+        6.2,
+        4.8,
+        3.3,
+        4,
+        7.4,
+        10.4,
+        12.8
+      ],
+      "crossCheck": {
+        "status": "no station named for Jakarta among 54 in Indonesia"
+      },
+      "annualMm": 1933.3,
+      "annualRainDays": 118.1,
+      "dpd": 16
+    },
+    {
+      "id": "mnl",
+      "name": "Manila, PH",
+      "wwis": {
+        "cityId": 92,
+        "cityName": "Metro Manila",
+        "stationName": "Metro Manila",
+        "latitude": "14.580000000",
+        "longitude": "120.970000000",
+        "candidates": [
+          "Metro Manila, Philippines (92)"
+        ],
+        "listCountry": "Philippines",
+        "listCity": "Metro Manila"
+      },
+      "supplier": {
+        "memId": 21,
+        "memName": "Philippines",
+        "orgName": "Philippine Atmospheric Geophysical and Astronomical Services Administration",
+        "url": "www.pagasa.dost.gov.ph"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1971-2000",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1971-2000",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:PortAreaManila",
+      "monthlyRainfallMm": [
+        19.4,
+        21.9,
+        21.8,
+        23.4,
+        159.1,
+        253.3,
+        432.3,
+        492.5,
+        396.4,
+        220.6,
+        119.9,
+        98.5
+      ],
+      "monthlyRainDays": [
+        3.2,
+        2.3,
+        2.7,
+        2.8,
+        9.4,
+        13.9,
+        18.9,
+        19.2,
+        18.2,
+        13.7,
+        10,
+        7.5
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Philippines",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "PortAreaManila",
+            "latitude": 14.583,
+            "longitude": 120.967,
+            "annualMm": 2259.1,
+            "annualRainDays": 121.8,
+            "dpd": 19
+          }
+        ],
+        "annualMmRange": [
+          2259.1,
+          2259.1
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 2259.1,
+      "annualRainDays": 121.8,
+      "dpd": 19
+    },
+    {
+      "id": "cgp",
+      "name": "Chittagong, BD",
+      "wwis": {
+        "cityId": 1164,
+        "cityName": "Chittagong",
+        "stationName": "Chittagong",
+        "latitude": "22.800000000",
+        "longitude": "91.990000000",
+        "candidates": [
+          "Chittagong, Bangladesh (1164)"
+        ],
+        "listCountry": "Bangladesh",
+        "listCity": "Chittagong"
+      },
+      "supplier": {
+        "memId": 141,
+        "memName": "Bangladesh",
+        "orgName": "Bangladesh Meteorological Department",
+        "url": "www.bmd.gov.bd/?/home"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "0.1",
+        "raindayThresholdUnit": "mm",
+        "period": "1971-2000",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1971-2000",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:Chittagong",
+      "monthlyRainfallMm": [
+        9,
+        21,
+        49,
+        103,
+        333,
+        627,
+        718,
+        533,
+        282,
+        231,
+        47,
+        11
+      ],
+      "monthlyRainDays": [
+        1,
+        1,
+        3,
+        6,
+        14,
+        19,
+        21,
+        21,
+        17,
+        10,
+        3,
+        1
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Bangladesh",
+        "matchedBy": "exact name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "Chittagong",
+            "latitude": 22.267,
+            "longitude": 91.817,
+            "annualMm": 2964,
+            "annualRainDays": 117,
+            "dpd": 25
+          }
+        ],
+        "annualMmRange": [
+          2964,
+          2964
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 2964,
+      "annualRainDays": 117,
+      "dpd": 25
+    },
+    {
+      "id": "los",
+      "name": "Lagos, NG",
+      "wwis": {
+        "cityId": 258,
+        "cityName": "Lagos",
+        "stationName": "Lagos / Ikeja",
+        "latitude": "6.580000000",
+        "longitude": "3.330000000",
+        "candidates": [
+          "Lagos, Nigeria (258)"
+        ],
+        "listCountry": "Nigeria",
+        "listCity": "Lagos"
+      },
+      "supplier": {
+        "memId": 75,
+        "memName": "Nigeria",
+        "orgName": "Nigerian Meteorological Agency",
+        "url": "www.nimet.gov.ng"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": null,
+        "periodFrom": "not declared",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": null,
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:LagosRoof",
+      "monthlyRainfallMm": [
+        10.5,
+        40.9,
+        68.4,
+        145.5,
+        235.8,
+        433.7,
+        208.9,
+        91.4,
+        217.9,
+        189.1,
+        51.5,
+        9.7
+      ],
+      "monthlyRainDays": [
+        1,
+        2.2,
+        4.3,
+        6.9,
+        11.3,
+        15.6,
+        10.8,
+        7.2,
+        12.3,
+        10.5,
+        3.4,
+        0.7
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Nigeria",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "LagosRoof",
+            "latitude": 6.58,
+            "longitude": 3.06,
+            "annualMm": 1703.3,
+            "annualRainDays": 86.2,
+            "dpd": 20
+          }
+        ],
+        "annualMmRange": [
+          1703.3,
+          1703.3
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 1703.3,
+      "annualRainDays": 86.2,
+      "dpd": 20
+    },
+    {
+      "id": "nbo",
+      "name": "Nairobi, KE",
+      "wwis": {
+        "cityId": 251,
+        "cityName": "Nairobi",
+        "stationName": "Mombasa",
+        "latitude": "-1.300000000",
+        "longitude": "36.750000000",
+        "candidates": [
+          "Nairobi, Kenya (251)"
+        ],
+        "listCountry": "Kenya",
+        "listCity": "Nairobi"
+      },
+      "supplier": {
+        "memId": 71,
+        "memName": "Kenya",
+        "orgName": "Kenya Meteorological Department",
+        "url": "www.meteo.go.ke/"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": null,
+        "periodFrom": "not declared",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": null,
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wwis",
+      "monthlyRainfallMm": [
+        64.1,
+        56.5,
+        92.8,
+        219.4,
+        176.6,
+        35,
+        17.5,
+        23.5,
+        28.3,
+        55.3,
+        154.2,
+        101
+      ],
+      "monthlyRainDays": [
+        4,
+        5,
+        9,
+        16,
+        13,
+        5,
+        3,
+        4,
+        4,
+        7,
+        15,
+        8
+      ],
+      "crossCheck": {
+        "status": "country Kenya absent from the normals"
+      },
+      "annualMm": 1024.2,
+      "annualRainDays": 93,
+      "dpd": 11
+    },
+    {
+      "id": "lon",
+      "name": "London, UK",
+      "wwis": {
+        "cityId": 32,
+        "cityName": "London",
+        "stationName": "London",
+        "latitude": "51.504722000",
+        "longitude": "-0.131111000",
+        "candidates": [
+          "London, United Kingdom of Great Britain and Northern Ireland (32)"
+        ],
+        "listCountry": "United Kingdom of Great Britain and Northern Ireland",
+        "listCity": "London"
+      },
+      "supplier": {
+        "memId": 10,
+        "memName": "United Kingdom of Great Britain and Northern Ireland",
+        "orgName": "Met Office",
+        "url": "www.metoffice.gov.uk"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "1",
+        "raindayThresholdUnit": "mm",
+        "period": "1981-2010",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1981-2010",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:London",
+      "monthlyRainfallMm": [
+        58.1,
+        43.6,
+        37,
+        42.5,
+        44.7,
+        50.5,
+        43.1,
+        54.9,
+        49.8,
+        66.9,
+        65.7,
+        58.6
+      ],
+      "monthlyRainDays": [
+        11.3,
+        9.6,
+        8.7,
+        8.9,
+        7.9,
+        8.7,
+        8.1,
+        8.6,
+        8.6,
+        11,
+        10.8,
+        11.3
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "United_Kingdom",
+        "matchedBy": "exact name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "London",
+            "latitude": 51.505,
+            "longitude": -0.131,
+            "annualMm": 615.4,
+            "annualRainDays": 113.5,
+            "dpd": 5
+          }
+        ],
+        "annualMmRange": [
+          615.4,
+          615.4
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 615.4,
+      "annualRainDays": 113.5,
+      "dpd": 5
+    },
+    {
+      "id": "dub",
+      "name": "Dublin, IE",
+      "wwis": {
+        "cityId": 188,
+        "cityName": "Dublin",
+        "stationName": "Dublin Airport",
+        "latitude": "53.380000000",
+        "longitude": "-6.270000000",
+        "candidates": [
+          "Dublin, Ireland (188)"
+        ],
+        "listCountry": "Ireland",
+        "listCity": "Dublin"
+      },
+      "supplier": {
+        "memId": 67,
+        "memName": "Ireland",
+        "orgName": "Met Éireann, The Irish Meteorological Service",
+        "url": "www.met.ie"
+      },
+      "normals": {
+        "raintype": "PPT",
+        "raindayThreshold": "0.1",
+        "raindayThresholdUnit": "mm",
+        "period": "1981-2010",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1981-2010",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:DublinAirport",
+      "monthlyRainfallMm": [
+        61.8,
+        52.4,
+        51.4,
+        55,
+        57,
+        64,
+        61,
+        73.4,
+        63.3,
+        78.4,
+        82.7,
+        72.1
+      ],
+      "monthlyRainDays": [
+        12.5,
+        11,
+        10.7,
+        11.1,
+        10.5,
+        9.8,
+        11.6,
+        11.8,
+        10.7,
+        11.6,
+        12.5,
+        13.3
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Ireland",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "DublinAirport",
+            "latitude": 53.428,
+            "longitude": -6.241,
+            "annualMm": 772.5,
+            "annualRainDays": 137.1,
+            "dpd": 6
+          }
+        ],
+        "annualMmRange": [
+          772.5,
+          772.5
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 772.5,
+      "annualRainDays": 137.1,
+      "dpd": 6
+    },
+    {
+      "id": "ber",
+      "name": "Berlin, DE",
+      "wwis": {
+        "cityId": 59,
+        "cityName": "Berlin",
+        "stationName": "Berlin",
+        "latitude": "52.565556000",
+        "longitude": "13.310833000",
+        "candidates": [
+          "Berlin, Germany (59)"
+        ],
+        "listCountry": "Germany",
+        "listCity": "Berlin"
+      },
+      "supplier": {
+        "memId": 16,
+        "memName": "Germany",
+        "orgName": "Deutscher Wetterdienst",
+        "url": "www.dwd.de"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "1",
+        "raindayThresholdUnit": "mm",
+        "period": "1971-2000",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1971-2000",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:Berlin-Brandenburg (1 of 4, chosen alphabetically)",
+      "monthlyRainfallMm": [
+        41.5,
+        30,
+        35.9,
+        27.7,
+        52.8,
+        60.2,
+        70,
+        52.4,
+        43.6,
+        40.3,
+        38.8,
+        39.1
+      ],
+      "monthlyRainDays": [
+        9.7,
+        7.5,
+        8.8,
+        6.4,
+        8.4,
+        8.7,
+        9.2,
+        8.2,
+        7.7,
+        8.3,
+        8.3,
+        9.5
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Germany",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "Berlin-Brandenburg",
+            "latitude": 52.381,
+            "longitude": 13.531,
+            "annualMm": 532.3,
+            "annualRainDays": 100.7,
+            "dpd": 5
+          },
+          {
+            "station": "Berlin-Dahlem-FU",
+            "latitude": 52.454,
+            "longitude": 13.302,
+            "annualMm": 582.4,
+            "annualRainDays": 106,
+            "dpd": 5
+          },
+          {
+            "station": "Berlin-Tegel",
+            "latitude": 52.564,
+            "longitude": 13.309,
+            "annualMm": 539.9,
+            "annualRainDays": 100.9,
+            "dpd": 5
+          },
+          {
+            "station": "Berlin-Tempelhof",
+            "latitude": 52.467,
+            "longitude": 13.402,
+            "annualMm": 570.2,
+            "annualRainDays": 104.1,
+            "dpd": 5
+          }
+        ],
+        "annualMmRange": [
+          532.3,
+          582.4
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 532.3,
+      "annualRainDays": 100.7,
+      "dpd": 5
+    },
+    {
+      "id": "sea",
+      "name": "Seattle, US",
+      "wwis": {
+        "cityId": 277,
+        "cityName": "Seattle, Washington",
+        "stationName": "Seattle",
+        "latitude": "47.430000000",
+        "longitude": "-122.300000000",
+        "candidates": [
+          "Seattle, Washington, United States of America (277)"
+        ],
+        "listCountry": "United States of America",
+        "listCity": "Seattle, Washington"
+      },
+      "supplier": {
+        "memId": 93,
+        "memName": "United States of America",
+        "orgName": "National Weather Service",
+        "url": "www.nws.noaa.gov/"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1981-2010",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1981-2010",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:SEATTLE_TACOMA_INTL_AP",
+      "monthlyRainfallMm": [
+        146.7,
+        95.6,
+        105.8,
+        80.9,
+        47.7,
+        36.8,
+        15.1,
+        24.7,
+        41,
+        99.4,
+        160.4,
+        145.2
+      ],
+      "monthlyRainDays": [
+        16.2,
+        13,
+        14.2,
+        12,
+        8.4,
+        6.3,
+        2.6,
+        3.4,
+        6,
+        11.1,
+        16.1,
+        15.7
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "United_States",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "SEATTLE_TACOMA_INTL_AP",
+            "latitude": 47.444,
+            "longitude": -122.314,
+            "annualMm": 999.3,
+            "annualRainDays": 125,
+            "dpd": 8
+          }
+        ],
+        "annualMmRange": [
+          999.3,
+          999.3
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 999.3,
+      "annualRainDays": 125,
+      "dpd": 8
+    },
+    {
+      "id": "chi",
+      "name": "Chicago, US",
+      "wwis": {
+        "cityId": 274,
+        "cityName": "Chicago, Illinois",
+        "stationName": "Chicago",
+        "latitude": "41.980000000",
+        "longitude": "-87.900000000",
+        "candidates": [
+          "Chicago, Illinois, United States of America (274)"
+        ],
+        "listCountry": "United States of America",
+        "listCity": "Chicago, Illinois"
+      },
+      "supplier": {
+        "memId": 93,
+        "memName": "United States of America",
+        "orgName": "National Weather Service",
+        "url": "www.nws.noaa.gov/"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1981-2010",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1981-2010",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:CHICAGO_MIDWAY_AP (1 of 2, chosen alphabetically)",
+      "monthlyRainfallMm": [
+        37.5,
+        37.2,
+        47.8,
+        90.7,
+        103.9,
+        102,
+        90.3,
+        101.4,
+        70.3,
+        88.3,
+        59.7,
+        45.5
+      ],
+      "monthlyRainDays": [
+        5.5,
+        6.1,
+        7.3,
+        9.2,
+        10.3,
+        9.6,
+        7.1,
+        8.2,
+        6.7,
+        8.6,
+        6.5,
+        6.7
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "United_States",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "CHICAGO_MIDWAY_AP",
+            "latitude": 41.786,
+            "longitude": -87.752,
+            "annualMm": 874.6,
+            "annualRainDays": 91.8,
+            "dpd": 10
+          },
+          {
+            "station": "CHICAGO_OHARE_INTL_AP",
+            "latitude": 41.995,
+            "longitude": -87.934,
+            "annualMm": 961.7,
+            "annualRainDays": 95.3,
+            "dpd": 10
+          }
+        ],
+        "annualMmRange": [
+          874.6,
+          961.7
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 874.6,
+      "annualRainDays": 91.8,
+      "dpd": 10
+    },
+    {
+      "id": "akl",
+      "name": "Auckland, NZ",
+      "wwis": {
+        "cityId": 538,
+        "cityName": "Auckland",
+        "stationName": "Auckland",
+        "latitude": "-36.850000000",
+        "longitude": "174.770000000",
+        "candidates": [
+          "Auckland, New Zealand (538)"
+        ],
+        "listCountry": "New Zealand",
+        "listCity": "Auckland"
+      },
+      "supplier": {
+        "memId": 46,
+        "memName": "New Zealand",
+        "orgName": "New Zealand National Meteorological Service",
+        "url": "www.metservice.co.nz"
+      },
+      "normals": {
+        "raintype": "PPT",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1981-2010",
+        "periodFrom": "rainfallb/rainfalle",
+        "rainfallPeriod": "1981-2010",
+        "raindayPeriod": null,
+        "generalPeriod": null,
+        "fromCLINO": "2002-05-21"
+      },
+      "sourcedFrom": "wmo-normals:Auckland_Aero_AWS",
+      "monthlyRainfallMm": [
+        58.1,
+        63.1,
+        75,
+        87.1,
+        119.8,
+        119.4,
+        136.9,
+        117.2,
+        100.1,
+        91.6,
+        68.9,
+        81.7
+      ],
+      "monthlyRainDays": [
+        6.8,
+        6.5,
+        7.7,
+        9.6,
+        13,
+        14.2,
+        15.2,
+        14.7,
+        12.5,
+        11.5,
+        9.3,
+        9
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "New_Zealand",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "Auckland_Aero_AWS",
+            "latitude": -37.009,
+            "longitude": 171.804,
+            "annualMm": 1118.9,
+            "annualRainDays": 130,
+            "dpd": 9
+          }
+        ],
+        "annualMmRange": [
+          1118.9,
+          1118.9
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 1118.9,
+      "annualRainDays": 130,
+      "dpd": 9
+    },
+    {
+      "id": "syd",
+      "name": "Sydney, AU",
+      "wwis": {
+        "cityId": 300,
+        "cityName": "Sydney",
+        "stationName": "SYDNEY (OBSERVATORY HILL)",
+        "latitude": "-33.860000000",
+        "longitude": "151.210000000",
+        "candidates": [
+          "Sydney, Australia (300)"
+        ],
+        "listCountry": "Australia",
+        "listCity": "Sydney"
+      },
+      "supplier": {
+        "memId": 185,
+        "memName": "Australia",
+        "orgName": "Bureau of Meteorology",
+        "url": "www.bom.gov.au"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1981-2010",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1981-2010",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:SydneyAirport (1 of 3, chosen alphabetically)",
+      "monthlyRainfallMm": [
+        80.7,
+        117.7,
+        96.5,
+        96,
+        90,
+        124.3,
+        71.4,
+        63.4,
+        58.1,
+        55.8,
+        71.7,
+        67.3
+      ],
+      "monthlyRainDays": [
+        7.8,
+        8.6,
+        9.4,
+        8,
+        7.6,
+        8.9,
+        7.2,
+        5.4,
+        6.3,
+        7.5,
+        8.6,
+        8
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Australia",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "SydneyAirport",
+            "latitude": -33.946,
+            "longitude": 151.173,
+            "annualMm": 992.9,
+            "annualRainDays": 93.3,
+            "dpd": 11
+          },
+          {
+            "station": "SydneyObservatoryHill",
+            "latitude": -33.861,
+            "longitude": 151.205,
+            "annualMm": 1148.1,
+            "annualRainDays": 95.2,
+            "dpd": 12
+          },
+          {
+            "station": "SydneyOlympicPark",
+            "latitude": -33.834,
+            "longitude": 151.072,
+            "annualMm": 945.8,
+            "annualRainDays": 83.8,
+            "dpd": 11
+          }
+        ],
+        "annualMmRange": [
+          945.8,
+          1148.1
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 992.9,
+      "annualRainDays": 93.3,
+      "dpd": 11
+    },
+    {
+      "id": "mel",
+      "name": "Melbourne, AU",
+      "wwis": {
+        "cityId": 301,
+        "cityName": "Melbourne",
+        "stationName": "MELBOURNE REGIONAL OFFICE",
+        "latitude": "-37.810000000",
+        "longitude": "144.970000000",
+        "candidates": [
+          "Melbourne, Australia (301)"
+        ],
+        "listCountry": "Australia",
+        "listCity": "Melbourne"
+      },
+      "supplier": {
+        "memId": 185,
+        "memName": "Australia",
+        "orgName": "Bureau of Meteorology",
+        "url": "www.bom.gov.au"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1981-2010",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1981-2010",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:MelbourneAirport (1 of 2, chosen alphabetically)",
+      "monthlyRainfallMm": [
+        39.3,
+        41.4,
+        37.5,
+        42.1,
+        34.3,
+        41.5,
+        32.8,
+        39.3,
+        46.1,
+        48.5,
+        60.1,
+        52.5
+      ],
+      "monthlyRainDays": [
+        5,
+        4.4,
+        5.2,
+        6.3,
+        7.3,
+        8.1,
+        8.4,
+        8.9,
+        8.8,
+        8.4,
+        7.4,
+        5.9
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Australia",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "MelbourneAirport",
+            "latitude": -37.665,
+            "longitude": 144.832,
+            "annualMm": 515.4,
+            "annualRainDays": 84.1,
+            "dpd": 6
+          },
+          {
+            "station": "MelbourneOlympicPark",
+            "latitude": -37.826,
+            "longitude": 144.982,
+            "annualMm": 588.8,
+            "annualRainDays": 90.5,
+            "dpd": 7
+          }
+        ],
+        "annualMmRange": [
+          515.4,
+          588.8
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 515.4,
+      "annualRainDays": 84.1,
+      "dpd": 6
+    },
+    {
+      "id": "ist",
+      "name": "Istanbul, TR",
+      "wwis": {
+        "cityId": 47,
+        "cityName": "Istanbul",
+        "stationName": "Istanbul",
+        "latitude": "40.970000000",
+        "longitude": "29.080000000",
+        "candidates": [
+          "Istanbul, Türkiye (47)"
+        ],
+        "listCountry": "Türkiye",
+        "listCity": "Istanbul"
+      },
+      "supplier": {
+        "memId": 14,
+        "memName": "Türkiye",
+        "orgName": "Turkish State Meteorological Service",
+        "url": "www.mgm.gov.tr"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1929-2000",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1929-2000",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:Sariyer",
+      "monthlyRainfallMm": [
+        96.1,
+        87.7,
+        69.8,
+        45.1,
+        37.2,
+        44.7,
+        36.3,
+        43.5,
+        81.3,
+        98.3,
+        100.5,
+        124.8
+      ],
+      "monthlyRainDays": [
+        12.3,
+        11,
+        9.2,
+        6.6,
+        4.8,
+        4.6,
+        3.6,
+        3.7,
+        6.6,
+        8.4,
+        9.6,
+        13.1
+      ],
+      "crossCheck": {
+        "status": "no station named for Istanbul among 211 in Turkiye"
+      },
+      "annualMm": 865.3,
+      "annualRainDays": 93.5,
+      "dpd": 9
+    },
+    {
+      "id": "ath",
+      "name": "Athens, GR",
+      "wwis": {
+        "cityId": 177,
+        "cityName": "Athens",
+        "stationName": "Athens",
+        "latitude": "37.970000000",
+        "longitude": "23.720000000",
+        "candidates": [
+          "Athens, Greece (177)"
+        ],
+        "listCountry": "Greece",
+        "listCity": "Athens"
+      },
+      "supplier": {
+        "memId": 63,
+        "memName": "Greece",
+        "orgName": "Hellenic National Meteorological Service",
+        "url": "www.hnms.gr"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1955-1997",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1955-1997",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wwis",
+      "monthlyRainfallMm": [
+        56.9,
+        46.7,
+        40.7,
+        30.8,
+        22.7,
+        10.6,
+        5.8,
+        6,
+        13.9,
+        52.6,
+        58.3,
+        69.1
+      ],
+      "monthlyRainDays": [
+        12.6,
+        10.4,
+        10.2,
+        8.1,
+        6.2,
+        3.7,
+        1.9,
+        1.7,
+        3.3,
+        7.2,
+        9.7,
+        12.1
+      ],
+      "crossCheck": {
+        "status": "country Greece absent from the normals"
+      },
+      "annualMm": 414.1,
+      "annualRainDays": 87.1,
+      "dpd": 5
+    },
+    {
+      "id": "cmn",
+      "name": "Casablanca, MA",
+      "wwis": {
+        "cityId": 179,
+        "cityName": "Casablanca",
+        "stationName": "Casablanca",
+        "latitude": "33.570000000",
+        "longitude": "-7.670000000",
+        "candidates": [
+          "Casablanca, Morocco (179)"
+        ],
+        "listCountry": "Morocco",
+        "listCity": "Casablanca"
+      },
+      "supplier": {
+        "memId": 45,
+        "memName": "Morocco",
+        "orgName": "Direction de la Météorologie Nationale",
+        "url": "www.marocmeteo.ma"
+      },
+      "normals": {
+        "raintype": "",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1991-2020",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1991-2020",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:CASABLANCAANFA",
+      "monthlyRainfallMm": [
+        61.9,
+        49.7,
+        42.5,
+        33.5,
+        13.6,
+        2.5,
+        0.5,
+        0.4,
+        11.7,
+        45.3,
+        84.4,
+        62.2
+      ],
+      "monthlyRainDays": [
+        6.5,
+        6.1,
+        6,
+        4.7,
+        2.2,
+        0.7,
+        0.1,
+        0,
+        1.8,
+        5.1,
+        6.7,
+        6.5
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Morocco",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "CASABLANCAANFA",
+            "latitude": 33.559,
+            "longitude": -7.667,
+            "annualMm": 408.2,
+            "annualRainDays": 46.4,
+            "dpd": 9
+          }
+        ],
+        "annualMmRange": [
+          408.2,
+          408.2
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 408.2,
+      "annualRainDays": 46.4,
+      "dpd": 9
+    },
+    {
+      "id": "amm",
+      "name": "Amman, JO",
+      "wwis": {
+        "cityId": 215,
+        "cityName": "Amman",
+        "stationName": "Amman Airport",
+        "latitude": "31.980000000",
+        "longitude": "35.980000000",
+        "candidates": [
+          "Amman, Jordan (215)"
+        ],
+        "listCountry": "Jordan",
+        "listCity": "Amman"
+      },
+      "supplier": {
+        "memId": 69,
+        "memName": "Jordan",
+        "orgName": "Jordan Meteorological Department",
+        "url": "www.jometeo.gov.jo"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": null,
+        "periodFrom": "not declared",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": null,
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wwis",
+      "monthlyRainfallMm": [
+        63.4,
+        61.7,
+        43.1,
+        13.7,
+        3.3,
+        0,
+        0,
+        0,
+        0.3,
+        6.6,
+        28,
+        49.2
+      ],
+      "monthlyRainDays": [
+        11,
+        10.9,
+        8,
+        4,
+        1.6,
+        0.1,
+        0,
+        0,
+        0.1,
+        2.3,
+        5.3,
+        8.4
+      ],
+      "crossCheck": {
+        "status": "country Jordan absent from the normals"
+      },
+      "annualMm": 269.3,
+      "annualRainDays": 51.7,
+      "dpd": 5
+    },
+    {
+      "id": "bgw",
+      "name": "Baghdad, IQ",
+      "wwis": {
+        "cityId": 1464,
+        "cityName": "Baghdad",
+        "stationName": "Baghdad",
+        "latitude": "33.320000000",
+        "longitude": "44.390000000",
+        "candidates": [
+          "Baghdad, Iraq (1464)"
+        ],
+        "listCountry": "Iraq",
+        "listCity": "Baghdad"
+      },
+      "supplier": {
+        "memId": 154,
+        "memName": "Iraq",
+        "orgName": "Iraqi Meteorological Organization and Seismology",
+        "url": ""
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": ".001",
+        "raindayThresholdUnit": "mm",
+        "period": "1976-2008",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1976-2008",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wwis",
+      "monthlyRainfallMm": [
+        27.2,
+        19.1,
+        22,
+        15.6,
+        3.2,
+        0,
+        0,
+        0,
+        0,
+        3.3,
+        12.4,
+        20
+      ],
+      "monthlyRainDays": [
+        8,
+        7,
+        8,
+        6,
+        4,
+        0,
+        0,
+        0,
+        0,
+        4,
+        6,
+        7
+      ],
+      "crossCheck": {
+        "status": "country Iraq absent from the normals"
+      },
+      "annualMm": 122.8,
+      "annualRainDays": 50,
+      "dpd": 2
+    },
+    {
+      "id": "cai",
+      "name": "Cairo, EG",
+      "wwis": {
+        "cityId": 248,
+        "cityName": "Cairo",
+        "stationName": "Cairo Airport",
+        "latitude": "30.083333000",
+        "longitude": "31.283333000",
+        "candidates": [
+          "Cairo, Egypt (248)"
+        ],
+        "listCountry": "Egypt",
+        "listCity": "Cairo"
+      },
+      "supplier": {
+        "memId": 59,
+        "memName": "Egypt",
+        "orgName": "The Egyptian Meteorological Authority (EMA)",
+        "url": "ema.gov.eg"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "0.01",
+        "raindayThresholdUnit": "mm",
+        "period": "1981-2010",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1981-2010",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:CairoAP",
+      "monthlyRainfallMm": [
+        4.8,
+        3.8,
+        6.3,
+        1.3,
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.7,
+        4.3,
+        3.4
+      ],
+      "monthlyRainDays": [
+        1.3,
+        2,
+        1.2,
+        1.3,
+        0.6,
+        0.6,
+        0.7,
+        1,
+        0.7,
+        0.1,
+        0.6,
+        0.8
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Egypt",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "CairoAP",
+            "latitude": 30.133,
+            "longitude": 31.4,
+            "annualMm": 24.8,
+            "annualRainDays": 10.9,
+            "dpd": 2
+          }
+        ],
+        "annualMmRange": [
+          24.8,
+          24.8
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 24.8,
+      "annualRainDays": 10.9,
+      "dpd": 2
+    },
+    {
+      "id": "dxb",
+      "name": "Dubai, AE",
+      "wwis": {
+        "cityId": 1190,
+        "cityName": "Dubai",
+        "stationName": "Dubai",
+        "latitude": "25.250000000",
+        "longitude": "55.330000000",
+        "candidates": [
+          "Dubai, United Arab Emirates (1190)"
+        ],
+        "listCountry": "United Arab Emirates",
+        "listCity": "Dubai"
+      },
+      "supplier": {
+        "memId": 117,
+        "memName": "United Arab Emirates",
+        "orgName": "The National Center of Meteorology",
+        "url": "www.ncm.gov.ae"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "0.2",
+        "raindayThresholdUnit": "mm",
+        "period": "1974-1991",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1974-1991",
+        "fromCLINO": "2005-01-25"
+      },
+      "sourcedFrom": "wmo-normals:DubaiIntlAirport",
+      "monthlyRainfallMm": [
+        20.8,
+        9.9,
+        21.7,
+        3.3,
+        0.1,
+        0,
+        1.1,
+        0,
+        0,
+        1.5,
+        5.9,
+        14.8
+      ],
+      "monthlyRainDays": [
+        2.8,
+        2.4,
+        3.4,
+        1.5,
+        1,
+        0,
+        2,
+        0,
+        1,
+        2,
+        1.9,
+        3.4
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "United_Arab_Emirates",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "DubaiIntlAirport",
+            "latitude": 25.25,
+            "longitude": 55.333,
+            "annualMm": 79.1,
+            "annualRainDays": 21.4,
+            "dpd": 4
+          }
+        ],
+        "annualMmRange": [
+          79.1,
+          79.1
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 79.1,
+      "annualRainDays": 21.4,
+      "dpd": 4
+    },
+    {
+      "id": "doh",
+      "name": "Doha, QA",
+      "wwis": {
+        "cityId": 221,
+        "cityName": "Doha",
+        "stationName": "Doha International Airport",
+        "latitude": "25.250000000",
+        "longitude": "51.570000000",
+        "candidates": [
+          "Doha, Qatar (221)"
+        ],
+        "listCountry": "Qatar",
+        "listCity": "Doha"
+      },
+      "supplier": {
+        "memId": 116,
+        "memName": "Qatar",
+        "orgName": "Qatar Meteorology Department",
+        "url": "qweather.gov.qa/Index.aspx"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "1",
+        "raindayThresholdUnit": "mm",
+        "period": "1962-1992",
+        "periodFrom": "rainfallb/rainfalle",
+        "rainfallPeriod": "1962-1992",
+        "raindayPeriod": "1962-1990",
+        "generalPeriod": null,
+        "fromCLINO": "2001-12-31"
+      },
+      "sourcedFrom": "wwis",
+      "monthlyRainfallMm": [
+        13.2,
+        17.1,
+        16.1,
+        8.7,
+        3.6,
+        0,
+        0,
+        0,
+        0,
+        1.1,
+        3.3,
+        12.1
+      ],
+      "monthlyRainDays": [
+        1.7,
+        2.1,
+        1.8,
+        1.4,
+        0.2,
+        0,
+        0,
+        0,
+        0,
+        0.1,
+        0.2,
+        1.3
+      ],
+      "crossCheck": {
+        "status": "country Qatar absent from the normals"
+      },
+      "annualMm": 75.2,
+      "annualRainDays": 8.8,
+      "dpd": 9
+    },
+    {
+      "id": "ruh",
+      "name": "Riyadh, SA",
+      "wwis": {
+        "cityId": 216,
+        "cityName": "Riyadh",
+        "stationName": "Riyadh",
+        "latitude": "24.720000000",
+        "longitude": "46.730000000",
+        "candidates": [
+          "Riyadh, Saudi Arabia (216)"
+        ],
+        "listCountry": "Saudi Arabia",
+        "listCity": "Riyadh"
+      },
+      "supplier": {
+        "memId": 79,
+        "memName": "Saudi Arabia",
+        "orgName": "National Center for Meteorology",
+        "url": "ncm.gov.sa"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "0.1",
+        "raindayThresholdUnit": "mm",
+        "period": "1982-2011",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1982-2011",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:RiyadhNew (1 of 2, chosen alphabetically)",
+      "monthlyRainfallMm": [
+        14.8,
+        8.3,
+        19.9,
+        23.7,
+        5.7,
+        0,
+        0,
+        0,
+        0,
+        1.5,
+        20.1,
+        13.5
+      ],
+      "monthlyRainDays": [
+        1.7,
+        1.5,
+        2.6,
+        3.7,
+        0.9,
+        0,
+        0,
+        0,
+        0,
+        0.4,
+        2.5,
+        1.7
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Saudi_Arabia",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "RiyadhNew",
+            "latitude": 24.925,
+            "longitude": 46.722,
+            "annualMm": 107.5,
+            "annualRainDays": 15,
+            "dpd": 7
+          },
+          {
+            "station": "RiyadhOld",
+            "latitude": 24.711,
+            "longitude": 46.738,
+            "annualMm": 99.9,
+            "annualRainDays": 14,
+            "dpd": 7
+          }
+        ],
+        "annualMmRange": [
+          99.9,
+          107.5
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 107.5,
+      "annualRainDays": 15,
+      "dpd": 7
+    },
+    {
+      "id": "phx",
+      "name": "Phoenix, US",
+      "wwis": {
+        "cityId": 806,
+        "cityName": "Phoenix, Arizona",
+        "stationName": "Phoenix",
+        "latitude": "33.430000000",
+        "longitude": "-112.020000000",
+        "candidates": [
+          "Phoenix, Arizona, United States of America (806)"
+        ],
+        "listCountry": "United States of America",
+        "listCity": "Phoenix, Arizona"
+      },
+      "supplier": {
+        "memId": 93,
+        "memName": "United States of America",
+        "orgName": "National Weather Service",
+        "url": "www.nws.noaa.gov/"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1981-2010",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1981-2010",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:PHOENIX_SKY_HARBOR_INTL_AP",
+      "monthlyRainfallMm": [
+        22.1,
+        22.1,
+        21,
+        5.7,
+        3.2,
+        0.6,
+        23,
+        23.6,
+        14.6,
+        14.3,
+        14.6,
+        18.7
+      ],
+      "monthlyRainDays": [
+        2.7,
+        3.1,
+        2.4,
+        1.2,
+        0.7,
+        0.1,
+        2.7,
+        3.2,
+        1.8,
+        1.8,
+        1.5,
+        2.8
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "United_States",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "PHOENIX_SKY_HARBOR_INTL_AP",
+            "latitude": 33.428,
+            "longitude": -112.004,
+            "annualMm": 183.5,
+            "annualRainDays": 24,
+            "dpd": 8
+          }
+        ],
+        "annualMmRange": [
+          183.5,
+          183.5
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 183.5,
+      "annualRainDays": 24,
+      "dpd": 8
+    },
+    {
+      "id": "bog",
+      "name": "Bogota, CO",
+      "wwis": {
+        "cityId": 157,
+        "cityName": "Bogota",
+        "stationName": "Bogota",
+        "latitude": "4.620000000",
+        "longitude": "-74.080000000",
+        "candidates": [
+          "Bogota, Colombia (157)"
+        ],
+        "listCountry": "Colombia",
+        "listCity": "Bogota"
+      },
+      "supplier": {
+        "memId": 57,
+        "memName": "Colombia",
+        "orgName": "Institute of Hydrology, Meteorology and Environment Studies",
+        "url": "www.ideam.gov.co"
+      },
+      "normals": {
+        "raintype": "PPT",
+        "raindayThreshold": "",
+        "raindayThresholdUnit": "mm",
+        "period": "1971-2000",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1971-2000",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wwis",
+      "monthlyRainfallMm": [
+        29,
+        44,
+        66,
+        101,
+        93,
+        54,
+        43,
+        46,
+        72,
+        107,
+        91,
+        53
+      ],
+      "monthlyRainDays": [
+        8,
+        11,
+        14,
+        18,
+        20,
+        18,
+        17,
+        16,
+        16,
+        18,
+        17,
+        12
+      ],
+      "crossCheck": {
+        "status": "no station named for Bogota among 229 in Colombia"
+      },
+      "annualMm": 799,
+      "annualRainDays": 185,
+      "dpd": 4
+    },
+    {
+      "id": "scl",
+      "name": "Santiago, CL",
+      "wwis": {
+        "cityId": 103,
+        "cityName": "Santiago",
+        "stationName": "Santiago",
+        "latitude": "-33.445000000",
+        "longitude": "-70.682500000",
+        "candidates": [
+          "Santiago, Chile (103)"
+        ],
+        "listCountry": "Chile",
+        "listCity": "Santiago"
+      },
+      "supplier": {
+        "memId": 28,
+        "memName": "Chile",
+        "orgName": "Dirección Meteorológica de Chile",
+        "url": "www.meteochile.cl"
+      },
+      "normals": {
+        "raintype": "Rainfall",
+        "raindayThreshold": "0.1",
+        "raindayThresholdUnit": "mm",
+        "period": "1981-2010",
+        "periodFrom": "datab/datae",
+        "rainfallPeriod": null,
+        "raindayPeriod": null,
+        "generalPeriod": "1981-2010",
+        "fromCLINO": ""
+      },
+      "sourcedFrom": "wmo-normals:Pudahuelaeropuertosantiago (1 of 2, chosen alphabetically)",
+      "monthlyRainfallMm": [
+        0.3,
+        0.9,
+        3.4,
+        13.4,
+        32.6,
+        66.5,
+        38.9,
+        34.1,
+        17.1,
+        8.4,
+        3.7,
+        2.2
+      ],
+      "monthlyRainDays": [
+        0.1,
+        0.1,
+        0.4,
+        1.6,
+        3.3,
+        5,
+        3.8,
+        3.3,
+        2.3,
+        1.1,
+        0.5,
+        0.3
+      ],
+      "crossCheck": {
+        "status": "matched",
+        "country": "Chile",
+        "matchedBy": "partial name",
+        "nearestKm": null,
+        "stations": [
+          {
+            "station": "Pudahuelaeropuertosantiago",
+            "latitude": -33.378,
+            "longitude": -70.788,
+            "annualMm": 221.5,
+            "annualRainDays": 21.8,
+            "dpd": 10
+          },
+          {
+            "station": "Quintanormalsantiago",
+            "latitude": -33.445,
+            "longitude": -70.683,
+            "annualMm": 286.3,
+            "annualRainDays": 23.8,
+            "dpd": 12
+          }
+        ],
+        "annualMmRange": [
+          221.5,
+          286.3
+        ],
+        "rejectedForMissingMonths": []
+      },
+      "annualMm": 221.5,
+      "annualRainDays": 21.8,
+      "dpd": 10
+    }
+  ]
+}

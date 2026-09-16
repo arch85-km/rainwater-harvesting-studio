@@ -972,13 +972,13 @@ CITATION.apa = `${CITATION.author} (${CITATION.year}). ${CITATION.title} ` +
                `(Version ${VERSION.number}) [Computer software]. ${CITATION.url}`;
 
 const CLIMATE_SOURCE = {
-  sourced:  false,          // set true by the generator
-  name:     "",             // e.g. "Open-Meteo historical weather API (reanalysis)"
-  endpoint: "",
-  window:   "",             // e.g. "1991-01-01 to 2020-12-31"
-  accessed: "",             // ISO date the generator ran
-  licence:  "",
-  note:     "Indicative teaching figures — not measured data, and not a citable source."
+  sourced:  true,
+  name:     "WMO Climate Normals 1991-2020 (NOAA NCEI) where available; WMO World Weather Information Service (WWIS) otherwise",
+  endpoint: "https://worldweather.wmo.int/en/json/{cityId}_en.json",
+  window:   "1991-2020 for 22 cities; 6 from WWIS over other periods — see docs/climate-source.json",
+  accessed: "2026-09-16",
+  licence:  "WMO Climate Normals 1991-2020 distributed by NOAA NCEI. Acknowledgement to the WMO World Weather Information Service, and to the national meteorological service named per city, is required for the cities sourced from it. Data reproduced accurately and unaltered.",
+  note:     "Gauge normals. Most cities use the WMO Climate Normals 1991-2020; the rest come from WWIS, where the period and the rain-day threshold vary by city. Each city records which — see docs/climate-source.json."
 };
 
 /* One-line provenance for the preset library. */
@@ -1040,34 +1040,34 @@ function rainfallProvenanceFor(climate) {
 }
 
 const CITIES = [
-  {id:"kul", name:"Kuala Lumpur, MY",  zone:"Tropical",    dpd:14, r:[165,200,260,290,225,130,145,175,215,260,310,225]},
-  {id:"sin", name:"Singapore, SG",     zone:"Tropical",    dpd:13, r:[240,165,185,180,170,130,160,175,170,195,255,290]},
-  {id:"kch", name:"Kuching, MY",       zone:"Tropical",    dpd:16, r:[680,510,340,290,250,210,200,230,260,330,360,460]},
-  {id:"jkt", name:"Jakarta, ID",       zone:"Tropical",    dpd:15, r:[385,310,215,150,115,100,65,45,65,140,175,205]},
-  {id:"mnl", name:"Manila, PH",        zone:"Tropical",    dpd:18, r:[20,12,15,25,130,255,420,430,355,235,140,75]},
-  {id:"cgp", name:"Chittagong, BD",    zone:"Monsoon",     dpd:25, r:[9,21,49,103,333,627,718,533,282,231,47,11]},
-  {id:"los", name:"Lagos, NG",         zone:"Tropical",    dpd:16, r:[28,46,102,150,269,460,279,64,140,206,69,25]},
-  {id:"nbo", name:"Nairobi, KE",       zone:"Highland",    dpd:9,  r:[64,57,92,219,177,35,18,24,31,56,155,80]},
-  {id:"lon", name:"London, UK",        zone:"Temperate",   dpd:5,  r:[55,41,42,44,49,45,45,50,49,69,59,55]},
-  {id:"dub", name:"Dublin, IE",        zone:"Temperate",   dpd:5,  r:[69,51,54,54,60,67,56,74,67,80,73,74]},
-  {id:"ber", name:"Berlin, DE",        zone:"Temperate",   dpd:6,  r:[43,35,39,38,55,71,55,58,46,37,45,48]},
-  {id:"sea", name:"Seattle, US",       zone:"Temperate",   dpd:7,  r:[143,98,90,70,50,40,18,24,39,89,166,144]},
-  {id:"chi", name:"Chicago, US",       zone:"Continental", dpd:10, r:[38,37,48,91,104,102,90,101,70,88,60,46]},
-  {id:"akl", name:"Auckland, NZ",      zone:"Temperate",   dpd:8,  r:[74,84,89,97,117,137,145,118,105,100,90,89]},
-  {id:"syd", name:"Sydney, AU",        zone:"Subtropical", dpd:11, r:[102,117,130,127,101,133,97,81,69,77,84,78]},
-  {id:"mel", name:"Melbourne, AU",     zone:"Temperate",   dpd:6,  r:[47,48,50,57,56,49,48,50,58,67,60,59]},
-  {id:"ist", name:"Istanbul, TR",      zone:"Mediterranean",dpd:9, r:[105,80,69,46,35,35,35,41,60,87,106,126]},
-  {id:"ath", name:"Athens, GR",        zone:"Mediterranean",dpd:9, r:[57,47,41,29,20,11,6,6,14,53,60,69]},
-  {id:"cmn", name:"Casablanca, MA",    zone:"Mediterranean",dpd:9, r:[68,55,46,39,18,4,0,1,6,33,76,77]},
-  {id:"amm", name:"Amman, JO",         zone:"Semi-arid",   dpd:10, r:[64,55,40,15,4,0,0,0,0,7,30,55]},
-  {id:"bgw", name:"Baghdad, IQ",       zone:"Arid",        dpd:9,  r:[26,28,26,22,7,0,0,0,0,8,21,26]},
-  {id:"cai", name:"Cairo, EG",         zone:"Arid",        dpd:5,  r:[5,4,4,1,0,0,0,0,0,1,4,6]},
-  {id:"dxb", name:"Dubai, AE",         zone:"Arid",        dpd:12, r:[19,25,21,9,1,0,1,0,0,1,3,16]},
-  {id:"doh", name:"Doha, QA",          zone:"Arid",        dpd:10, r:[13,17,16,9,4,0,0,0,0,1,4,11]},
-  {id:"ruh", name:"Riyadh, SA",        zone:"Arid",        dpd:11, r:[13,8,22,25,9,0,0,0,0,1,12,14]},
-  {id:"phx", name:"Phoenix, US",       zone:"Arid",        dpd:8,  r:[21,22,25,9,3,1,26,25,18,16,15,22]},
-  {id:"bog", name:"Bogota, CO",        zone:"Highland",    dpd:8,  r:[40,55,85,125,110,60,45,45,70,130,110,60]},
-  {id:"scl", name:"Santiago, CL",      zone:"Mediterranean",dpd:11,r:[1,2,4,11,50,77,75,55,22,14,8,6]}
+  {id:"kul", name:"Kuala Lumpur, MY",    zone:"Tropical",      lat:3.116667, lon:101.55, elev:null, dpd:17, r:[226.7,192.8,270.4,301.5,229.9,145.8,165.2,174.3,220.3,283.8,355.8,280.6]},
+  {id:"sin", name:"Singapore, SG",       zone:"Tropical",      lat:1.366667, lon:103.916667, elev:null, dpd:16, r:[221.6,105,151.1,163.8,163.8,137.1,144.8,148.9,124.6,166.4,254.1,332.1]},
+  {id:"kch", name:"Kuching, MY",         zone:"Tropical",      lat:1.48, lon:110.33, elev:null, dpd:20, r:[672.3,501.4,340.2,303.2,267.8,255.4,200.9,263.7,245.3,343.1,341.5,498.1]},
+  {id:"jkt", name:"Jakarta, ID",         zone:"Tropical",      lat:-6.17, lon:106.8, elev:null, dpd:16, r:[373.3,381.4,210.4,164.1,103.2,80.4,77.7,51.5,61,112.2,134.8,183.3]},
+  {id:"mnl", name:"Manila, PH",          zone:"Tropical",      lat:14.58, lon:120.97, elev:null, dpd:19, r:[19.4,21.9,21.8,23.4,159.1,253.3,432.3,492.5,396.4,220.6,119.9,98.5]},
+  {id:"cgp", name:"Chittagong, BD",      zone:"Monsoon",       lat:22.8, lon:91.99, elev:null, dpd:25, r:[9,21,49,103,333,627,718,533,282,231,47,11]},
+  {id:"los", name:"Lagos, NG",           zone:"Tropical",      lat:6.58, lon:3.33, elev:null, dpd:20, r:[10.5,40.9,68.4,145.5,235.8,433.7,208.9,91.4,217.9,189.1,51.5,9.7]},
+  {id:"nbo", name:"Nairobi, KE",         zone:"Highland",      lat:-1.3, lon:36.75, elev:null, dpd:11, r:[64.1,56.5,92.8,219.4,176.6,35,17.5,23.5,28.3,55.3,154.2,101]},
+  {id:"lon", name:"London, UK",          zone:"Temperate",     lat:51.504722, lon:-0.131111, elev:null, dpd:5, r:[58.1,43.6,37,42.5,44.7,50.5,43.1,54.9,49.8,66.9,65.7,58.6]},
+  {id:"dub", name:"Dublin, IE",          zone:"Temperate",     lat:53.38, lon:-6.27, elev:null, dpd:6, r:[61.8,52.4,51.4,55,57,64,61,73.4,63.3,78.4,82.7,72.1]},
+  {id:"ber", name:"Berlin, DE",          zone:"Temperate",     lat:52.565556, lon:13.310833, elev:null, dpd:5, r:[41.5,30,35.9,27.7,52.8,60.2,70,52.4,43.6,40.3,38.8,39.1]},
+  {id:"sea", name:"Seattle, US",         zone:"Temperate",     lat:47.43, lon:-122.3, elev:null, dpd:8, r:[146.7,95.6,105.8,80.9,47.7,36.8,15.1,24.7,41,99.4,160.4,145.2]},
+  {id:"chi", name:"Chicago, US",         zone:"Continental",   lat:41.98, lon:-87.9, elev:null, dpd:10, r:[37.5,37.2,47.8,90.7,103.9,102,90.3,101.4,70.3,88.3,59.7,45.5]},
+  {id:"akl", name:"Auckland, NZ",        zone:"Temperate",     lat:-36.85, lon:174.77, elev:null, dpd:9, r:[58.1,63.1,75,87.1,119.8,119.4,136.9,117.2,100.1,91.6,68.9,81.7]},
+  {id:"syd", name:"Sydney, AU",          zone:"Subtropical",   lat:-33.86, lon:151.21, elev:null, dpd:11, r:[80.7,117.7,96.5,96,90,124.3,71.4,63.4,58.1,55.8,71.7,67.3]},
+  {id:"mel", name:"Melbourne, AU",       zone:"Temperate",     lat:-37.81, lon:144.97, elev:null, dpd:6, r:[39.3,41.4,37.5,42.1,34.3,41.5,32.8,39.3,46.1,48.5,60.1,52.5]},
+  {id:"ist", name:"Istanbul, TR",        zone:"Mediterranean", lat:40.97, lon:29.08, elev:null, dpd:9, r:[96.1,87.7,69.8,45.1,37.2,44.7,36.3,43.5,81.3,98.3,100.5,124.8]},
+  {id:"ath", name:"Athens, GR",          zone:"Mediterranean", lat:37.97, lon:23.72, elev:null, dpd:5, r:[56.9,46.7,40.7,30.8,22.7,10.6,5.8,6,13.9,52.6,58.3,69.1]},
+  {id:"cmn", name:"Casablanca, MA",      zone:"Mediterranean", lat:33.57, lon:-7.67, elev:null, dpd:9, r:[61.9,49.7,42.5,33.5,13.6,2.5,0.5,0.4,11.7,45.3,84.4,62.2]},
+  {id:"amm", name:"Amman, JO",           zone:"Semi-arid",     lat:31.98, lon:35.98, elev:null, dpd:5, r:[63.4,61.7,43.1,13.7,3.3,0,0,0,0.3,6.6,28,49.2]},
+  {id:"bgw", name:"Baghdad, IQ",         zone:"Arid",          lat:33.32, lon:44.39, elev:null, dpd:2, r:[27.2,19.1,22,15.6,3.2,0,0,0,0,3.3,12.4,20]},
+  {id:"cai", name:"Cairo, EG",           zone:"Arid",          lat:30.083333, lon:31.283333, elev:null, dpd:2, r:[4.8,3.8,6.3,1.3,0.2,0,0,0,0,0.7,4.3,3.4]},
+  {id:"dxb", name:"Dubai, AE",           zone:"Arid",          lat:25.25, lon:55.33, elev:null, dpd:4, r:[20.8,9.9,21.7,3.3,0.1,0,1.1,0,0,1.5,5.9,14.8]},
+  {id:"doh", name:"Doha, QA",            zone:"Arid",          lat:25.25, lon:51.57, elev:null, dpd:9, r:[13.2,17.1,16.1,8.7,3.6,0,0,0,0,1.1,3.3,12.1]},
+  {id:"ruh", name:"Riyadh, SA",          zone:"Arid",          lat:24.72, lon:46.73, elev:null, dpd:7, r:[14.8,8.3,19.9,23.7,5.7,0,0,0,0,1.5,20.1,13.5]},
+  {id:"phx", name:"Phoenix, US",         zone:"Arid",          lat:33.43, lon:-112.02, elev:null, dpd:8, r:[22.1,22.1,21,5.7,3.2,0.6,23,23.6,14.6,14.3,14.6,18.7]},
+  {id:"bog", name:"Bogota, CO",          zone:"Highland",      lat:4.62, lon:-74.08, elev:null, dpd:4, r:[29,44,66,101,93,54,43,46,72,107,91,53]},
+  {id:"scl", name:"Santiago, CL",        zone:"Mediterranean", lat:-33.445, lon:-70.6825, elev:null, dpd:10, r:[0.3,0.9,3.4,13.4,32.6,66.5,38.9,34.1,17.1,8.4,3.7,2.2]}
 ];
 const CITY_BY_ID = Object.fromEntries(CITIES.map(c => [c.id, c]));
 
