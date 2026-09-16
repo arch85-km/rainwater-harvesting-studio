@@ -938,10 +938,15 @@ const ROOF_ORDER = ["flat","gable","hip","shed","butterfly","sawtooth","vault","
    that what the app shows and what `docs/climate-source.json` records stay the
    same thing.
 
-   Until that generator has been run, CLIMATE_SOURCE.sourced is false and the
-   values are INDICATIVE TEACHING FIGURES with no dataset behind them — good
-   enough to compare one roof against another, not citable as climate data. The
-   app says so wherever it prints a location. */
+   The library is now sourced, and not uniformly: 22 cities carry WMO Climate
+   Normals 1991-2020 and 6 carry WWIS records over their own periods, because
+   their countries contribute no station to the Normals composite. Every city
+   records which source, station and distance it came from.
+
+   If CLIMATE_SOURCE.sourced is ever false again, the values are INDICATIVE
+   TEACHING FIGURES with no dataset behind them — good enough to compare one
+   roof against another, not citable as climate data. The app says so wherever
+   it prints a location. */
 
 /* The window both the preset library and the in-app fetch are built on. 1991-2020
    is the WMO standard normal period, so a fetched site and a preset are the same
