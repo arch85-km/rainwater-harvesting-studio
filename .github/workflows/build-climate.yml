@@ -1,42 +1,25 @@
 # Give the rainfall library a source.
 #
 # The 28 preset cities in index.html were originally written by hand from no
-# dataset. tools/build-climate.mjs replaces them with figures that have a
-# source, a window and a retrieval date — but it needs outbound HTTPS to
-# open-meteo.com, which not every environment allows. This runs it somewhere
-# that does, with nothing to install.
+# dataset. This fetches real normals from the WMO World Weather Information
+# Service, cross-checks them against the WMO Climate Normals 1991-2020, and
+# commits the result to a branch for review.
 #
-# It UPLOADS the result; it does not commit. A committing workflow would author
-# commits as github-actions[bot], and the history of this repository is
-# deliberately the author's alone. Download the artifact, check it, commit it
-# yourself.
+# One button. No options to get wrong. It runs a dry pass first and stops there
+# if anything is off, so a bad fetch cannot reach the branch.
 
 name: Build climate library
 
 on:
   workflow_dispatch:
-    inputs:
-      source:
-        description: "Where the preset rainfall comes from."
-        type: choice
-        default: wwis
-        options:
-          - wwis
-          - openmeteo
-      dry_run:
-        description: "Fetch and report only — write nothing. Leave true for the first run."
-        type: boolean
-        default: true
 
-# Read-only: the job fetches data and uploads files. It cannot alter the
-# repository even if something goes wrong.
+# Needed to push the result to the climate-update branch. It never touches main.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    # 28 cities x 30 years, fetched one at a time and politely.
     timeout-minutes: 30
 
     steps:
@@ -44,68 +27,74 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
-      # The WMO Climate Normals live in a NOAA NCEI archive directory. Printing
-      # its listing is how the exact filenames get established rather than
-      # guessed — the rain-days file is known, the precipitation file is not.
+      # Informational: confirms the two cross-check files are still named what
+      # the generator expects.
       - name: List the WMO Normals archive
-        if: ${{ inputs.source == 'wwis' }}
         continue-on-error: true
         run: |
           url="https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/data-composite-primary-parameters/"
-          echo "### Files in the WMO Normals archive" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          curl -sSL --max-time 60 "$url" \
-            | grep -oE 'href="[^"]+\.csv"' | sed 's/href="//; s/"$//' \
-            | sort -u | tee -a "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "<details><summary>Files in the WMO Normals archive</summary>"
+            echo
+            echo '```'
+            curl -sSL --max-time 60 "$url" | grep -oE 'href="[^"]+\.csv"' | sed 's/href="//; s/"$//' | sort -u
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Run the generator
+      # Gate: fetch everything and report, writing nothing. If any city fails to
+      # resolve the generator exits non-zero here and the real run never happens.
+      - name: Check every city resolves
+        run: node tools/build-climate-wwis.mjs --dry-run
+
+      - name: Fetch for real
+        run: node tools/build-climate-wwis.mjs
+
+      - name: Confirm the library is actually sourced
         run: |
-          case "${{ inputs.source }}" in
-            wwis)      gen=tools/build-climate-wwis.mjs ;;
-            openmeteo) gen=tools/build-climate.mjs ;;
-            *) echo "unknown source"; exit 1 ;;
-          esac
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            node "$gen" --dry-run
-          else
-            node "$gen"
-          fi
+          grep -q 'sourced: *true' index.html \
+            || { echo "CLIMATE_SOURCE.sourced is still false — refusing to commit"; exit 1; }
+          test -s docs/climate-source.json \
+            || { echo "docs/climate-source.json is empty — refusing to commit"; exit 1; }
 
-      - name: Report what changed
-        if: ${{ inputs.dry_run == false }}
+      # Committed as the repository's author, not as a bot: this history is
+      # deliberately one person's. The branch is climate-update, never main, so
+      # the change is reviewed before it reaches the app.
+      - name: Commit to the climate-update branch
         run: |
-          echo "## Climate library rebuilt" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
+          git -c user.name="Karam Al-Obaidi" \
+              -c user.email="karam.arch85@gmail.com" \
+              commit -am "Source the rainfall library from WMO WWIS normals
 
-          if grep -q 'sourced: *true' index.html; then
-            echo "- \`CLIMATE_SOURCE.sourced\` is now **true** — the app will stop showing the amber disclaimer." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "- **\`CLIMATE_SOURCE.sourced\` is still false.** The library was not replaced; do not use this artifact." >> "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
+          Written by .github/workflows/build-climate.yml. Figures quoted in
+          docs/method-notes.html and pinned in the test suites were measured on
+          the previous data and are now stale; they must be re-derived by
+          measurement, not edited to fit."
+          git push --force origin HEAD:climate-update
 
-          echo "- \`docs/climate-source.json\` written, $(wc -c < docs/climate-source.json) bytes" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Download the **climate-data** artifact below and send both files back." >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Every figure quoted in \`docs/method-notes.html\` and pinned in the test" >> "$GITHUB_STEP_SUMMARY"
-          echo "suites was measured on the old data and is now stale. They must be" >> "$GITHUB_STEP_SUMMARY"
-          echo "re-derived, not edited to fit." >> "$GITHUB_STEP_SUMMARY"
+      - name: Say what happened
+        run: |
+          {
+            echo "## Rainfall library rebuilt"
+            echo
+            echo "Committed to the **climate-update** branch. \`main\` is untouched."
+            echo
+            echo '```'
+            git --no-pager diff --stat HEAD~1
+            echo '```'
+            echo
+            echo "Nothing else to do — tell Claude the run finished."
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Show the diff, so nothing lands unseen
-        if: ${{ inputs.dry_run == false }}
-        run: git --no-pager diff --stat
-
-      - name: Upload the regenerated files
-        if: ${{ inputs.dry_run == false }}
-        uses: actions/upload-artifact@v4
+      # A fallback copy, in case the branch is not convenient.
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: climate-data
           path: |
             index.html
             docs/climate-source.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30

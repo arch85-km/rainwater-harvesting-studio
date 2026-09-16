@@ -463,8 +463,8 @@ tools/build-climate-wwis.mjs
                           regenerates it from WMO WWIS gauge normals, cross-
                           checked against the WMO Climate Normals 1991–2020
 .github/workflows/        one manual workflow that regenerates the rainfall
-                          library on a runner with internet, and uploads the
-                          result rather than committing it
+                          library on a runner with internet and commits it to
+                          the climate-update branch for review
 CITATION.cff              machine-readable citation — the only format GitHub
                           reads, and what puts "Cite this repository" on the
                           repo page
