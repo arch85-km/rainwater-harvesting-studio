@@ -73,6 +73,21 @@ t("a city name shared across countries resolves to the right one",
   /London, United Kingdom/.test(out) && !/London, Canada/.test(out),
   (out.match(/London, \w[^\n]*/) || ["not resolved"])[0], "London, United Kingdom…");
 
+/* A station is often not named for the city it serves — Kuala Lumpur's is
+   Subang, 2 km away; Jakarta's is Stasiun Meteorologi Kemayoran at 5 km. Without
+   proximity matching those cities stay on WWIS records dating from 1971-2000 and
+   1930-1960. */
+t("a station near the city is found even when the name does not match",
+  /via wmo-normals:Subang/.test(out),
+  (out.match(/Kuala Lumpur[^\n]*/) || ["not matched"])[0], "via wmo-normals:Subang");
+
+/* Distance is not enough in mountains. Bogota is at 2,600 m; the nearest
+   station is 12 km away and 64% wetter because it is down-valley. Adopting it
+   silently would be worse than leaving the city on an older record. */
+t("a near station that disagrees wildly is rejected, and says why",
+  /not adopted, WWIS kept/.test(out) && !/via wmo-normals:La_Bolsa/.test(out),
+  (out.match(/Bogota[^\n]*not adopted[^\n]*/) || ["not rejected"])[0], "rejected with a reason");
+
 t("the cross-check section is reached", /cities cross-checked/.test(out),
   /cities cross-checked/.test(out) ? "reached" : "not reached", "reached");
 

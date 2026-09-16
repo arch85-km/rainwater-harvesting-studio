@@ -450,7 +450,7 @@ design, rather than quoting whichever number looks largest.
 
 ```
 index.html                the entire app — single file, no dependencies, no build step
-test/                     308 assertions, no dependencies — see Verifying below
+test/                     310 assertions, no dependencies — see Verifying below
 package.json              scripts and metadata; there is nothing to install
 docs/method-notes.html    method notes for students: what it calculates, which
                           clause each step comes from, and every figure the code
@@ -484,7 +484,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**308 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**310 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.

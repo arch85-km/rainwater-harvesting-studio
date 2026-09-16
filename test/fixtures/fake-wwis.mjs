@@ -73,20 +73,42 @@ const cityList = ['"Country";"City";"CityId"']
    whole-city fallback to the normals rather than leaving it unrun. */
 const NO_RAINDAYS = new Set(["Singapore", "Manila", "Auckland"]);
 
+/* Real WWIS coordinates for the cities whose normals station is found by
+   proximity rather than by name. Without them every city sits at 1.0,2.0 and no
+   station is ever within range, so the nearest-station path never runs and the
+   test proves nothing — which is what happened the first time. Bogota is here
+   deliberately: its nearest station is close but 64% wetter, and must be
+   rejected rather than adopted. */
+const REAL_COORDS = {
+  "Kuala Lumpur": [3.116667, 101.55],
+  "Jakarta":      [-6.17, 106.8],
+  "Istanbul":     [40.97, 29.08],
+  "Bogota":       [4.62, -74.08]
+};
+
 function cityJSON(id) {
   const p = presets[Number(id) - 1000];
   const wet = NO_RAINDAYS.has(p.city) ? 0 : 8;
   return JSON.stringify({
     city: {
       cityName: p.city, cityId: Number(id),
-      cityLatitude: "1.0", cityLongitude: "2.0", stationName: `${p.city} Station`,
+      cityLatitude: String((REAL_COORDS[p.city] || [1.0, 2.0])[0]),
+      cityLongitude: String((REAL_COORDS[p.city] || [1.0, 2.0])[1]),
+      stationName: `${p.city} Station`,
       member: { memId: 1, memName: "Test Service", orgName: "Test NMHS", url: "https://example.invalid" },
       climate: {
         raintype: "Rainfall", raindef: 1, rainunit: "mm",
         datab: 1991, datae: 2020,
-        climateMonth: Array.from({ length: 12 }, (_, i) => ({
-          month: i + 1, rainfall: 50 + i, raindays: wet
-        }))
+        /* Annual totals close to what WWIS really reports for these cities, so
+           the caller's disagreement guard is exercised against realistic gaps
+           rather than against a flat 666 mm. */
+        climateMonth: (() => {
+          const annual = { "Kuala Lumpur": 2427, "Jakarta": 1655, "Istanbul": 678, "Bogota": 799 }[p.city];
+          const each = annual ? annual / 12 : 50;
+          return Array.from({ length: 12 }, (_, i) => ({
+            month: i + 1, rainfall: annual ? each : 50 + i, raindays: wet
+          }));
+        })()
       }
     }
   });

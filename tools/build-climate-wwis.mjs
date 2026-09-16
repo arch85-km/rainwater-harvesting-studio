@@ -274,7 +274,22 @@ export async function loadNormalsPair(rainfallSrc, raindaySrc, read) {
    need to choose at all — the honest output is the span across the candidates,
    which is itself information about how well any single station represents
    the city. */
-export function matchNormals(table, city, cc) {
+/* Great-circle distance, km. */
+export function distanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371, p = Math.PI / 180;
+  const h = Math.sin((lat2 - lat1) * p / 2) ** 2 +
+            Math.cos(lat1 * p) * Math.cos(lat2 * p) * Math.sin((lon2 - lon1) * p / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/* How far a station may be from the city and still be taken to represent it. */
+export const NEAR_KM = 25;
+
+/* How far a proximity-matched station's annual total may sit from the city's
+   own published figure before it is treated as a different place. */
+export const NEAR_DISAGREE = 0.40;
+
+export function matchNormals(table, city, cc, near) {
   const country = NORMALS_COUNTRY[cc];
   if (!country) return { status: "no country mapping for " + cc };
   const pool = table.filter(d => d.country === country);
@@ -291,6 +306,26 @@ export function matchNormals(table, city, cc) {
      claim and a reader should be able to see which kind of match they have. */
   let matchedBy = named.length ? "exact name" : (cands.length ? "partial name" : null);
   if (!cands.length && pool.length === 1) { cands = pool; matchedBy = "sole station in country"; }
+
+  /* A station is often not named for the city it serves: Kuala Lumpur's is
+     Subang, 2 km away, and Jakarta's is Stasiun Meteorologi Kemayoran at 5 km.
+     Where the city's coordinates are known, the nearest usable station within
+     NEAR_KM is taken and the distance recorded, so a reader can judge it.
+
+     Distance alone is not enough in mountains — Bogota sits at 2,600 m and the
+     nearest station 12 km away reads 64% wetter, because it is down-valley in a
+     different regime. The caller compares the two annual totals and rejects a
+     match that disagrees wildly; this function only reports the distance. */
+  let nearestKm = null;
+  if (!cands.length && near && isFinite(near.lat) && isFinite(near.lon)) {
+    const usable = pool.filter(d => d.complete);
+    if (usable.length) {
+      const best = usable.reduce((a, b) =>
+        distanceKm(near.lat, near.lon, a.lat, a.lon) <= distanceKm(near.lat, near.lon, b.lat, b.lon) ? a : b);
+      const km = distanceKm(near.lat, near.lon, best.lat, best.lon);
+      if (km <= NEAR_KM) { cands = [best]; matchedBy = `nearest station, ${km.toFixed(0)} km`; nearestKm = km; }
+    }
+  }
 
   if (!cands.length) return { status: `no station named for ${city} among ${pool.length} in ${country}` };
 
@@ -311,6 +346,7 @@ export function matchNormals(table, city, cc) {
     status: "matched",
     country,
     matchedBy,
+    nearestKm,
     stations,
     annualMmRange: [Math.min(...mm), Math.max(...mm)],
     rejectedForMissingMonths: cands.filter(d => !d.complete).map(d => d.station)
@@ -459,8 +495,30 @@ for (const c of resolved) {
        every candidate is recorded. That choice is arbitrary and is labelled
        arbitrary; Berlin's four span 9% on the annual total and agree exactly on
        dpd, which is the figure the app uses. */
-    const alt = normalsTable ? matchNormals(normalsTable, c.city, c.cc) : { status: "no normals loaded" };
-    const prefer = alt.status === "matched" ? alt.stations[0] : null;
+    const alt = normalsTable
+      ? matchNormals(normalsTable, c.city, c.cc,
+          { lat: Number(city.cityLatitude), lon: Number(city.cityLongitude) })
+      : { status: "no normals loaded" };
+    let prefer = alt.status === "matched" ? alt.stations[0] : null;
+
+    /* A station matched only by proximity has to earn it. If its annual total
+       disagrees with what the city's own service publishes by more than
+       NEAR_DISAGREE, it is probably not representing the same place —
+       Bogota's nearest station is 12 km away and 64% wetter, because the city
+       is at 2,600 m and the station is not. Rejected, recorded, and WWIS keeps
+       the city. A name or sole-station match is not subjected to this: there
+       the identification is not in doubt, only the gauge. */
+    if (prefer && alt.matchedBy && alt.matchedBy.startsWith("nearest") && annual > 0) {
+      const gap = Math.abs(prefer.annualMm - annual) / annual;
+      if (gap > NEAR_DISAGREE) {
+        warnings.push(`${c.name}: nearest normals station ${prefer.station} is ${alt.nearestKm.toFixed(0)} km away ` +
+          `but reads ${Math.round(prefer.annualMm)} mm against WWIS's ${Math.round(annual)} mm ` +
+          `(${Math.round(gap * 100)}% apart) — not adopted, WWIS kept`);
+        alt.rejectedAsUnrepresentative = { station: prefer.station, km: alt.nearestKm,
+                                           normalsMm: prefer.annualMm, wwisMm: Math.round(annual) };
+        prefer = null;
+      }
+    }
 
     if (prefer) {
       const src = normalsTable.find(d => d.station === prefer.station);
