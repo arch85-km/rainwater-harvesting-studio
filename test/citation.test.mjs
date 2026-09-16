@@ -31,6 +31,7 @@ const notes = readFileSync(resolve(ROOT, "docs/method-notes.html"), "utf8");
 const pkg   = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8"));
 const cff   = readFileSync(resolve(ROOT, "CITATION.cff"), "utf8");
 const rdme  = readFileSync(resolve(ROOT, "README.md"), "utf8");
+const zen   = JSON.parse(readFileSync(resolve(ROOT, ".zenodo.json"), "utf8"));
 
 let pass = 0, fail = 0;
 const t = (name, cond, got, want) => {
@@ -200,6 +201,67 @@ console.log("\n\u2500\u2500 4. The README describes the app that ships \u2500\u2
   t("the method notes' Updated line is VERSION.label",
     !!upd && upd[1].replace(/&nbsp;/g, " ").trim() === VERSION.label,
     upd ? upd[1].trim() : "no Updated line", VERSION.label);
+}
+
+console.log("\n\u2500\u2500 5. The Zenodo record says the same as the citation \u2500\u2500");
+{
+  /* .zenodo.json is what the archive reads when a release is made, and it is
+     the one file here whose mistakes become permanent: a DOI is minted against
+     whatever it says. It duplicates CITATION.cff — title, version, date,
+     licence, author, ORCID, keywords — so it is a fifth copy of the citation,
+     and a fifth copy drifts like the other four did.
+
+     Held to the .cff rather than to text written here, so the .cff stays the
+     one place a citation is edited. */
+  const cffField = k => {
+    const m = cff.match(new RegExp(`^${k}:[ \\t]*(.+)$`, "m"));
+    return m ? m[1].trim().replace(/^["']|["']$/g, "") : null;
+  };
+
+  t("the Zenodo title is CITATION.cff's title", zen.title === cffField("title"),
+    zen.title, cffField("title"));
+  t("the Zenodo version is VERSION.number", zen.version === VERSION.number,
+    zen.version, VERSION.number);
+  t("the Zenodo publication date is VERSION.date", zen.publication_date === VERSION.date,
+    zen.publication_date, VERSION.date);
+  t("the Zenodo licence is package.json's", zen.license === pkg.license, zen.license, pkg.license);
+  t("the deposit is open access", zen.access_right === "open", zen.access_right, "open");
+  t("the upload type is software", zen.upload_type === "software", zen.upload_type, "software");
+
+  /* One creator, carrying the same ORCID the .cff does — bare, as Zenodo wants
+     it, not as a URL. The name is the .cff's structured name joined as Zenodo
+     asks ("Family, Given"), NOT CITATION.author: that is the APA short form,
+     "Al-Obaidi, K.M.", and initials in an archive record are a worse identifier
+     than the name the author actually publishes under. */
+  t("there is exactly one creator", Array.isArray(zen.creators) && zen.creators.length === 1,
+    zen.creators && zen.creators.length, 1);
+  const c = (zen.creators || [])[0] || {};
+  const nm = cff.match(/family-names:[ \t]*(.+)\n\s*given-names:[ \t]*(.+)/);
+  const want = nm ? `${nm[1].trim()}, ${nm[2].trim()}` : null;
+  t("the creator is the .cff's name as \"Family, Given\"", c.name === want, c.name, want);
+  t("the creator is not the APA short form", c.name !== CITATION.author,
+    c.name, "not " + CITATION.author);
+  const cffOrcid = (cff.match(/orcid:[ \t]*["']?https:\/\/orcid\.org\/([\dX-]+)/) || [])[1];
+  t("the creator's ORCID is the .cff's, without the URL prefix",
+    c.orcid === cffOrcid, c.orcid, cffOrcid);
+
+  /* Keywords are what makes it findable; a subset is a silent loss. */
+  const cffKeys = (cff.match(/^keywords:\n((?:\s+-\s+.+\n)+)/m) || ["", ""])[1]
+    .split("\n").map(l => l.replace(/^\s*-\s*/, "").trim()).filter(Boolean);
+  t("the keywords are the .cff's, in the same order",
+    JSON.stringify(zen.keywords) === JSON.stringify(cffKeys),
+    JSON.stringify(zen.keywords), JSON.stringify(cffKeys));
+
+  /* The address of record, declared to Zenodo as the same work. */
+  const ident = (zen.related_identifiers || []).find(r => r.identifier === CITATION.url);
+  t("the record points at the address of record", !!ident,
+    JSON.stringify((zen.related_identifiers || []).map(r => r.identifier)), CITATION.url);
+
+  /* WWIS's condition applies wherever its information is used, and a Zenodo
+     abstract is a place it is used. */
+  t("the description carries the WWIS acknowledgement",
+    /Acknowledgement must be given to the WMO World Weather Information Service/.test(zen.description),
+    "absent", "the condition, verbatim");
 }
 
 console.log(`\n${pass ? "✓" : "✗"} ${pass} passed, ${fail} failed\n`);

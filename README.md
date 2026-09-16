@@ -472,6 +472,8 @@ package.json              scripts and metadata; there is nothing to install
 docs/method-notes.html    method notes for students: what it calculates, which
                           clause each step comes from, and every figure the code
                           leaves unsourced. Paste into a CMS as an HTML block.
+.zenodo.json              what the Zenodo record says when a release is made —
+                          held to CITATION.cff by the suite
 docs/climate-source.json  provenance of the rainfall library — every city's
                           source, station, WMO number, elevation, period and
                           rain-day threshold. Written by the generator
@@ -503,7 +505,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**333 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**346 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.
@@ -554,6 +556,9 @@ What it covers:
 - **The rainfall licence in the app is the generator's** — character for
   character, with the two WWIS conditions checked as WWIS words them, so a
   paraphrase copied into both files still fails.
+- **The Zenodo record** — that `.zenodo.json` gives the same title, version,
+  date, licence, author and ORCID as `CITATION.cff`. It is the one file whose
+  mistakes become permanent, because a DOI is minted against whatever it says.
 - **This README** — that the assertion count above is the number actually run,
   that the data source named here is the one `CLIMATE_SOURCE` declares, and that
   the version line matches the app's. It had drifted to 310 and to a source the
