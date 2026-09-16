@@ -15,9 +15,9 @@
       "rainfall": "https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/data-composite-primary-parameters/wmo_normals_9120_PRCP.csv",
       "raindays": "https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/data-composite-primary-parameters/wmo_normals_9120_DP01.csv"
     },
-    "what": "Mean number of precipitation days per station, 1991-2020, recorded beside each city where the composite carries its country. An independent check on the same quantity over a uniform period — nothing in the app is calculated from it.",
+    "what": "The stations this city's country contributes, 1991-2020, with the WMO number, elevation and annual figures of each. Read it beside sourcedFrom: where that names a wmo-normals station, these ARE the source and stations[0] is the one used; where it says wwis, they are an independent comparison and nothing in the app is calculated from them.",
     "loaded": "5184 stations in both files",
-    "matched": 19,
+    "matched": 23,
     "caveat": "WWIS and the normals may define a precipitation day at different thresholds; a difference between them is not in itself an error."
   },
   "periods_present": [
@@ -111,7 +111,27 @@
         16.3
       ],
       "crossCheck": {
-        "status": "no station named for Kuala Lumpur among 15 in Malaysia"
+        "status": "matched",
+        "country": "Malaysia",
+        "matchedBy": "nearest station, 2 km",
+        "nearestKm": 1.628192050600118,
+        "stations": [
+          {
+            "station": "Subang",
+            "wmoStationId": "00048647",
+            "latitude": 3.131,
+            "longitude": 101.553,
+            "elevationM": 17,
+            "annualMm": 2847.1,
+            "annualRainDays": 167.2,
+            "dpd": 17
+          }
+        ],
+        "annualMmRange": [
+          2847.1,
+          2847.1
+        ],
+        "rejectedForMissingMonths": []
       },
       "annualMm": 2847.1,
       "annualRainDays": 167.2,
@@ -355,7 +375,27 @@
         12.8
       ],
       "crossCheck": {
-        "status": "no station named for Jakarta among 54 in Indonesia"
+        "status": "matched",
+        "country": "Indonesia",
+        "matchedBy": "nearest station, 5 km",
+        "nearestKm": 4.688101319625134,
+        "stations": [
+          {
+            "station": "StasiunMeteorologiKemayoran",
+            "wmoStationId": "00096745",
+            "latitude": -6.156,
+            "longitude": 106.84,
+            "elevationM": 4,
+            "annualMm": 1933.3,
+            "annualRainDays": 118.1,
+            "dpd": 16
+          }
+        ],
+        "annualMmRange": [
+          1933.3,
+          1933.3
+        ],
+        "rejectedForMissingMonths": []
       },
       "annualMm": 1933.3,
       "annualRainDays": 118.1,
@@ -1529,7 +1569,27 @@
         13.1
       ],
       "crossCheck": {
-        "status": "no station named for Istanbul among 211 in Turkiye"
+        "status": "matched",
+        "country": "Turkiye",
+        "matchedBy": "nearest station, 20 km",
+        "nearestKm": 19.73129589506065,
+        "stations": [
+          {
+            "station": "Sariyer",
+            "wmoStationId": "00017061",
+            "latitude": 41.146,
+            "longitude": 29.05,
+            "elevationM": 59,
+            "annualMm": 865.3,
+            "annualRainDays": 93.5,
+            "dpd": 9
+          }
+        ],
+        "annualMmRange": [
+          865.3,
+          865.3
+        ],
+        "rejectedForMissingMonths": []
       },
       "annualMm": 865.3,
       "annualRainDays": 93.5,
@@ -2319,7 +2379,33 @@
         12
       ],
       "crossCheck": {
-        "status": "no station named for Bogota among 229 in Colombia"
+        "status": "matched",
+        "country": "Colombia",
+        "matchedBy": "nearest station, 12 km",
+        "nearestKm": 12.014206838216179,
+        "stations": [
+          {
+            "station": "La_Bolsa",
+            "wmoStationId": "35025060",
+            "latitude": 4.576,
+            "longitude": -73.981,
+            "elevationM": 3195,
+            "annualMm": 1308.8,
+            "annualRainDays": 181.5,
+            "dpd": 7
+          }
+        ],
+        "annualMmRange": [
+          1308.8,
+          1308.8
+        ],
+        "rejectedForMissingMonths": [],
+        "rejectedAsUnrepresentative": {
+          "station": "La_Bolsa",
+          "km": 12.014206838216179,
+          "normalsMm": 1308.8,
+          "wwisMm": 799
+        }
       },
       "annualMm": 799,
       "annualRainDays": 185,
