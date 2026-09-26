@@ -541,7 +541,9 @@ h    rainfall depth for the time step, mm
             get <b>24.7&nbsp;%, 49.5&nbsp;%, 68.8&nbsp;%, 68.8&nbsp;%, 68.8&nbsp;%,
             68.8&nbsp;%</b>.</li>
           <li>Switch <b>Storage capacity</b> back to <i>BS basic approach</i> and read the size it
-            proposes: <b>8&nbsp;913&nbsp;litres</b>, against a curve that flattened at 1&nbsp;500.</li>
+            proposes: <b>8&nbsp;913&nbsp;litres</b>, against a curve that flattened at 1&nbsp;500.
+            <b>Capacity optimisation</b>, at the foot of the <b>Results</b> tab, draws that curve for
+            you.</li>
           <li>Untick <b>Daily balance</b> and watch every figure collapse. Explain why before reading
             on.</li>
         </ol>
@@ -612,17 +614,21 @@ h    rainfall depth for the time step, mm
         </figure>
         <ol class="cs-steps">
           <li><b>New model</b>, and leave the block at its default 12&nbsp;&times;&nbsp;8&nbsp;m
-            footprint, gable roof, 0.5&nbsp;m overhang, pitched rough surface.</li>
-          <li>Set the pitch to <code>15</code>&deg; and record catchment, surface area and annual
-            yield: <b>117.00&nbsp;m&sup2;, 121.13&nbsp;m&sup2;, 51.84&nbsp;m&sup3;</b>.</li>
-          <li>Take it to <code>25</code>, <code>35</code>, then <code>45</code>&deg;. The surface climbs
-            to 129.10, 142.83 and <b>165.46&nbsp;m&sup2;</b>. The catchment does not move. The yield
-            does not move.</li>
-          <li>Change the roof form to <b>vault</b> with a <code>6</code>&nbsp;m rise. The surface goes
-            further still; the catchment stays at 117.00&nbsp;m&sup2;.</li>
-          <li>Change the <b>overhang</b> from 0.5 to <code>1.5</code>&nbsp;m and watch the catchment
-            move for the first time. Then switch to <b>sawtooth</b>: it drops to 110.50&nbsp;m&sup2;,
-            the one form carrying its overhang on the low edge only.</li>
+            footprint, gable roof, 0.5&nbsp;m eaves overhang, rough pitched tile.</li>
+          <li>In the <b>Roof</b> tab, set <b>Pitch</b> to <code>15</code>&deg; and record catchment,
+            surface area and annual yield: <b>117.00&nbsp;m&sup2;, 121.13&nbsp;m&sup2;,
+            51.84&nbsp;m&sup3;</b>.</li>
+          <li>Take the pitch to <code>25</code>, <code>35</code>, then <code>45</code>&deg;. The
+            surface climbs to 129.10, 142.83 and <b>165.46&nbsp;m&sup2;</b>. The catchment does not
+            move. The yield does not move.</li>
+          <li>Change <b>Roof form</b> to <b>Vault</b>, leaving <b>Rise at crown</b> at its default
+            <code>3</code>&nbsp;m. The surface reaches <b>185.69&nbsp;m&sup2;</b>, more than the
+            45&deg; gable; the catchment is still 117.00&nbsp;m&sup2;.</li>
+          <li>Set the form back to <b>Gable</b> and change <b>Eaves overhang</b> from 0.5 to
+            <code>1.5</code>&nbsp;m. Now the catchment moves for the first time:
+            117.00&nbsp;&rarr;&nbsp;<b>165.00&nbsp;m&sup2;</b>. Put it back to <code>0.5</code> and
+            switch the form to <b>Sawtooth</b>: the catchment drops to <b>110.50&nbsp;m&sup2;</b>, the
+            one form carrying its overhang on the low edge only.</li>
         </ol>
         <p class="cs-principle"><b>Principle.</b> Rain falls vertically, so the catchment is the plan
           projection, exactly as the standard defines it. A 45&deg; roof buys 41&nbsp;% more covering,
@@ -719,14 +725,16 @@ h    rainfall depth for the time step, mm
           <li>Record again. The roof, the demand and the tank are untouched, and the harvest has gone
             <i>up</i> to <b>399.1&nbsp;m&sup3;</b>. Coverage falls from 100&nbsp;% to
             <b>79.5&nbsp;%</b>.</li>
-          <li>Set <b>Storage capacity</b> to <i>Set manually</i> and sweep both cities. Kuala Lumpur
+          <li>Set <b>Storage capacity</b> to <i>Set manually</i> and step <b>Tank capacity</b>
+            through the range in each city. Kuala Lumpur
             reaches 100&nbsp;% at <code>3000</code>&nbsp;litres and stays there. Chittagong climbs
             slowly &mdash; 68.3&nbsp;% at 1&nbsp;500, 77.2 at 3&nbsp;000, 83.7 at 10&nbsp;000,
             90.5 at 20&nbsp;000 &mdash; and does not reach 100&nbsp;% until
             <b>40&nbsp;000&nbsp;litres</b>. Thirteen times the tank, on four per cent more rain. The
             knees sit at <b>1&nbsp;353</b> and <b>17&nbsp;591&nbsp;litres</b>.</li>
-          <li>Look at the store-behaviour chart for each. One cycles all year; the other fills once in
-            the monsoon and empties over the five months from November to March.</li>
+          <li>Look at the <b>Storage behaviour</b> chart in the <b>Results</b> tab for each. One
+            cycles all year; the other fills once in the monsoon and empties over the five months
+            from November to March.</li>
         </ol>
         <p class="cs-principle"><b>Principle.</b> Annual rainfall totals tell you almost nothing about
           a harvesting system. What decides the tank is the longest stretch during which demand runs

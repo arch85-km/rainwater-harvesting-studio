@@ -845,8 +845,10 @@ spaced evenly through the month.</div>
             and <code>10000</code>&nbsp;litres, writing the coverage rate down each time. You should
             get <b>24.7&nbsp;%, 49.5&nbsp;%, 68.8&nbsp;%, 68.8&nbsp;%, 68.8&nbsp;%,
             68.8&nbsp;%</b>.</li>
-          <li>Plot them. The first 1&nbsp;000&nbsp;litres buys 59 points of coverage. The next
-            8&nbsp;500 buys one tenth of a point.</li>
+          <li>Plot them. The first 1&nbsp;000&nbsp;litres buys 59 points of coverage; the next
+            8&nbsp;500 buys one tenth of a point. Then check your plot against the app&rsquo;s own:
+            <b>Capacity optimisation</b>, at the foot of the <b>Results</b> tab, draws the same
+            curve.</li>
           <li>Now switch <b>Storage capacity</b> back to <i>BS basic approach</i> and read the size it
             proposes: <b>8&nbsp;913&nbsp;litres</b>, against a curve that flattened at 1&nbsp;500.</li>
           <li>Untick <b>Daily balance</b> and watch every figure collapse. Explain why before reading
@@ -863,19 +865,24 @@ spaced evenly through the month.</div>
         <span class="cs-ex-n">Exercise 2</span>
         <h3>Pitch changes the roof and not the harvest</h3>
         <ol class="cs-steps">
-          <li><b>New model</b>, and leave the block at its default 12&nbsp;&times;&nbsp;8&nbsp;m footprint,
-            gable roof, 0.5&nbsp;m overhang, pitched rough surface.</li>
-          <li>Set the pitch to <code>15</code>&deg;. Record catchment, surface area and annual yield:
-            <b>117.00&nbsp;m&sup2;, 121.13&nbsp;m&sup2;, 51.84&nbsp;m&sup3;</b>.</li>
-          <li>Take it to <code>25</code>, <code>35</code>, then <code>45</code>&deg;. The surface climbs to
-            129.10, 142.83 and <b>165.46&nbsp;m&sup2;</b>. The catchment does not move. The yield does not
-            move.</li>
-          <li>Change the roof form to <b>vault</b> and set the rise to <code>6</code>&nbsp;m. The surface
-            goes further still; the catchment stays at 117.00&nbsp;m&sup2;.</li>
-          <li>Now change the <b>overhang</b> from 0.5 to <code>1.5</code>&nbsp;m and watch the catchment
-            move for the first time.</li>
-          <li>Finally switch the form to <b>sawtooth</b> and note that the catchment drops to
-            110.50&nbsp;m&sup2; &mdash; the one form that carries its overhang on the low edge only.</li>
+          <li><b>New model</b>, and leave the block at its default 12&nbsp;&times;&nbsp;8&nbsp;m
+            footprint, gable roof, 0.5&nbsp;m eaves overhang, rough pitched tile.</li>
+          <li>In the <b>Roof</b> tab, set <b>Pitch</b> to <code>15</code>&deg;. Record catchment,
+            surface area and annual yield: <b>117.00&nbsp;m&sup2;, 121.13&nbsp;m&sup2;,
+            51.84&nbsp;m&sup3;</b>. Catchment and annual yield are tiles in the strip along the bottom
+            of the window; the surface is on the block readout in the corner of the view.</li>
+          <li>Take the pitch to <code>25</code>, <code>35</code>, then <code>45</code>&deg;. The
+            surface climbs to 129.10, 142.83 and <b>165.46&nbsp;m&sup2;</b>. The catchment does not
+            move. The yield does not move.</li>
+          <li>Change <b>Roof form</b> to <b>Vault</b>, leaving <b>Rise at crown</b> at its default
+            <code>3</code>&nbsp;m. The surface reaches <b>185.69&nbsp;m&sup2;</b>, more than the
+            45&deg; gable; the catchment is still 117.00&nbsp;m&sup2;.</li>
+          <li>Set the form back to <b>Gable</b> and change <b>Eaves overhang</b> from 0.5 to
+            <code>1.5</code>&nbsp;m. Now the catchment moves for the first time:
+            117.00&nbsp;&rarr;&nbsp;<b>165.00&nbsp;m&sup2;</b>.</li>
+          <li>Put the overhang back to <code>0.5</code>&nbsp;m and switch the form to <b>Sawtooth</b>.
+            The catchment drops to <b>110.50&nbsp;m&sup2;</b> &mdash; the one form that carries its
+            overhang on the low edge only.</li>
         </ol>
         <p class="cs-principle"><b>The principle.</b> Rain falls vertically, so the catchment is the
           plan projection: <span class="cs-mono">BS EN 16941&#8209;1:2024</span> defines <i>A</i> as the
@@ -902,9 +909,9 @@ spaced evenly through the month.</div>
           <li>Record again. The roof, the demand and the tank are untouched, and the harvest has gone
             <i>up</i> to <b>399.1&nbsp;m&sup3;</b>. Coverage falls from 100&nbsp;% to
             <b>79.5&nbsp;%</b>.</li>
-          <li>Set <b>Storage capacity</b> to <i>Set manually</i> and sweep both cities through
-            <code>1500</code>, <code>3000</code>, <code>6000</code>, <code>10000</code>,
-            <code>20000</code> and <code>40000</code>&nbsp;litres:</li>
+          <li>Set <b>Storage capacity</b> to <i>Set manually</i> and step <b>Tank capacity</b>
+            through <code>1500</code>, <code>3000</code>, <code>6000</code>, <code>10000</code>,
+            <code>20000</code> and <code>40000</code>&nbsp;litres, in each city:</li>
         </ol>
         <div class="cs-tbl">
           <table>
@@ -926,8 +933,9 @@ spaced evenly through the month.</div>
             <b>40&nbsp;000</b> for the same result &mdash; thirteen times the tank, on four per cent
             more rain. Read the knee off each curve too: <b>1&nbsp;353&nbsp;litres</b> against
             <b>17&nbsp;591</b>.</li>
-          <li>Look at the store-behaviour chart for each. One cycles all year; the other fills once in
-            the monsoon and empties over the five months from November to March.</li>
+          <li>Look at the <b>Storage behaviour</b> chart in the <b>Results</b> tab for each. One
+            cycles all year; the other fills once in the monsoon and empties over the five months from
+            November to March.</li>
         </ol>
         <p class="cs-principle"><b>The principle.</b> Annual rainfall totals tell you almost nothing about
           a harvesting system. What decides the tank is the longest stretch during which demand runs
