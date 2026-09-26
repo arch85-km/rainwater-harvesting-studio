@@ -1,0 +1,839 @@
+<!-- ======================================================================
+     RAINWATER HARVESTING STUDIO — "Method notes in brief"
+     A short companion to the full method notes.
+
+     Uses the SAME design system as the full notes: the .cs-doc scope, the same
+     custom properties, the same class names. Body type inherits from the site
+     (--cs-fb:inherit), so it picks up your serif exactly as the full notes do,
+     and it carries the same dark-mode block.
+
+     IF YOU PASTE THIS ON THE SAME PAGE AS THE FULL NOTES, delete the <style>
+     block below — the full notes already define every rule it contains, and
+     one copy is enough. On its own page, keep it.
+
+     THE CITATION STRIP JUMPS HERE. The "How to cite" heading below carries
+     id="how-to-cite", which is what the strip's "Version, BibTeX and licence"
+     link targets. Only ONE element per page may hold that id — so if the full
+     method notes are on this same page, remove the id from one of them.
+     ====================================================================== -->
+
+<style>
+.cs-doc{
+  --cs-paper:#F1F2EE; --cs-surface:#FBFBF9; --cs-surface2:#E8EAE4;
+  --cs-ink:#16191B; --cs-ink2:#4C555A; --cs-ink3:#5F696E;
+  --cs-rule:#D6D9D1; --cs-rule2:#E5E7E1;
+  --cs-accent:#1D5A73; --cs-accent-soft:rgba(29,90,115,.10);
+  --cs-ok:#3F6B47;  --cs-ok-soft:rgba(63,107,71,.12);
+  --cs-warn:#8A6410;--cs-warn-soft:rgba(138,100,16,.13);
+  --cs-no:#8E3A32;  --cs-no-soft:rgba(142,58,50,.11);
+  /* Headings and body follow the site's own typeface. `inherit` resolves where
+     it is used — inside .cs-doc, whose parent is the Elementor container — so
+     this keeps working if the theme font ever changes.
+     The monospace stack must NOT inherit: the table number columns use
+     font-variant-numeric:tabular-nums and align on fixed-width digits, and the
+     formulas and BibTeX block depend on their spacing. */
+  /* The site pairs a sans for headings with a serif for body, so the page
+     does the same. Body inherits — CSS has no way to inherit "the theme's
+     HEADING font", so that one is named. If the site's heading face ever
+     changes, this is the single line to update.
+     Weights sit at 600 throughout: the site ships Poppins 400/500/600 and
+     Source Serif 4 400/600, so 700 and 800 do not exist and the browser
+     would either drop to 600 or synthesise a smeared bold. Size carries the
+     hierarchy instead. */
+  --cs-fd:"Poppins",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  --cs-fb:inherit;
+  --cs-fm:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --cs-measure:90ch; --cs-rail:4.75rem;
+
+  background:var(--cs-paper); color:var(--cs-ink);
+  font-family:var(--cs-fb); font-size:17px; line-height:1.65; font-weight:400;
+  max-width:1040px; margin:0 auto; padding:0 20px 4rem;
+  -webkit-font-smoothing:antialiased; text-align:left;
+}
+@media (prefers-color-scheme:dark){
+  .cs-doc.cs-auto-dark{
+    --cs-paper:#121517; --cs-surface:#191D20; --cs-surface2:#21262A;
+    --cs-ink:#E9EBE6; --cs-ink2:#A6AFB4; --cs-ink3:#79838A;
+    --cs-rule:#2C3235; --cs-rule2:#232829;
+    --cs-accent:#74B6D0; --cs-accent-soft:rgba(116,182,208,.14);
+    --cs-ok:#7FB88C;  --cs-ok-soft:rgba(127,184,140,.14);
+    --cs-warn:#D6A748;--cs-warn-soft:rgba(214,167,72,.15);
+    --cs-no:#DD8479;  --cs-no-soft:rgba(221,132,121,.14);
+  }
+}
+
+/* local reset — only inside .cs-doc */
+.cs-doc *,.cs-doc *::before,.cs-doc *::after{box-sizing:border-box;}
+.cs-doc h1,.cs-doc h2,.cs-doc h3,.cs-doc h4,.cs-doc p,.cs-doc ul,.cs-doc ol,
+.cs-doc dl,.cs-doc dt,.cs-doc dd,.cs-doc table,.cs-doc figure{margin:0;padding:0;}
+.cs-doc ul,.cs-doc ol{list-style-position:outside;}
+.cs-doc li{margin:0;}
+.cs-doc img{max-width:100%;height:auto;}
+.cs-doc a{color:var(--cs-accent);text-decoration:underline;text-underline-offset:2px;}
+.cs-doc a:focus-visible{outline:2px solid var(--cs-accent);outline-offset:3px;}
+.cs-doc .cs-sechead{scroll-margin-top:5rem;}
+.cs-doc .cs-sechead:target h2{background:var(--cs-hl,rgba(127,127,127,.14));}
+.cs-doc code,.cs-doc .cs-mono{font-family:var(--cs-fm);font-size:.855em;}
+/* Inline bold defaults to 700. A site that ships only 400/500/600 has no such
+   face, so the browser either drops to 600 or fakes one by smearing the 400.
+   Pin it to a weight that exists. */
+.cs-doc b,.cs-doc strong{font-weight:600;}
+.cs-doc code{background:var(--cs-accent-soft);color:var(--cs-accent);
+  padding:.1em .34em;border-radius:2px;border:0;}
+
+/* masthead */
+.cs-doc .cs-masthead{padding:3.5rem 0 2.25rem;border-bottom:2px solid var(--cs-ink);}
+.cs-doc h1{font-family:var(--cs-fd);font-weight:600;
+  font-size:clamp(2.1rem,6.2vw,3.35rem);line-height:1.02;letter-spacing:-.028em;
+  text-wrap:balance;margin:0 0 1.1rem;color:var(--cs-ink);}
+.cs-doc .cs-standfirst{max-width:var(--cs-measure);font-size:1.14rem;line-height:1.6;
+  color:var(--cs-ink2);margin:0;}
+.cs-doc .cs-standfirst strong{color:var(--cs-ink);font-weight:600;}
+.cs-doc .cs-byline{display:flex;flex-wrap:wrap;gap:.5rem 1.6rem;margin-top:1.9rem;
+  font-family:var(--cs-fm);font-size:.74rem;letter-spacing:.04em;color:var(--cs-ink3);}
+.cs-doc .cs-byline b{color:var(--cs-ink2);font-weight:500;}
+
+/* trap notice */
+.cs-doc .cs-traps{margin:2.5rem 0;border:1px solid var(--cs-rule);
+  border-left:4px solid var(--cs-no);background:var(--cs-surface);padding:1.5rem 1.6rem;}
+.cs-doc .cs-traps h2{font-family:var(--cs-fd);font-size:.82rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--cs-no);margin:0 0 .9rem;}
+.cs-doc .cs-traps ol{margin:0;padding-left:1.15rem;display:grid;gap:.6rem;}
+.cs-doc .cs-traps li{max-width:var(--cs-measure);}
+
+/* sections */
+.cs-doc .cs-sec{padding:3.25rem 0 0;}
+.cs-doc .cs-sechead{display:grid;grid-template-columns:var(--cs-rail) 1fr;
+  align-items:baseline;gap:0 1rem;border-top:1px solid var(--cs-rule);
+  padding-top:1.4rem;margin-bottom:1.6rem;}
+.cs-doc .cs-secnum{font-family:var(--cs-fm);font-size:.95rem;font-weight:600;
+  color:var(--cs-accent);letter-spacing:.02em;font-variant-numeric:tabular-nums;}
+.cs-doc .cs-sechead h2{font-family:var(--cs-fd);font-weight:600;
+  font-size:clamp(1.45rem,3.3vw,1.95rem);line-height:1.12;letter-spacing:-.02em;
+  text-wrap:balance;margin:0;color:var(--cs-ink);}
+.cs-doc .cs-secbody{display:grid;grid-template-columns:var(--cs-rail) minmax(0,1fr);gap:0 1rem;}
+.cs-doc .cs-secbody>*{grid-column:2;}
+.cs-doc .cs-secbody>p,.cs-doc .cs-secbody>ul,.cs-doc .cs-secbody>ol{max-width:var(--cs-measure);}
+.cs-doc .cs-secbody>p{margin:0 0 1.05rem;}
+.cs-doc .cs-secbody>ul,.cs-doc .cs-secbody>ol{margin:0 0 1.15rem;padding-left:1.15rem;
+  display:grid;gap:.5rem;}
+.cs-doc h3{font-family:var(--cs-fd);font-weight:600;font-size:1.06rem;
+  letter-spacing:-.005em;margin:1.9rem 0 .7rem;color:var(--cs-ink);}
+.cs-doc .cs-secbody>h3:first-child{margin-top:0;}
+.cs-doc h4{font-family:var(--cs-fm);font-weight:600;font-size:.74rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--cs-ink3);margin:1.6rem 0 .6rem;}
+
+.cs-doc .cs-formula{font-family:var(--cs-fm);font-size:.84rem;line-height:1.75;
+  background:var(--cs-surface);border:1px solid var(--cs-rule);
+  border-left:3px solid var(--cs-accent);padding:.95rem 1.1rem;margin:0 0 1.2rem;
+  overflow-x:auto;white-space:pre;color:var(--cs-ink);}
+.cs-doc .cs-formula em{color:var(--cs-ink3);font-style:normal;}
+.cs-doc .cs-note{font-size:.9rem;color:var(--cs-ink2);border-left:2px solid var(--cs-rule);
+  padding-left:.95rem;margin:0 0 1.2rem;max-width:var(--cs-measure);}
+
+/* tables */
+.cs-doc .cs-tbl{overflow-x:auto;margin:0 0 1.4rem;border:1px solid var(--cs-rule);
+  background:var(--cs-surface);}
+.cs-doc .cs-tbl table{border-collapse:collapse;width:100%;font-size:.845rem;
+  line-height:1.45;background:transparent;}
+.cs-doc .cs-tbl th,.cs-doc .cs-tbl td{padding:.5rem .7rem;text-align:left;
+  vertical-align:top;border:0;border-bottom:1px solid var(--cs-rule2);color:var(--cs-ink);}
+.cs-doc .cs-tbl thead th{font-family:var(--cs-fm);font-size:.68rem;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--cs-ink3);
+  background:var(--cs-surface2);border-bottom:1px solid var(--cs-rule);white-space:nowrap;}
+.cs-doc .cs-tbl tbody tr:last-child td{border-bottom:0;}
+/* Greek and subscripted symbols must not be uppercased: text-transform turns
+   ν into Ν and γ into Γ, which are different letters, and a reader of a
+   materials table would be misled by both. */
+.cs-doc .cs-tbl thead th.cs-sym{text-transform:none;letter-spacing:.02em;font-size:.74rem;}
+.cs-doc .cs-tbl tbody tr{background:transparent;}
+.cs-doc .cs-tbl .cs-n{text-align:right;font-family:var(--cs-fm);
+  font-variant-numeric:tabular-nums;white-space:nowrap;}
+.cs-doc .cs-tbl .cs-p{font-family:var(--cs-fm);font-size:.8rem;white-space:nowrap;}
+.cs-doc .cs-tbl .cs-d{font-family:var(--cs-fm);font-variant-numeric:tabular-nums;
+  white-space:nowrap;color:var(--cs-accent);font-weight:500;text-align:right;}
+.cs-doc .cs-tbl caption{caption-side:bottom;text-align:left;padding:.6rem .7rem;
+  font-size:.78rem;color:var(--cs-ink3);border-top:1px solid var(--cs-rule2);}
+
+/* chips + ledger */
+.cs-doc .cs-chip{display:inline-block;font-family:var(--cs-fm);font-size:.64rem;
+  font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:.15em .5em;
+  border-radius:2px;white-space:nowrap;}
+.cs-doc .cs-chip.is-in{background:var(--cs-ok-soft);color:var(--cs-ok);}
+.cs-doc .cs-chip.is-part{background:var(--cs-warn-soft);color:var(--cs-warn);}
+.cs-doc .cs-chip.is-out{background:var(--cs-no-soft);color:var(--cs-no);}
+.cs-doc .cs-ledger{display:grid;gap:0;border:1px solid var(--cs-rule);
+  background:var(--cs-surface);margin-bottom:1.4rem;}
+.cs-doc .cs-ledger>div{display:grid;grid-template-columns:7.5rem minmax(0,1fr);
+  gap:.2rem .9rem;padding:.8rem 1rem;border-bottom:1px solid var(--cs-rule2);}
+.cs-doc .cs-ledger>div:last-child{border-bottom:0;}
+.cs-doc .cs-ledger dt{font-family:var(--cs-fd);font-weight:600;font-size:.95rem;
+  grid-column:2;margin:0;color:var(--cs-ink);}
+.cs-doc .cs-ledger .cs-chip{grid-row:1;grid-column:1;align-self:start;margin-top:.18rem;}
+.cs-doc .cs-ledger dd{grid-column:2;margin:0;font-size:.93rem;color:var(--cs-ink2);
+  line-height:1.55;}
+
+/* exercises */
+.cs-doc .cs-ex{border:1px solid var(--cs-rule);background:var(--cs-surface);
+  padding:1.5rem 1.6rem;margin-bottom:1.5rem;}
+.cs-doc .cs-ex-n{font-family:var(--cs-fm);font-size:.7rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--cs-accent);
+  display:block;margin-bottom:.35rem;}
+.cs-doc .cs-ex h3{margin:0 0 .9rem;font-size:1.18rem;}
+.cs-doc .cs-steps{margin:0;padding-left:1.2rem;display:grid;gap:.5rem;font-size:.95rem;}
+.cs-doc .cs-steps code{font-size:.8rem;}
+.cs-doc .cs-principle{font-size:.93rem;color:var(--cs-ink2);
+  border-top:1px solid var(--cs-rule2);padding-top:.85rem;margin:.95rem 0 0;}
+.cs-doc .cs-principle b{color:var(--cs-ink);font-weight:600;}
+
+/* footer */
+.cs-doc .cs-footer{margin-top:4rem;padding-top:1.6rem;border-top:2px solid var(--cs-ink);
+  font-size:.86rem;color:var(--cs-ink2);}
+.cs-doc .cs-footer p{max-width:var(--cs-measure);margin:0 0 .8rem;}
+.cs-doc .cs-cite{font-family:var(--cs-fm);font-size:.78rem;color:var(--cs-ink3);line-height:1.7;}
+.cs-doc .cs-refs{max-width:var(--cs-measure);margin:0 0 1.2rem;padding-left:1.15rem;
+  display:grid;gap:.55rem;font-size:.9rem;color:var(--cs-ink2);}
+.cs-doc .cs-refs b{color:var(--cs-ink);font-weight:600;}
+.cs-doc .cs-ref{border-left:2px solid var(--cs-rule);padding-left:.95rem;margin:0 0 1rem;
+  max-width:var(--cs-measure);font-size:.92rem;color:var(--cs-ink2);}
+.cs-doc pre{margin:0 0 1rem;padding:.9rem 1rem;background:var(--cs-surface);
+  border:1px solid var(--cs-rule);overflow-x:auto;font-family:var(--cs-fm);
+  font-size:.78rem;line-height:1.6;color:var(--cs-ink);white-space:pre;}
+
+/* Large screens. Most sizes here are in rem, which is relative to the ROOT
+   font size, not to .cs-doc — so raising .cs-doc alone would scale the body
+   copy and leave the byline, notes and references behind. They are stepped up
+   together. */
+@media (min-width:1280px){
+  .cs-doc{font-size:18.5px;max-width:1140px;}
+  .cs-doc .cs-standfirst{font-size:1.22rem;}
+  .cs-doc .cs-byline{font-size:.84rem;}
+  .cs-doc h3{font-size:1.14rem;}
+  .cs-doc .cs-note{font-size:.97rem;}
+  .cs-doc .cs-ref{font-size:1rem;}
+  .cs-doc .cs-cite{font-size:.86rem;}
+  .cs-doc pre{font-size:.86rem;}
+  .cs-doc .cs-ledger dt{font-size:1.02rem;}
+  .cs-doc .cs-ledger dd{font-size:1rem;}
+  .cs-doc .cs-chip{font-size:.70rem;}
+  .cs-doc .cs-traps h2{font-size:.88rem;}
+  .cs-doc .cs-steps{font-size:1rem;}
+  .cs-doc .cs-principle{font-size:.99rem;}
+  .cs-doc .cs-ex-n{font-size:.76rem;}
+}
+@media (max-width:720px){
+  .cs-doc{--cs-rail:0px;font-size:16px;}
+  .cs-doc .cs-sechead{grid-template-columns:1fr;gap:.35rem;}
+  .cs-doc .cs-secbody{grid-template-columns:minmax(0,1fr);}
+  .cs-doc .cs-secbody>*{grid-column:1;}
+  .cs-doc .cs-traps,.cs-doc .cs-ex{padding:1.15rem;}
+}
+@media (max-width:560px){
+  .cs-doc .cs-ledger>div{grid-template-columns:1fr;}
+  .cs-doc .cs-ledger .cs-chip{grid-row:auto;grid-column:1;justify-self:start;margin-bottom:.3rem;}
+  .cs-doc .cs-ledger dt,.cs-doc .cs-ledger dd{grid-column:1;}
+}
+@media (prefers-reduced-motion:reduce){
+  .cs-doc *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
+}
+
+/* quick start — this page only */
+.cs-doc .cs-quick{margin:2.5rem 0 0;border:1px solid var(--cs-rule);
+  border-left:4px solid var(--cs-accent);background:var(--cs-surface);padding:1.5rem 1.6rem;}
+.cs-doc .cs-quick h2{font-family:var(--cs-fd);font-size:.82rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--cs-accent);margin:0 0 .9rem;}
+.cs-doc .cs-quick ol{margin:0;padding-left:1.15rem;display:grid;gap:.6rem;}
+.cs-doc .cs-quick li{max-width:var(--cs-measure);}
+.cs-doc .cs-quick .cs-principle{margin-top:1rem;}
+.cs-doc .cs-eyebrow{font-family:var(--cs-fm);font-size:.70rem;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--cs-accent);margin:0 0 1.1rem;}
+
+/* Figures. A host theme usually styles <figure> and <figcaption> itself, and
+   its rules can be specific enough to win here — which is where an italic
+   caption and a caption sitting hard against the next paragraph come from.
+   The four properties that decide that are pinned, so the caption keeps this
+   page's own monospace label style wherever the fragment is pasted. */
+.cs-doc .cs-fig{margin:0 0 1.9rem !important;font-style:normal;}
+.cs-doc .cs-fig svg{display:block;width:100%;height:auto;font-style:normal;
+  background:var(--cs-paper);border:1px solid var(--cs-rule);}
+.cs-doc .cs-fig figcaption{font-family:var(--cs-fm) !important;
+  font-style:normal !important;font-size:.68rem;letter-spacing:.06em;line-height:1.5;
+  text-align:left;text-transform:uppercase;color:var(--cs-ink3);
+  margin:.7rem 0 0 !important;}
+</style>
+
+<div class="cs-doc cs-auto-dark">
+
+  <div class="cs-masthead">
+    <p class="cs-eyebrow">Rainwater Harvesting Studio &middot; In brief</p>
+    <h1>Method notes in brief</h1>
+    <p class="cs-standfirst">The short version: what the tool calculates, which clause of
+      <span class="cs-mono">BS&nbsp;EN&nbsp;16941&#8209;1:2024</span> each step comes from, and
+      <strong>where it departs from that standard</strong>. The method is the standard&rsquo;s; the
+      rainfall behind it is twelve monthly totals per city, which is the single fact that decides how
+      far a number from here can travel. The
+      <a href="https://github.com/arch85-km/rainwater-harvesting-studio" target="_blank" rel="noopener">full
+      method notes</a> give the clause-by-clause check, the measured tables and the provenance of every
+      figure.</p>
+    <div class="cs-byline">
+      <span><b>Audience</b> Architecture students and staff</span>
+      <span><b>Method</b> BS EN 16941-1:2024 &middot; yield and store simulation</span>
+      <span><b>Runs</b> Entirely in the browser</span>
+      <span><b>Version</b> 1.0.0 &middot; 16 September 2026</span>
+    </div>
+  </div>
+
+  <div class="cs-traps">
+    <h2>Three things to know before you cite a number</h2>
+    <ol>
+      <li><b>There is no daily rainfall in this tool, anywhere.</b> The standard&rsquo;s detailed
+        approach (A.2.2.2) runs on measured daily rainfall over at least five years. This tool holds
+        twelve monthly totals per location and nothing else. Its <i>daily balance</i> option does not
+        read daily data: it divides the month&rsquo;s depth by a typical depth per wet day to get a
+        count of wet days, then spreads the month&rsquo;s water evenly across them. A synthetic year
+        of identical showers stands in for a real one of downpours and dry spells &mdash; and real
+        rainfall is lumpier, so real dry runs are longer and real spills larger than this shows.
+        <b>Expect it to flatter a small tank, and do not present a tank size from here as a
+        BS&nbsp;EN&nbsp;16941&#8209;1 detailed-approach sizing.</b></li>
+      <li><b>The number to report is mains water displaced, not annual yield.</b> Annual yield is what
+        the roof collects; a good deal of it overflows and is never used. Mains water displaced is what
+        the store actually supplied &mdash; what the system is for, and what the saving is worked out
+        from. Quote yield without storage and you will overstate the benefit, often by half.</li>
+      <li><b>A station is not a city, and six of the twenty-eight presets are not on the same footing
+        as the rest.</b> Twenty-two come from the <i>WMO Climate Normals 1991&ndash;2020</i> &mdash; one
+        named gauge, one period, one definition of a rain day throughout. Six &mdash; Nairobi, Athens,
+        Amman, Baghdad, Doha and Bogot&aacute; &mdash; come from the <i>WMO World Weather Information
+        Service</i> instead, over whatever period their national service published &mdash; from
+        1955&ndash;1997 onwards, and two declare no period at all.
+        <span class="cs-mono">docs/climate-source.json</span> names the source, station, WMO number,
+        elevation and period for every city. Cite the station, not the city: its <i>London</i> is a
+        central gauge reading 113.5 rain days a year, and <i>Heathrow</i> is a different gauge
+        22&nbsp;km west reading 111.6.</li>
+    </ol>
+  </div>
+
+  <section class="cs-sec">
+    <div class="cs-sechead"><span class="cs-secnum"></span><h2>What it calculates</h2></div>
+    <div class="cs-secbody">
+      <p>Yield is Formula&nbsp;(1) of clause 6.1.2, implemented directly and summed over surfaces so
+        that blocks of different materials each keep their own coefficient:</p>
+      <div class="cs-formula">Y = SUM( A_i  x  e_i  x  h  x  eta )        litres
+
+<em>A_i  horizontal projection of collection area i, m2
+e_i  surface yield coefficient of that surface, Table 2
+h    rainfall depth for the time step, mm
+eta  hydraulic treatment efficiency coefficient</em>
+
+1 mm falling on 1 m2 = 1 litre, which is where the units close.</div>
+      <p>Two losses, and only two. <b>e</b> is what the roof surface itself loses to wetting,
+        evaporation and wind &mdash; all eight surfaces of Table&nbsp;2 at the published values.
+        <b>&eta;</b> is what the pre-tank treatment loses, defaulting to 0.90. The note to clause 6.1.2
+        says 0.9 <i>can be used</i> where the manufacturer specifies nothing: it is a fallback the
+        standard offers, <b>not a minimum it requires</b>. Put the manufacturer&rsquo;s figure in when
+        you have one. The <b>first-flush</b> input is the tool&rsquo;s own addition; Formula&nbsp;(1)
+        has no such term, so leave it at 0 to calculate strictly to the standard.</p>
+      <p>Demand is built per person per day from four end uses times occupancy, plus an optional
+        seasonal irrigation term. WC flushing at 25 and laundry at 15 come to 40&nbsp;l/person/day,
+        which is exactly the BSI UK National Annex NA.1.2 figure &mdash; but the split between the two
+        is the tool&rsquo;s, and cleaning at 5 and vehicle wash at 2 have no source at all. Annual
+        demand is daily &times; 365, as Formula&nbsp;(4). <b>The tool always uses 365</b> and gives you
+        no way to say otherwise, so a school or office model overstates annual demand by every day the
+        building is shut.</p>
+      <p>The store is operated by Formulas&nbsp;(A.3) and (A.4) of Annex A.2.2.3. Abstraction is the
+        lesser of the demand and the volume standing at the <i>end of the previous step</i>, before
+        this step&rsquo;s inflow is added; anything above the usable volume overflows. That is the
+        YAS convention &mdash; Yield After Spillage &mdash; and it is the conservative one. Three
+        warm-up cycles run before the fourth is reported, so the answer does not depend on how full
+        the tank was assumed to be on 1 January.</p>
+      <div class="cs-ledger">
+        <div><span class="cs-chip is-out">not it</span><dt>Annual yield</dt>
+          <dd>What the roof collects. A large part can overflow, so on its own it overstates the benefit.</dd></div>
+        <div><span class="cs-chip is-out">not it</span><dt>Peak flow, litres/second</dt>
+          <dd>How fast water leaves the roof in one storm, which sizes pipes. No bearing on the tank.</dd></div>
+        <div><span class="cs-chip is-out">not it</span><dt>Storage capacity</dt>
+          <dd>An input, or the output of a sizing rule. Not a performance result.</dd></div>
+        <div><span class="cs-chip is-in">the answer</span><dt>Mains water displaced</dt>
+          <dd>The volume the store actually supplied over the year. This is the number to report.</dd></div>
+      </div>
+      <p class="cs-note">Alongside it the tool reports the <b>coverage rate</b> <i>C</i><sub>r</sub>,
+        supplied divided by demanded, which is Formula&nbsp;(A.5); and a second figure counting the
+        <i>steps</i> in which demand was met in full. That second figure is the tool&rsquo;s own &mdash;
+        the standard has no such measure, and the two diverge whenever a shortfall is partial rather
+        than total. Report <i>C</i><sub>r</sub> if you are citing the standard.</p>
+    </div>
+  </section>
+
+  <section class="cs-sec">
+    <div class="cs-sechead"><span class="cs-secnum"></span><h2>Catchment is the plan projection, and pitch does not change it</h2></div>
+    <div class="cs-secbody">
+      <p>The tool builds each roof as a set of planes and keeps the <b>vertical component</b> of the
+        area vector &mdash; the area of the roof&rsquo;s shadow on the ground, not the area of the
+        sloping surface you would tile. This is not a simplification the tool has chosen:
+        <span class="cs-mono">BS&nbsp;EN&nbsp;16941&#8209;1:2024</span> clause 6.1.2 defines <i>A</i> in
+        Formula&nbsp;(1) as <b>the horizontal projection of the collection area</b>. Rain falls
+        vertically; a steeper roof intercepts no more of it.</p>
+      <div class="cs-tbl">
+        <table>
+          <caption>Measured by running the tool&rsquo;s own geometry on a 12&nbsp;&times;&nbsp;8&nbsp;m
+            block with a 0.5&nbsp;m overhang, London rainfall, rough pitched tile. Catchment and yield
+            do not move at all.</caption>
+          <thead><tr><th>Gable pitch</th><th class="cs-sym">Catchment</th><th class="cs-sym">Sloping surface</th><th class="cs-sym">Annual yield</th></tr></thead>
+          <tbody>
+            <tr><td class="cs-n">15&deg;</td><td class="cs-n">117.00 m&sup2;</td><td class="cs-n">121.13 m&sup2;</td><td class="cs-d">51.84 m&sup3;</td></tr>
+            <tr><td class="cs-n">25&deg;</td><td class="cs-n">117.00 m&sup2;</td><td class="cs-n">129.10 m&sup2;</td><td class="cs-d">51.84 m&sup3;</td></tr>
+            <tr><td class="cs-n">35&deg;</td><td class="cs-n">117.00 m&sup2;</td><td class="cs-n">142.83 m&sup2;</td><td class="cs-d">51.84 m&sup3;</td></tr>
+            <tr><td class="cs-n">45&deg;</td><td class="cs-n">117.00 m&sup2;</td><td class="cs-n">165.46 m&sup2;</td><td class="cs-d">51.84 m&sup3;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>At 45&deg; you are buying 41&nbsp;% more roof covering, more structure and more cost, and
+        collecting exactly the same water. If you want more water, extend the footprint or the
+        overhang. Seven of the eight roof forms give the same catchment,
+        <span class="cs-mono">(w&nbsp;+&nbsp;2o)(d&nbsp;+&nbsp;2o)</span>; the sawtooth is the exception,
+        because it carries its overhang on the low edge only.</p>
+    </div>
+  </section>
+
+  <section class="cs-sec">
+    <div class="cs-sechead"><span class="cs-secnum"></span><h2>The time step decides the answer</h2></div>
+    <div class="cs-secbody">
+      <p>With monthly stepping there is one draw per month, taken against the volume standing at the
+        end of the previous month. A tank cannot be drawn twice, so however often it would really
+        refill, the most it can supply in a month is its own capacity. On the terraced-housing model,
+        whose demand is about 22&nbsp;m&sup3; a month, that is not a small effect:</p>
+      <div class="cs-tbl">
+        <table>
+          <caption>Coverage rate against capacity for the same model, stepped both ways. Produced by
+            driving the tool&rsquo;s own hydrology module.</caption>
+          <thead><tr><th>Usable capacity</th><th class="cs-sym">C<sub>r</sub>, monthly step</th><th class="cs-sym">C<sub>r</sub>, daily step</th></tr></thead>
+          <tbody>
+            <tr><td class="cs-n">1 000 L</td><td class="cs-n">4.6 %</td><td class="cs-d">49.5 %</td></tr>
+            <tr><td class="cs-n">2 000 L</td><td class="cs-n">9.1 %</td><td class="cs-d">68.8 %</td></tr>
+            <tr><td class="cs-n">4 000 L</td><td class="cs-n">18.3 %</td><td class="cs-d">68.8 %</td></tr>
+            <tr><td class="cs-n">10 000 L</td><td class="cs-n">45.7 %</td><td class="cs-d">68.8 %</td></tr>
+            <tr><td class="cs-n">20 000 L</td><td class="cs-n">68.8 %</td><td class="cs-d">68.8 %</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The monthly column is an artefact of the time step, not a property of the tank. <b>Use the
+        daily balance for any store smaller than a month&rsquo;s demand</b>; the app warns when you
+        have not. The monthly step is only safe for comparing capacities well above that threshold.
+        A coverage rate quoted without its time step cannot be checked by anyone reading you &mdash;
+        the step alone moves it from 4.6&nbsp;% to 49.5&nbsp;%.</p>
+    </div>
+  </section>
+
+  <section class="cs-sec">
+    <div class="cs-sechead"><span class="cs-secnum"></span><h2>Where the figures come from, and where they come from nowhere</h2></div>
+    <div class="cs-secbody">
+      <p>Most of the method is traceable to a clause. Some of what the tool puts on screen is not, and
+        the difference matters more than any single number:</p>
+      <dl class="cs-ledger">
+        <div><span class="cs-chip is-in">Standard</span><dt>The method, nearly entire</dt><dd>Catchment and yield (6.1.2, Formula 1, Table 2), the demand formulas (6.1.3), the store and coverage rate (A.2.2.3), capacity and dry periods (A.2.1), the coverage curve (A.2.2.4), and NA.1.2 and NA.3 from the BSI UK National Annex. Clauses beginning NA are UK-only: a reader holding a non-UK copy of EN 16941-1 will not find them.</dd></div>
+        <div><span class="cs-chip is-part">Sourced data</span><dt>The rainfall library</dt><dd>Twenty-eight cities, twenty-two on the WMO Climate Normals and six on WWIS, each with station, WMO number, elevation and period recorded in docs/climate-source.json. A wet day here is 1 mm or more, which matches the Normals' own DP01 definition — but Baghdad counts a rain day at 0.001 mm and four of the six WWIS cities declare no threshold, so their depth per wet day is not comparable with the rest.</dd></div>
+        <div><span class="cs-chip is-out">No source</span><dt>Several numbers on screen</dt><dd>The 75 mm/h design storm and the downpipe table; cleaning at 5 and vehicle wash at 2 l/person/day, and the split of NA.1.2's 40 into WC 25 and laundry 15; the mains tariff of 2.20, whose currency the code never names; and the knee rule — the smallest capacity reaching 95 % of the best achievable coverage, where the standard plots the curve and leaves the choice to the project.</dd></div>
+      </dl>
+      <p class="cs-note">The litres-per-second figure is not a design. The gutter and downpipe check
+        divides the catchment by one fixed storm intensity and looks a pipe up in a table, and the code
+        names a source for neither. Its own comment marks it as not a substitute for
+        <span class="cs-mono">BS&nbsp;EN&nbsp;12056&#8209;3</span>. Use it to see that a roof this size
+        needs pipes of roughly this order, and for nothing else.</p>
+    </div>
+  </section>
+
+  <section class="cs-sec">
+    <div class="cs-sechead"><span class="cs-secnum"></span><h2>Not modelled at all</h2></div>
+    <div class="cs-secbody">
+      <p>None of the following is approximated or simplified. It is <b>absent</b>, and a result from
+        this tool says nothing about any of it.</p>
+      <ul>
+        <li><b>Water quality, treatment and risk assessment</b> &mdash; clauses 5.9 and 10, and the
+          whole of National Annex NA.2 with its guideline values and monitoring. A tool that sizes a
+          tank has said nothing about whether the water in it is fit for the use.</li>
+        <li><b>Pumps, pipework, controls, pressure and energy.</b> No pump curve, no head, no kWh. And
+          no back-up supply sizing: a mains top-up volume is reported, but no pipe and no air gap.</li>
+        <li><b>Carbon, capital cost and payback.</b> The tool multiplies displaced mains water by a
+          tariff. That is a saving in water charges, not a financial appraisal.</li>
+        <li><b>Climate change.</b> National Annex NA.4 asks for a sensitivity analysis on drier summers
+          and wetter winters. The tool holds no future scenario and will not prompt you for one, so a
+          tank sized here is sized for the climate that was.</li>
+        <li><b>Tank geometry, siting and losses.</b> Capacity is a number of litres &mdash; no shape,
+          no minimum water level, no calmed inlet, no evaporation or leakage. Nor where the overflow
+          goes: the volume is reported and the model stops there.</li>
+        <li><b>Regulatory compliance of any kind.</b> No Building Regulations, no water fittings
+          regulations, no pass or fail, no notion of jurisdiction beyond the National Annex rules named
+          above. Treat every output as a design study.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="cs-sec">
+    <div class="cs-sechead"><span class="cs-secnum"></span><h2>Three exercises</h2></div>
+    <div class="cs-secbody">
+      <p>Each is a sequence of settings and a number to read back. The figures quoted were produced by
+        running the tool&rsquo;s own modules, so if you follow the steps exactly you should see them.</p>
+
+      <div class="cs-ex">
+        <span class="cs-ex-n">Exercise 01</span>
+        <h3>The tank that stops paying for itself</h3>
+        <figure class="cs-fig">
+<svg viewBox="0 0 720 336" role="img" aria-label="Coverage rate against usable storage capacity for the terraced-housing model on Dublin rainfall. Coverage climbs steeply to 68.8 per cent at 1,500 litres and is flat after that: 2,000, 4,000 and 10,000 litres all return the same 68.8 per cent. The basic-approach rule proposes 8,913 litres, six times the capacity the curve justifies.">
+  <text x="20" y="24" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="var(--cs-ink)">WHERE MORE TANK STOPS BUYING ANYTHING</text>
+  <text x="20" y="38" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-ink3)">Terraced housing row &#183; Dublin &#183; daily balance &#183; every point read from the tool</text>
+  <text x="20" y="58" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-ink3)">COVERAGE RATE</text>
+  <path d="M80 250.0 L660 250.0" stroke="var(--cs-rule2)" stroke-width="1"/>
+  <text x="71" y="253.5" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="end">0%</text>
+  <path d="M80 204.0 L660 204.0" stroke="var(--cs-rule2)" stroke-width="1"/>
+  <text x="71" y="207.5" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="end">20%</text>
+  <path d="M80 158.0 L660 158.0" stroke="var(--cs-rule2)" stroke-width="1"/>
+  <text x="71" y="161.5" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="end">40%</text>
+  <path d="M80 112.0 L660 112.0" stroke="var(--cs-rule2)" stroke-width="1"/>
+  <text x="71" y="115.5" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="end">60%</text>
+  <path d="M80 66.0 L660 66.0" stroke="var(--cs-rule2)" stroke-width="1"/>
+  <text x="71" y="69.5" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="end">80%</text>
+  <path d="M80 66 L80 250" stroke="var(--cs-rule)" stroke-width="1"/>
+  <path d="M80 250 L660 250" stroke="var(--cs-rule)" stroke-width="1"/>
+  <path d="M80.0 250 L80.0 254" stroke="var(--cs-rule)" stroke-width="1"/>
+  <text x="80.0" y="267" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="middle">0</text>
+  <path d="M196.0 250 L196.0 254" stroke="var(--cs-rule)" stroke-width="1"/>
+  <text x="196.0" y="267" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="middle">2&#8201;000</text>
+  <path d="M312.0 250 L312.0 254" stroke="var(--cs-rule)" stroke-width="1"/>
+  <text x="312.0" y="267" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="middle">4&#8201;000</text>
+  <path d="M428.0 250 L428.0 254" stroke="var(--cs-rule)" stroke-width="1"/>
+  <text x="428.0" y="267" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="middle">6&#8201;000</text>
+  <path d="M544.0 250 L544.0 254" stroke="var(--cs-rule)" stroke-width="1"/>
+  <text x="544.0" y="267" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="middle">8&#8201;000</text>
+  <path d="M660.0 250 L660.0 254" stroke="var(--cs-rule)" stroke-width="1"/>
+  <text x="660.0" y="267" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink3)" text-anchor="middle">10&#8201;000</text>
+  <text x="370.0" y="284" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-ink3)" text-anchor="middle">USABLE CAPACITY, LITRES</text>
+  <path d="M201.8 113.8 L645.5 113.8" stroke="var(--cs-ink3)" stroke-width="1" stroke-dasharray="4 3"/>
+  <path d="M645.5 113.8 l-7 -3.5 l0 7 Z" fill="var(--cs-ink3)"/>
+  <text x="422.2" y="106.76000000000002" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-ink3)" text-anchor="middle">8&#8201;500 more litres buys 0.0 points of coverage</text>
+  <path d="M109.0 193.2 L138.0 136.2 L167.0 91.8 L196.0 91.8 L312.0 91.8 L660.0 91.8" fill="none" stroke="var(--cs-accent)" stroke-width="2"/>
+  <circle cx="109.0" cy="193.2" r="3.4" fill="var(--cs-accent)"/>
+  <circle cx="138.0" cy="136.2" r="3.4" fill="var(--cs-accent)"/>
+  <circle cx="167.0" cy="91.8" r="3.4" fill="var(--cs-accent)"/>
+  <circle cx="196.0" cy="91.8" r="3.4" fill="var(--cs-accent)"/>
+  <circle cx="312.0" cy="91.8" r="3.4" fill="var(--cs-accent)"/>
+  <circle cx="660.0" cy="91.8" r="3.4" fill="var(--cs-accent)"/>
+  <path d="M167.0 91.8 L167.0 250" stroke="var(--cs-ok)" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="177.0" y="152" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10" fill="var(--cs-ok)">1&#8201;500 L &#8212; the knee</text>
+  <text x="177.0" y="165" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10" fill="var(--cs-ok)">68.8% coverage, and that is the ceiling</text>
+  <path d="M597.0 123.8 L597.0 250" stroke="var(--cs-no)" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="586.954" y="206" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10" fill="var(--cs-no)" text-anchor="end">8&#8201;913 L &#8212; what the basic-approach rule proposes</text>
+  <text x="586.954" y="219" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10" fill="var(--cs-no)" text-anchor="end">six times the knee, for no more water</text>
+  <text x="20" y="306" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10.5" fill="var(--cs-no)">Storage buys reliability with sharply diminishing returns. Size from the curve, not from a rule of thumb.</text>
+  <text x="20" y="324" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-ink3)">The knee moves with the time step: on a monthly balance this same 1&#8201;000 L tank returns 4.6%, not 49.5%.</text>
+</svg>
+<figcaption>Coverage rate against tank size, terraced housing on Dublin rainfall. The curve is flat past 1,500 litres &mdash; the rule of thumb proposes six times that.</figcaption>
+        </figure>
+        <ol class="cs-steps">
+          <li>Open <b>Models &rsaquo; Terraced housing row</b> &mdash; five blocks, 325&nbsp;m&sup2; of
+            catchment, 18 occupants, Dublin rainfall.</li>
+          <li>In <b>System</b>, tick <b>Daily balance</b> and set <b>Storage capacity</b> to
+            <i>Set manually</i>.</li>
+          <li>Record the coverage rate at <code>500</code>, <code>1000</code>, <code>1500</code>,
+            <code>2000</code>, <code>4000</code> and <code>10000</code>&nbsp;litres. You should get
+            <b>24.7&nbsp;%, 49.5&nbsp;%, 68.8&nbsp;%, 68.8&nbsp;%, 68.8&nbsp;%, 68.8&nbsp;%</b>.</li>
+          <li>Switch <b>Storage capacity</b> back to <i>BS basic approach</i> and read the size it
+            proposes: <b>8&nbsp;913&nbsp;litres</b>, against a curve that flattened at 1&nbsp;500.</li>
+          <li>Untick <b>Daily balance</b> and watch every figure collapse. Explain why before reading
+            on.</li>
+        </ol>
+        <p class="cs-principle"><b>Principle.</b> Storage buys reliability with sharply diminishing
+          returns, and the point of diminishing return is set by how often the tank refills &mdash; not
+          by the annual totals. A rule of thumb worked out on annual figures cannot see that point:
+          here it sizes the store six times larger than the curve justifies. <b>Size from the curve,
+          and say which time step you ran it on.</b></p>
+      </div>
+
+      <div class="cs-ex">
+        <span class="cs-ex-n">Exercise 02</span>
+        <h3>Pitch changes the roof and not the harvest</h3>
+        <figure class="cs-fig">
+<svg viewBox="0 0 720 318" role="img" aria-label="Sections through the same 12 by 8 metre block with a 15 degree and a 45 degree gable. Rain falls vertically, so both roofs intercept the same horizontal projection: 117 square metres of catchment and 51.84 cubic metres of annual yield. The sloping surface grows from 121 to 165 square metres.">
+  <text x="20" y="24" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="var(--cs-ink)">PITCH CHANGES THE ROOF, NOT THE HARVEST</text>
+  <text x="20" y="38" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-ink3)">Sections through the same 12 &#215; 8 m block, 0.5 m overhang &#183; every figure read from the tool</text>
+  <path d="M110.0 74 L110.0 215.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M107.2 215.0 L112.8 215.0 L110.0 220.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M140.0 74 L140.0 207.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M137.2 207.0 L142.8 207.0 L140.0 212.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M170.0 74 L170.0 199.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M167.2 199.0 L172.8 199.0 L170.0 204.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M200.0 74 L200.0 191.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M197.2 191.0 L202.8 191.0 L200.0 196.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M230.0 74 L230.0 199.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M227.2 199.0 L232.8 199.0 L230.0 204.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M260.0 74 L260.0 207.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M257.2 207.0 L262.8 207.0 L260.0 212.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M290.0 74 L290.0 215.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M287.2 215.0 L292.8 215.0 L290.0 220.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M124.0 224 L124.0 254 M276.0 224 L276.0 254" stroke="var(--cs-ink3)" stroke-width="1"/>
+  <path d="M110.0 224 L200 200.0 L290.0 224 Z" fill="var(--cs-surface2)" stroke="var(--cs-ink)" stroke-width="1.5"/>
+  <path d="M92.0 254 L308.0 254" stroke="var(--cs-ink)" stroke-width="1.5"/>
+  <path d="M110.0 267 L290.0 267" stroke="var(--cs-ok)" stroke-width="3"/>
+  <path d="M110.0 224 L110.0 267 M290.0 224 L290.0 267" stroke="var(--cs-ok)" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="200" y="283" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10" fill="var(--cs-ok)" text-anchor="middle">CATCHMENT 117.00 m&#178;</text>
+  <text x="200" y="245" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10.5" fill="var(--cs-ink)" text-anchor="middle">15&#176; GABLE</text>
+  <text x="200" y="62" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10" fill="var(--cs-ink3)" text-anchor="middle">sloping surface 121.13 m&#178;</text>
+  <path d="M430.0 74 L430.0 215.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M427.2 215.0 L432.8 215.0 L430.0 220.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M460.0 74 L460.0 185.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M457.2 185.0 L462.8 185.0 L460.0 190.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M490.0 74 L490.0 155.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M487.2 155.0 L492.8 155.0 L490.0 160.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M520.0 74 L520.0 125.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M517.2 125.0 L522.8 125.0 L520.0 130.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M550.0 74 L550.0 155.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M547.2 155.0 L552.8 155.0 L550.0 160.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M580.0 74 L580.0 185.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M577.2 185.0 L582.8 185.0 L580.0 190.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M610.0 74 L610.0 215.0" stroke="var(--cs-accent)" stroke-width="1" opacity=".6"/>
+  <path d="M607.2 215.0 L612.8 215.0 L610.0 220.5 Z" fill="var(--cs-accent)" opacity=".6"/>
+  <path d="M444.0 224 L444.0 254 M596.0 224 L596.0 254" stroke="var(--cs-ink3)" stroke-width="1"/>
+  <path d="M430.0 224 L520 134.0 L610.0 224 Z" fill="var(--cs-surface2)" stroke="var(--cs-ink)" stroke-width="1.5"/>
+  <path d="M412.0 254 L628.0 254" stroke="var(--cs-ink)" stroke-width="1.5"/>
+  <path d="M430.0 267 L610.0 267" stroke="var(--cs-ok)" stroke-width="3"/>
+  <path d="M430.0 224 L430.0 267 M610.0 224 L610.0 267" stroke="var(--cs-ok)" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="520" y="283" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10" fill="var(--cs-ok)" text-anchor="middle">CATCHMENT 117.00 m&#178;</text>
+  <text x="520" y="245" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10.5" fill="var(--cs-ink)" text-anchor="middle">45&#176; GABLE</text>
+  <text x="520" y="62" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10" fill="var(--cs-ink3)" text-anchor="middle">sloping surface 165.46 m&#178; &#183; +41%</text>
+  <path d="M330 160 L390 160" stroke="var(--cs-ink3)" stroke-width="1" stroke-dasharray="4 3"/>
+  <path d="M390 160 l-7 -3.5 l0 7 Z" fill="var(--cs-ink3)"/>
+  <text x="360" y="152" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-ink3)" text-anchor="middle">steeper</text>
+  <text x="20" y="304" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10.5" fill="var(--cs-no)">Same catchment, same 51.84 m&#179; a year. Rain falls vertically &#8212; a steeper roof intercepts no more of it.</text>
+</svg>
+<figcaption>Section. Rain falls vertically, so both roofs intercept the same plan projection. The steeper one is 41% more covering for the same 51.84 m&sup3; a year.</figcaption>
+        </figure>
+        <ol class="cs-steps">
+          <li><b>New model</b>, and leave the block at its default 12&nbsp;&times;&nbsp;8&nbsp;m
+            footprint, gable roof, 0.5&nbsp;m overhang, pitched rough surface.</li>
+          <li>Set the pitch to <code>15</code>&deg; and record catchment, surface area and annual
+            yield: <b>117.00&nbsp;m&sup2;, 121.13&nbsp;m&sup2;, 51.84&nbsp;m&sup3;</b>.</li>
+          <li>Take it to <code>25</code>, <code>35</code>, then <code>45</code>&deg;. The surface climbs
+            to 129.10, 142.83 and <b>165.46&nbsp;m&sup2;</b>. The catchment does not move. The yield
+            does not move.</li>
+          <li>Change the roof form to <b>vault</b> with a <code>6</code>&nbsp;m rise. The surface goes
+            further still; the catchment stays at 117.00&nbsp;m&sup2;.</li>
+          <li>Change the <b>overhang</b> from 0.5 to <code>1.5</code>&nbsp;m and watch the catchment
+            move for the first time. Then switch to <b>sawtooth</b>: it drops to 110.50&nbsp;m&sup2;,
+            the one form carrying its overhang on the low edge only.</li>
+        </ol>
+        <p class="cs-principle"><b>Principle.</b> Rain falls vertically, so the catchment is the plan
+          projection, exactly as the standard defines it. A 45&deg; roof buys 41&nbsp;% more covering,
+          more structure and more cost, and collects not one extra litre. <b>If you want more water,
+          extend the footprint or the overhang.</b> Pitch is a decision about weathering, daylight,
+          form and snow &mdash; never about harvest.</p>
+      </div>
+
+      <div class="cs-ex">
+        <span class="cs-ex-n">Exercise 03</span>
+        <h3>The same rainfall, arriving at the wrong time</h3>
+        <figure class="cs-fig">
+<svg viewBox="0 0 720 458" role="img" aria-label="Two monthly harvest profiles, both totalling 121.2 cubic metres a year against the same 148.2 cubic metres of demand. The Dubai distribution delivers almost everything in three winter months and then spends eight months with almost nothing arriving; the Kuala Lumpur distribution sits close to demand all year and never falls far below it. Dubai needs 31,871 litres of storage to reach its knee, Kuala Lumpur 6,972.">
+  <text x="20" y="24" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="var(--cs-ink)">THE SAME RAIN, ARRIVING AT THE WRONG TIME</text>
+  <text x="20" y="38" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-ink3)">Monthly harvest, m&#179;. Both climates rescaled to 900 mm a year, keeping their own shape.</text>
+  <text x="20" y="52" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-ink3)">Monthly shapes read from docs/climate-source.json &#183; tank sizes read from the tool.</text>
+  <rect x="210.0" y="92.0" width="346.7" height="104" fill="var(--cs-no)" opacity=".09"/>
+  <rect x="82.0" y="98.5" width="39.3" height="97.5" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="101.66666666666667" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">J</text>
+  <rect x="125.3" y="149.6" width="39.3" height="46.4" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="145.0" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">F</text>
+  <rect x="168.7" y="94.3" width="39.3" height="101.7" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="188.33333333333334" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">M</text>
+  <rect x="212.0" y="180.5" width="39.3" height="15.5" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="231.66666666666666" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">A</text>
+  <rect x="255.3" y="195.5" width="39.3" height="0.5" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="275.0" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">M</text>
+  <rect x="298.7" y="196.0" width="39.3" height="0.0" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="318.33333333333337" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">J</text>
+  <rect x="342.0" y="190.8" width="39.3" height="5.2" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="361.6666666666667" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">J</text>
+  <rect x="385.3" y="196.0" width="39.3" height="0.0" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="405.00000000000006" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">A</text>
+  <rect x="428.7" y="196.0" width="39.3" height="0.0" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="448.33333333333337" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">S</text>
+  <rect x="472.0" y="189.0" width="39.3" height="7.0" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="491.6666666666667" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">O</text>
+  <rect x="515.3" y="168.3" width="39.3" height="27.7" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="535.0" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">N</text>
+  <rect x="558.7" y="126.6" width="39.3" height="69.4" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="578.3333333333334" y="209" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">D</text>
+  <path d="M80 196 L600 196" stroke="var(--cs-rule)" stroke-width="1"/>
+  <path d="M80 158.2 L600 158.2" stroke="var(--cs-ink)" stroke-width="1.4" stroke-dasharray="5 3"/>
+  <text x="608" y="161.7235294117647" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink)">demand</text>
+  <text x="80" y="80" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10.5" fill="var(--cs-ink)">DUBAI&#8217;S DISTRIBUTION</text>
+  <text x="383.33333333333337" y="109" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-no)" text-anchor="middle">eight months, almost nothing arriving</text>
+  <text x="80" y="228" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10.5" fill="var(--cs-ink)">EIGHT MONTHS BELOW DEMAND &#183; TANK AT THE KNEE 31&#8201;871 L</text>
+  <rect x="253.3" y="282.0" width="260.0" height="104" fill="var(--cs-no)" opacity=".09"/>
+  <rect x="82.0" y="356.5" width="39.3" height="29.5" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="101.66666666666667" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">J</text>
+  <rect x="125.3" y="360.9" width="39.3" height="25.1" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="145.0" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">F</text>
+  <rect x="168.7" y="350.8" width="39.3" height="35.2" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="188.33333333333334" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">M</text>
+  <rect x="212.0" y="346.7" width="39.3" height="39.3" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="231.66666666666666" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">A</text>
+  <rect x="255.3" y="356.1" width="39.3" height="29.9" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="275.0" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">M</text>
+  <rect x="298.7" y="367.0" width="39.3" height="19.0" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="318.33333333333337" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">J</text>
+  <rect x="342.0" y="364.5" width="39.3" height="21.5" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="361.6666666666667" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">J</text>
+  <rect x="385.3" y="363.3" width="39.3" height="22.7" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="405.00000000000006" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">A</text>
+  <rect x="428.7" y="357.3" width="39.3" height="28.7" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="448.33333333333337" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">S</text>
+  <rect x="472.0" y="349.0" width="39.3" height="37.0" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="491.6666666666667" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">O</text>
+  <rect x="515.3" y="339.7" width="39.3" height="46.3" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="535.0" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">N</text>
+  <rect x="558.7" y="349.5" width="39.3" height="36.5" fill="var(--cs-accent)" opacity=".55"/>
+  <text x="578.3333333333334" y="399" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="var(--cs-ink3)" text-anchor="middle">D</text>
+  <path d="M80 386 L600 386" stroke="var(--cs-rule)" stroke-width="1"/>
+  <path d="M80 348.2 L600 348.2" stroke="var(--cs-ink)" stroke-width="1.4" stroke-dasharray="5 3"/>
+  <text x="608" y="351.72352941176473" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="var(--cs-ink)">demand</text>
+  <text x="80" y="270" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10.5" fill="var(--cs-ink)">KUALA LUMPUR&#8217;S DISTRIBUTION</text>
+  <text x="383.33333333333337" y="299" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="var(--cs-no)" text-anchor="middle">below demand, but never by much</text>
+  <text x="80" y="418" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10.5" fill="var(--cs-ink)">SIX MONTHS BELOW DEMAND &#183; TANK AT THE KNEE 6&#8201;972 L</text>
+  <text x="20" y="450" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10.5" fill="var(--cs-no)">Identical total, identical roof, identical demand. Four and a half times the tank, for a worse result.</text>
+</svg>
+<figcaption>Monthly harvest against demand, both climates rescaled to the same 900 mm a year. The tank is sized by the dry run, not by the total.</figcaption>
+        </figure>
+        <ol class="cs-steps">
+          <li>Open <b>Models &rsaquo; Arid &mdash; Dubai</b>. In <b>Climate</b>, set <b>Rainfall
+            input</b> to <b>Annual</b> and type <code>900</code>&nbsp;mm. The monthly <i>shape</i> is
+            kept and scaled, so Dubai&rsquo;s distribution survives at nine times the depth.</li>
+          <li>In <b>System</b>, tick <b>Daily balance</b>, leave the capacity on the basic approach,
+            and record the harvest, the proposed capacity and the coverage rate.</li>
+          <li>Repeat exactly with <b>Models &rsaquo; Tropical &mdash; Kuala Lumpur</b> at the same
+            <code>900</code>&nbsp;mm. The building, the demand and the harvest are identical:
+            <b>121.2&nbsp;m&sup3; collected against 148.2&nbsp;m&sup3; demanded</b> in both.</li>
+          <li>Compare the coverage rate. Dubai&rsquo;s distribution reaches <b>42.2&nbsp;%</b>; Kuala
+            Lumpur&rsquo;s reaches <b>77.4&nbsp;%</b>.</li>
+          <li>Set the capacity manually and sweep it in both. Dubai needs
+            <b>31&nbsp;871&nbsp;litres</b> to reach its knee; Kuala Lumpur needs <b>6&nbsp;972</b>.
+            Four and a half times the tank, for a worse result. Then look at the store-behaviour chart
+            for each: one empties for a season, the other cycles.</li>
+        </ol>
+        <p class="cs-principle"><b>Principle.</b> Annual rainfall totals tell you almost nothing about
+          a harvesting system. What decides the tank is the longest stretch during which demand runs
+          ahead of supply, and two places with the same annual depth can differ by a factor of four and
+          a half in the storage needed to bridge it. This is why the standard&rsquo;s basic approach is
+          parameterised by a <b>dry period</b> rather than by rainfall alone, and why its detailed
+          approach insists on a daily series. <b>Quote the distribution, not just the total.</b></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cs-sec">
+    <div class="cs-sechead"><span class="cs-secnum"></span><h2>Where it stops</h2></div>
+    <div class="cs-secbody">
+      <p>The tool is built to teach three relationships &mdash; catchment against surface, distribution
+        against total, storage against reliability &mdash; and it contains no water quality, no
+        hydraulics and no cost model at all, deliberately, so that what it does do stays legible. For
+        anything that must be built, none of this substitutes for a designer who can take
+        responsibility for the system.</p>
+      <p>Two limits are worth stating plainly. <b>Where it is not conservative:</b> the synthetic
+        even wet days shorten dry runs and understate spill, and the catchment allows for nothing lost
+        at gutter, filter or overflow beyond the two coefficients. The arithmetic being exact is not
+        the same as the answer being right &mdash; the volume balance closes to floating point, and
+        the uncertainty sits entirely in the inputs above. <b>Where it cannot be checked:</b>
+        <span class="cs-mono">BS&nbsp;EN&nbsp;16941&#8209;1:2024</span> is paywalled, so verifying what
+        this page says about it needs a purchased copy or an institutional subscription.</p>
+    </div>
+  </section>
+
+  <div class="cs-footer">
+
+    <h3>Licence</h3>
+    <p>&copy; Karam Al-Obaidi. The app is licensed <b>MIT</b>; this documentation is
+      <b><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></b>.
+      Both permit any use, including commercial, and ask only that you credit the author. The tool
+      bundles no third-party code &mdash; no external script, stylesheet or font &mdash; and the only
+      outbound request it can make is the optional Open&#8209;Meteo fetch you start yourself from the
+      Climate panel.</p>
+    <p>A model you make with the tool is <b>yours</b>. Neither licence claims anything over your model,
+      your drawings or the images you export.</p>
+    <p>Two things sit outside both licences. Rainfall fetched from <b>Open&#8209;Meteo</b> comes under
+      Open&#8209;Meteo&rsquo;s own terms: their CC&nbsp;BY&nbsp;4.0 offer covers <b>non-commercial</b>
+      use, and commercial use requires their paid API &mdash; read their terms before any commercial
+      use, and attribute the data wherever you use it. And
+      <span class="cs-mono">BS&nbsp;EN&nbsp;16941&#8209;1:2024</span> is a copyright work of BSI: this
+      page cites clause numbers and states values the tool uses, and reproduces no part of its text.</p>
+
+    <h3 id="how-to-cite" style="scroll-margin-top:100px;">How to cite</h3>
+    <p>Cite it as software. Keeping the copyright notice in the file satisfies the licence; a citation
+      is the scholarly act on top of that.</p>
+    <p class="cs-ref">Al-Obaidi, K. M. (2026). <i>Rainwater Harvesting Studio: A parametric roof and
+      tank sizing tool</i> (Version 1.0.0) [Computer software]. Zenodo.
+      <a href="https://doi.org/10.5281/zenodo.22801123" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.22801123</a></p>
+<pre>@software{alobaidi2026rainwaterstudio,
+  author    = {Al-Obaidi, Karam M.},
+  title     = {Rainwater Harvesting Studio: A parametric roof and
+               tank sizing tool},
+  year      = {2026},
+  version   = {1.0.0},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.22801123},
+  url       = {https://karam.me.uk/applications/rainwater-harvesting-studio/},
+  note      = {Code MIT licensed; accompanying material CC BY 4.0}
+}</pre>
+    <p>That DOI names this release. To cite the software in general rather than version 1.0.0, use the
+      concept DOI <a href="https://doi.org/10.5281/zenodo.22801122" target="_blank" rel="noopener">10.5281/zenodo.22801122</a>,
+      which always resolves to the newest version. If you are reporting figures someone should be able
+      to reproduce, cite the version DOI instead &mdash; it names the exact code <i>and</i> the exact
+      rainfall library those figures came from.</p>
+    <p><b>Report five things alongside any figure</b> taken from the tool: the <b>catchment area</b>,
+      the <b>surface coefficient</b>, the <b>rainfall source</b> &mdash; station, not city &mdash; the
+      <b>time step</b>, and the <b>usable capacity</b>. All five change the answer.</p>
+    <p class="cs-note">Two more, if your city is one of the six on the WMO World Weather Information
+      Service. Its terms require acknowledgement of <i>&ldquo;the WMO World Weather Information Service
+      (https://worldweather.wmo.int) as the source of information&rdquo;</i> and that its information
+      <i>&ldquo;be reproduced accurately&rdquo;</i>. And record which version of the Normals you used:
+      the NCEI accession is revised as WMO Members submit corrections, and this library was built from
+      <b>version 6.6</b> on <b>16 September 2026</b>.</p>
+
+    <h3>References</h3>
+    <p>Every clause and table number on this page was checked against
+      <b>BS EN 16941-1:2024 specifically</b> &mdash; the edition incorporating the July 2024
+      corrigendum. Numbering moved between that and the withdrawn 2018 edition, so a reader checking
+      against a 2018 copy should expect it not to line up.</p>
+
+    <h4>The method</h4>
+    <p class="cs-ref">British Standards Institution. (2024). <i>On-site non-potable water systems.
+      Part 1: Systems for the use of rainwater</i> (BS EN 16941-1:2024, incorporating corrigendum
+      July 2024). BSI. &mdash; the method, nearly entire. The tool does <b>not</b> implement the
+      detailed approach of A.2.2, the climate-change analysis of NA.4, or anything on water quality.</p>
+    <p class="cs-ref">British Standards Institution. (2000). <i>Gravity drainage systems inside
+      buildings. Part 3: Roof drainage, layout and calculation</i> (BS EN 12056-3:2000). BSI. &mdash;
+      <b>where to go for gutter and downpipe sizing</b>, which this tool does not do.</p>
+
+    <h4>Rainfall</h4>
+    <p class="cs-ref">NOAA National Centers for Environmental Information. (2022). <i>WMO
+      climatological standard normals for 1991&ndash;2020</i> (NCEI Accession 0253808, version 6.6)
+      [Data set].
+      <a href="https://doi.org/10.25921/800j-vn07" target="_blank" rel="noopener">https://doi.org/10.25921/800j-vn07</a>
+      &mdash; the rainfall for twenty-two of the twenty-eight presets. CC0&nbsp;1.0.</p>
+    <p class="cs-ref">World Meteorological Organization. (n.d.). <i>World Weather Information
+      Service</i> [Data set].
+      <a href="https://worldweather.wmo.int/" target="_blank" rel="noopener">worldweather.wmo.int</a>
+      &mdash; the rainfall for the six presets whose countries contribute no station to the Normals
+      composite. The figures are the contributing national service&rsquo;s, named per city in
+      <span class="cs-mono">docs/climate-source.json</span>.</p>
+    <p class="cs-ref">World Meteorological Organization. (2017). <i>WMO guidelines on the calculation
+      of climate normals</i> (WMO-No.&nbsp;1203). WMO. &mdash; defines the thirty-year standard normal,
+      and names days with at least 1&nbsp;mm as the principal precipitation-frequency parameter, which
+      is why depth per wet day is comparable across those twenty-two cities.</p>
+    <p class="cs-ref">Open-Meteo. (n.d.). <i>Historical weather API</i>.
+      <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> &mdash; the
+      in-app fetch only; it supplies no preset. It serves a reanalysis, so a fetched figure and a
+      preset are different kinds of number, and the app labels which produced any figure it prints.</p>
+
+    <p class="cs-cite">The full method notes carry the clause-by-clause check behind this page,
+      including four disagreements between the tool and the standard found during it and since
+      corrected. If you are working from an older copy of the tool, those four are what to re-check.</p>
+
+  </div>
+
+</div>
