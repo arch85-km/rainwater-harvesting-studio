@@ -361,14 +361,14 @@ depth. On a 12 x 8 m block with o = 0.5 m that is 110.5 m2 against 117.0 m2.</em
       <h3>The yield equation, as implemented</h3>
       <p>The code implements Formula (1) of clause 6.1.2 directly, summed over surfaces so that blocks
         with different materials each keep their own coefficient:</p>
-      <div class="cs-formula">Y = SUM( A_i  x  e_i  x  h  x  eta )        litres
+      <div class="cs-formula">Y = &Sigma; ( A_i  &times;  e_i  &times;  h  &times;  &eta; )        litres
 
-<em>A_i  horizontal projection of collection area i, m2
+<em>A_i  horizontal projection of collection area i, m&sup2;
 e_i  surface yield coefficient of that surface, Table 2
 h    rainfall depth for the time step, mm
-eta  hydraulic treatment efficiency coefficient</em>
+&eta;    hydraulic treatment efficiency coefficient</em>
 
-1 mm falling on 1 m2 = 1 litre, which is where the units close.</div>
+1 mm falling on 1 m&sup2; = 1 litre, which is where the units close.</div>
       <p>Worked, for the 12&nbsp;&times;&nbsp;8&nbsp;m gable above:
         117.00&nbsp;m&sup2; &times; 615&nbsp;mm &times; 0.80 &times; 0.90 = <b>51&nbsp;841&nbsp;litres a year</b>, the 51.84&nbsp;m&sup3; in the table above.</p>
 
