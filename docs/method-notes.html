@@ -418,13 +418,13 @@ h    rainfall depth for the time step, mm
         cycles through the year before reporting the fourth, so the answer does not depend on how full
         the tank was assumed to be on 1 January.</p>
       <div class="cs-ledger">
-        <div><span class="cs-chip is-out">not it</span><dt>Annual yield</dt>
+        <div><span class="cs-chip is-out">not the answer</span><dt>Annual yield</dt>
           <dd>What the roof collects. A large part of it can overflow, so on its own it overstates
             the benefit.</dd></div>
-        <div><span class="cs-chip is-out">not it</span><dt>Peak flow, litres/second</dt>
+        <div><span class="cs-chip is-out">not the answer</span><dt>Peak flow, litres/second</dt>
           <dd>Answers a different question — how fast water leaves the roof in one storm, which sizes
             pipes. It has no bearing on the tank.</dd></div>
-        <div><span class="cs-chip is-out">not it</span><dt>Storage capacity</dt>
+        <div><span class="cs-chip is-out">not the answer</span><dt>Storage capacity</dt>
           <dd>An input, or the output of a sizing rule. Not a performance result.</dd></div>
         <div><span class="cs-chip is-in">the answer</span><dt>Mains water displaced</dt>
           <dd>The volume the store actually supplied over the year. This is what the system is for,
@@ -881,28 +881,53 @@ spaced evenly through the month.</div>
 
       <div class="cs-ex">
         <span class="cs-ex-n">Exercise 3</span>
-        <h3>The same rainfall, arriving at the wrong time</h3>
+        <h3>Nearly the same rainfall, arriving at the wrong time</h3>
         <ol class="cs-steps">
-          <li>Open <b>Models &rsaquo; Arid &mdash; Dubai</b>. In <b>Climate</b>, set <b>Rainfall input</b>
-            to <b>Annual</b> and type <code>900</code>&nbsp;mm. The monthly <i>shape</i> is kept and scaled,
-            so Dubai's distribution survives at nine times the depth.</li>
-          <li>In <b>System</b>, tick <b>Daily balance</b> and leave the capacity on the basic approach.
-            Record the harvest, the proposed capacity and the coverage rate.</li>
-          <li>Repeat, exactly, with <b>Models &rsaquo; Tropical &mdash; Kuala Lumpur</b> at the same
-            <code>900</code>&nbsp;mm. The building, the demand and the harvest are identical:
-            <b>121.2&nbsp;m&sup3; collected against 148.2&nbsp;m&sup3; demanded</b> in both cases.</li>
-          <li>Compare the coverage rate. Dubai's distribution reaches <b>42.2&nbsp;%</b>; Kuala Lumpur's
-            reaches <b>77.4&nbsp;%</b>.</li>
-          <li>Now set the capacity manually and sweep it in both models. Dubai needs
-            <b>31&nbsp;871&nbsp;litres</b> to reach its knee; Kuala Lumpur needs <b>6&nbsp;972</b>. Four and a half
-            times the tank, for a worse result.</li>
-          <li>Look at the store-behaviour chart for each. One empties for a season; the other cycles.</li>
+          <li>Open <b>Models &rsaquo; Tropical &mdash; Kuala Lumpur</b>. In <b>System</b>, tick
+            <b>Daily balance</b> and leave the capacity on the basic approach. Record the harvest, the
+            proposed capacity and the coverage rate: <b>383.3&nbsp;m&sup3; collected against
+            148.2&nbsp;m&sup3; demanded</b>, a proposed <b>3&nbsp;654&nbsp;litres</b>, and coverage at
+            <b>100&nbsp;%</b>.</li>
+          <li>Change nothing except the city. In <b>Climate</b>, set <b>Location</b> to
+            <b>Chittagong</b>. The dropdown prints each city's annual rainfall beside its name, so you
+            can see what you have just done: <b>2&nbsp;847.1&nbsp;mm</b> a year becomes
+            <b>2&nbsp;964.0</b> &mdash; four per cent <i>more</i> rain.</li>
+          <li>Record again. The roof, the demand and the tank are untouched, and the harvest has gone
+            <i>up</i> to <b>399.1&nbsp;m&sup3;</b>. Coverage falls from 100&nbsp;% to
+            <b>79.5&nbsp;%</b>.</li>
+          <li>Set <b>Storage capacity</b> to <i>Set manually</i> and sweep both cities through
+            <code>1500</code>, <code>3000</code>, <code>6000</code>, <code>10000</code>,
+            <code>20000</code> and <code>40000</code>&nbsp;litres:</li>
+        </ol>
+        <div class="cs-tbl">
+          <table>
+            <caption>Coverage rate at each capacity, daily balance, everything but the city held
+              fixed. Produced by driving the tool's own hydrology module.</caption>
+            <thead><tr><th>Usable capacity</th><th class="cs-sym">Kuala Lumpur</th><th class="cs-sym">Chittagong</th></tr></thead>
+            <tbody>
+              <tr><td class="cs-n">1 500 L</td><td class="cs-n">98.4 %</td><td class="cs-d">68.3 %</td></tr>
+              <tr><td class="cs-n">3 000 L</td><td class="cs-n">100 %</td><td class="cs-d">77.2 %</td></tr>
+              <tr><td class="cs-n">6 000 L</td><td class="cs-n">100 %</td><td class="cs-d">81.0 %</td></tr>
+              <tr><td class="cs-n">10 000 L</td><td class="cs-n">100 %</td><td class="cs-d">83.7 %</td></tr>
+              <tr><td class="cs-n">20 000 L</td><td class="cs-n">100 %</td><td class="cs-d">90.5 %</td></tr>
+              <tr><td class="cs-n">40 000 L</td><td class="cs-n">100 %</td><td class="cs-d">100 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ol class="cs-steps" start="5">
+          <li>Kuala Lumpur is finished at <b>3&nbsp;000&nbsp;litres</b>. Chittagong needs
+            <b>40&nbsp;000</b> for the same result &mdash; thirteen times the tank, on four per cent
+            more rain. Read the knee off each curve too: <b>1&nbsp;353&nbsp;litres</b> against
+            <b>17&nbsp;591</b>.</li>
+          <li>Look at the store-behaviour chart for each. One cycles all year; the other fills once in
+            the monsoon and empties over the five months from November to March.</li>
         </ol>
         <p class="cs-principle"><b>The principle.</b> Annual rainfall totals tell you almost nothing about
           a harvesting system. What decides the tank is the longest stretch during which demand runs
-          ahead of supply, and two places with the same annual depth can differ by a factor of four and a half in
-          the storage needed to bridge it. This is why the standard's basic approach is parameterised by
-          a <b>dry period</b> rather than by rainfall alone, and why its detailed approach insists on a
+          ahead of supply, and two cities within four per cent of each other on annual depth can differ
+          by a factor of thirteen in the storage needed to bridge it &mdash; with the wetter one
+          needing the larger tank. This is why the standard's basic approach is parameterised by a
+          <b>dry period</b> rather than by rainfall alone, and why its detailed approach insists on a
           daily series. <b>Quote the distribution, not just the total.</b></p>
       </div>
     </div>
