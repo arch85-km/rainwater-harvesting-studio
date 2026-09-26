@@ -755,13 +755,24 @@ h    rainfall depth for the time step, mm
         hydraulics and no cost model at all, deliberately, so that what it does do stays legible. For
         anything that must be built, none of this substitutes for a designer who can take
         responsibility for the system.</p>
-      <p>Two limits are worth stating plainly. <b>Where it is not conservative:</b> the synthetic
-        even wet days shorten dry runs and understate spill, and the catchment allows for nothing lost
-        at gutter, filter or overflow beyond the two coefficients. The arithmetic being exact is not
-        the same as the answer being right &mdash; the volume balance closes to floating point, and
-        the uncertainty sits entirely in the inputs above. <b>Where it cannot be checked:</b>
-        <span class="cs-mono">BS&nbsp;EN&nbsp;16941&#8209;1:2024</span> is paywalled, so verifying what
-        this page says about it needs a purchased copy or an institutional subscription.</p>
+      <p><b>It flatters the tank.</b> The store is run against a made-up rainfall pattern &mdash;
+        the month&rsquo;s water shared equally between its wet days. Real rain arrives in bursts with
+        long gaps between them, and it is the gaps that empty a tank. So the dry spells here are
+        shorter than real ones, and less water goes over the overflow than really would. Expect a
+        real installation to do worse than this shows, and expect the gap to be widest for the
+        smallest tanks.</p>
+      <p><b>It also collects more than a real roof.</b> Two losses are applied and no others: the
+        surface coefficient <i>e</i> and the treatment coefficient <i>&eta;</i>. Nothing is deducted
+        for rain that overshoots a gutter, sits in a blocked filter, or is lost in the plumbing
+        between the roof and the tank.</p>
+      <p><b>And exact arithmetic is not a right answer.</b> The books balance to the litre &mdash;
+        what comes in equals what is used, plus what spills, plus what is left standing in the tank.
+        That is a property of the sums, not of the result. Every uncertainty is in what you fed them:
+        the rainfall, the coefficients, the time step.</p>
+      <p><b>One thing you cannot check for yourself.</b>
+        <span class="cs-mono">BS&nbsp;EN&nbsp;16941&#8209;1:2024</span> is paywalled, so confirming
+        what this page says about its clauses needs a purchased copy or an institutional
+        subscription.</p>
     </div>
   </section>
 
