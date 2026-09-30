@@ -647,7 +647,8 @@ same seven with the working behind them.
 
 - **Cite the DOI, and pick the right one.** `10.5281/zenodo.22801122` is the
   concept DOI and resolves to the newest version — cite that for the tool.
-  `10.5281/zenodo.22801123` is version 1.0.0, frozen; cite that when you are
+  `10.5281/zenodo.23072220` is version 1.1.0, frozen, and
+  `10.5281/zenodo.22801123` was version 1.0.0. Cite a version DOI when you are
   reporting figures someone should be able to reproduce, because it names the
   exact code and the exact rainfall library they came from.
 - **Record which source your city came from, and the station.** Twenty-two
