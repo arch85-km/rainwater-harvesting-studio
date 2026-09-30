@@ -418,9 +418,10 @@ h    rainfall depth for the time step, mm
           </tbody>
         </table>
       </div>
-      <p>The monthly column is an artefact of the time step, not a property of the tank. <b>Use the
-        daily balance for any store smaller than a month&rsquo;s demand</b>; the app warns when you
-        have not. The monthly step is only safe for comparing capacities well above that threshold.
+      <p>The monthly column is an artefact of the time step, not a property of the tank, which is why
+        <b>the daily balance is the default</b> &mdash; and why unticking it for a store smaller than a
+        month&rsquo;s demand is the one thing to avoid. The app says so when you have. The monthly
+        step is only safe for comparing capacities well above that threshold.
         A coverage rate quoted without its time step cannot be checked by anyone reading you &mdash;
         the step alone moves it from 4.6&nbsp;% to 49.5&nbsp;%.</p>
     </div>
@@ -533,8 +534,8 @@ h    rainfall depth for the time step, mm
         <ol class="cs-steps">
           <li>Open <b>Models &rsaquo; Terraced housing row</b> &mdash; five blocks, 325&nbsp;m&sup2; of
             catchment, 18 occupants, Dublin rainfall.</li>
-          <li>In the <b>Demand</b> tab, scroll to the <b>System</b> group. Tick <b>Daily balance</b>,
-            and set <b>Storage capacity</b> to <i>Set manually</i>.</li>
+          <li>In the <b>Demand</b> tab, scroll to the <b>System</b> group. Leave <b>Daily balance</b>
+            ticked, and set <b>Storage capacity</b> to <i>Set manually</i>.</li>
           <li>Set <b>Tank capacity</b> to <code>500</code>&nbsp;litres. The tank is what you are
             changing; the coverage rate is what you read back. It is the <b>Demand met</b> tile in
             the strip along the bottom of the window, or the row <b>Coverage rate

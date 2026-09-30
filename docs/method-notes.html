@@ -249,9 +249,9 @@
     <ol>
       <li>Open the app and let the tour run, or dismiss it. <b>Models &rsaquo; Terraced housing row</b>
         loads a worked example: five blocks, 325&nbsp;m&sup2; of catchment, 18 occupants, Dublin rainfall.</li>
-      <li>In the <b>Demand</b> tab, under <b>System</b>, tick <b>Daily balance</b>. Leave it off and the store is capped at one
-        tank-full a month, which is a property of the time step, not of the tank (see
-        <a href="#cs-04">How exact the numbers are</a>).</li>
+      <li>Leave <b>Daily balance</b>, under <b>System</b> in the <b>Demand</b> tab, ticked &mdash; it is on by
+        default. Untick it and the store is capped at one tank-full a month, which is a property of
+        the time step, not of the tank (see <a href="#cs-04">How exact the numbers are</a>).</li>
       <li>Set <b>Storage capacity</b> to <i>Set manually</i> and type <code>1000</code>, then <code>2000</code>.
         Watch the <b>Demand met</b> tile along the bottom of the window &mdash; the same figure appears
         as <b>Coverage rate C<sub>r</sub></b> in the <b>Results</b> tab: 49.5&nbsp;% then 68.8&nbsp;%.</li>
@@ -763,7 +763,7 @@ spaced evenly through the month.</div>
             <tr><td>Storage capacity</td><td colspan="2">basic approach A.2.1, or set manually</td><td class="cs-d">A.2.1</td></tr>
             <tr><td>Design dry period</td><td class="cs-n">1 &ndash; 60 days</td><td class="cs-n">1</td><td class="cs-d">18 days</td></tr>
             <tr><td>Tank capacity &mdash; manual mode</td><td class="cs-n">0 &ndash; 200 000 L</td><td class="cs-n">100</td><td class="cs-d">3 000 L</td></tr>
-            <tr><td>Daily balance</td><td colspan="2">on or off</td><td class="cs-d">off</td></tr>
+            <tr><td>Daily balance</td><td colspan="2">on or off</td><td class="cs-d">on</td></tr>
             <tr><td>Mains water tariff</td><td class="cs-n">0 &ndash; 20 per m&sup3;</td><td class="cs-n">0.05</td><td class="cs-d">2.20</td></tr>
           </tbody>
         </table>
@@ -849,8 +849,8 @@ spaced evenly through the month.</div>
         <ol class="cs-steps">
           <li>Open <b>Models &rsaquo; Terraced housing row</b>. Five blocks, 325&nbsp;m&sup2; of catchment,
             18 occupants, Dublin rainfall.</li>
-          <li>In the <b>Demand</b> tab, scroll to the <b>System</b> group. Tick <b>Daily balance</b>,
-            and set <b>Storage capacity</b> to <i>Set manually</i>.</li>
+          <li>In the <b>Demand</b> tab, scroll to the <b>System</b> group. Leave <b>Daily balance</b>
+            ticked, and set <b>Storage capacity</b> to <i>Set manually</i>.</li>
           <li>Set <b>Tank capacity</b> to <code>500</code>&nbsp;litres. The tank is what you are
             changing; the coverage rate is what you read back, from the <b>Demand met</b> tile in the
             strip along the bottom of the window &mdash; or the row <b>Coverage rate C<sub>r</sub></b>
@@ -911,8 +911,8 @@ spaced evenly through the month.</div>
         <h3>Nearly the same rainfall, arriving at the wrong time</h3>
         <ol class="cs-steps">
           <li>Open <b>Models &rsaquo; Tropical &mdash; Kuala Lumpur</b>. In the <b>Demand</b> tab,
-            scroll to the <b>System</b> group, tick <b>Daily balance</b> and leave the capacity on the
-            basic approach. Record the harvest, the
+            scroll to the <b>System</b> group, leave <b>Daily balance</b> ticked and the capacity on
+            the basic approach. Record the harvest, the
             proposed capacity and the <b>Demand met</b> figure: <b>383.3&nbsp;m&sup3; collected against
             148.2&nbsp;m&sup3; demanded</b>, a proposed <b>3&nbsp;654&nbsp;litres</b>, and coverage at
             <b>100&nbsp;%</b>.</li>

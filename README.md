@@ -291,9 +291,10 @@ own; the standard has no such measure.
 month's demand is drawn in one go against the previous month's closing volume,
 so the store can never supply more than **one tank-full a month** however often
 it would really refill. On the terraced-housing model a 1 000 L tank reads 4.6%
-monthly and 59.3% daily — the monthly figure is an artefact of the step, not a
-property of the tank. Turn on *Daily balance* for any store smaller than a
-month's demand; the app warns when you have not.
+monthly and 49.5% daily — the monthly figure is an artefact of the step, not a
+property of the tank. That is why *Daily balance* is **on by default**; untick it
+for a store smaller than a month's demand and the app says so, and the Explain
+sheet declines to diagnose until you put it back.
 
 Neither step is the standard's detailed approach (A.2.2), which requires at
 least five years of **measured daily** rainfall. The tool holds no daily series
@@ -447,17 +448,16 @@ Four ways in:
    use it.
    Then raise the occupancy and watch the overflow collapse.
 6. **Monthly vs daily.** Load `terrace`, set the tank manually to 1 000 L and
-   read the coverage rate with the daily balance off, then on: 4.6% becomes
-   49.5%. Ask which figure is the artefact, and why (see *Store operation*).
+   read the coverage rate as it loads, then untick *Daily balance*: 49.5% becomes
+   4.6%. Ask which figure is the artefact, and why (see *Store operation*).
 7. **Read the diagnosis.** Open **Explain** on `clim-arid`, `warehouse` and
-   `house` in turn, as they load. Dubai comes back yield-limited — no tank can
-   create water, so a bigger one is the *wrong* answer. The other two refuse to
-   diagnose at all: they are stepped monthly with a store below the busiest
-   month, so what the sheet is measuring is the time step. Tick **Daily balance**
-   and open them again: the warehouse is demand-limited at 100% met, and the
-   house is well matched at 61%. Ask what each would have cost you if you had
-   quoted the first reading — the warehouse's was a tank four times the size,
-   for nothing.
+   `house` in turn. They come back yield-limited (no tank can create water, so a
+   bigger one is the *wrong* answer), demand-limited at 100% met, and well
+   matched at 61%. Now untick **Daily balance** and open the last two again: the
+   sheet refuses to diagnose, because a monthly step with a store below the
+   busiest month is measuring itself rather than the design. Ask what the monthly
+   reading would have cost — it used to send the warehouse from 7 334 L to
+   29 879 L, four times the tank, to reach a coverage it already had.
 8. **Save two variants** of the same building and compare them in Analysis mode.
 
 Three worked exercises with the numbers to expect, written for students to follow
@@ -517,7 +517,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**387 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**388 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.

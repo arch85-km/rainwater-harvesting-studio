@@ -342,19 +342,22 @@ console.log('\n── 5c. A monthly step that caps the store is flagged ──')
      against 852 L - and the diagnosis read those figures straight and told the
      reader to nearly double a tank that was already at the ceiling. */
   const at = over => { const m=C.newModel(); Object.assign(m.system, over||{}); return HYD.compute(m, GEO.build(m)); };
-  const monthly = at(), daily = at({daily:true});
-  t('the default model on a monthly step is flagged', monthly.stepCapped === true,
+  const monthly = at({daily:false}), daily = at();
+  t('the default model stepped monthly is flagged', monthly.stepCapped === true,
     monthly.stepCapped, true);
-  t('the same model on a daily step is not', daily.stepCapped === false, daily.stepCapped, false);
-  t('a store above the busiest month is not flagged',
-    at({tankMode:'manual', tank:20000}).stepCapped === false, at({tankMode:'manual', tank:20000}).stepCapped, false);
-  const nodem = (() => { const m=C.newModel(); m.demand.occupants=0; m.demand.irrigArea=0; return HYD.compute(m, GEO.build(m)); })();
+  t('the same model on the daily default is not', daily.stepCapped === false, daily.stepCapped, false);
+  t('the daily balance is the default', C.newModel().system.daily === true,
+    C.newModel().system.daily, true);
+  t('a monthly step with a store above the busiest month is not flagged',
+    at({daily:false, tankMode:'manual', tank:20000}).stepCapped === false,
+    at({daily:false, tankMode:'manual', tank:20000}).stepCapped, false);
+  const nodem = (() => { const m=C.newModel(); m.system.daily=false; m.demand.occupants=0; m.demand.irrigArea=0; return HYD.compute(m, GEO.build(m)); })();
   t('a model with no demand is not flagged', nodem.stepCapped === false, nodem.stepCapped, false);
 
   /* The cap, not the tank, is what holds the coverage down: give the same
      monthly model a store bigger than any month and it reaches the daily
      figure. This is the evidence the flag is reading the right thing. */
-  const big = at({tankMode:'manual', tank:20000});
+  const big = at({daily:false, tankMode:'manual', tank:20000});
   const bigMet = big.bal.totalSupplied / big.bal.totalDemand;
   const dayMet = daily.bal.totalSupplied / daily.bal.totalDemand;
   t('lifting the store past the busiest month recovers the daily coverage',

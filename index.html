@@ -1167,7 +1167,14 @@ function newModel(over) {
       dryDays: 18,              // design dry period (days) for the basic approach
       tankMode: "auto",         // auto (BS basic approach) | manual
       tank: 3000,               // litres, used when manual
-      daily: false,             // daily (wet-day) balance instead of monthly
+      /* Daily, because monthly is not a conservative simplification - it is a
+         wrong one. A monthly step draws the whole month in one go, so a store
+         below the busiest month's demand reads far under what it really
+         achieves, and the diagnosis that follows misnames the constraint: on
+         this very model, 53% against 89%, and a knee of 4 687 L against 852 L.
+         Every document here already told the reader to turn it on before
+         quoting anything, which is the wrong way round for a default. */
+      daily: true,              // daily (wet-day) balance rather than monthly
       tariff: 2.20              // currency per m3 of mains water displaced
     },
     view: { style: "shaded", grid: true, system: true, dims: true }
