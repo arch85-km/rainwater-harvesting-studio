@@ -335,8 +335,8 @@ h    rainfall depth for the time step, mm
         has no such term, so leave it at 0 to calculate strictly to the standard.</p>
       <p>Demand is built per person per day from four end uses times occupancy, plus an optional
         seasonal irrigation term. WC flushing at 25 and laundry at 15 come to 40&nbsp;l/person/day,
-        which is exactly the BSI UK National Annex NA.1.2 figure &mdash; but the split between the two
-        is the tool&rsquo;s, and cleaning at 5 and vehicle wash at 2 have no source at all. Annual
+        which is exactly the BSI UK National Annex NA.1.2 figure. The split between the two is the
+        tool&rsquo;s own, though, and cleaning at 5 and vehicle wash at 2 have no source at all. Annual
         demand is daily &times; 365, as Formula&nbsp;(4). <b>The tool always uses 365</b> and gives you
         no way to say otherwise, so a school or office model overstates annual demand by every day the
         building is shut.</p>
@@ -534,9 +534,9 @@ h    rainfall depth for the time step, mm
           <li>In the <b>Demand</b> tab, scroll to the <b>System</b> group. Tick <b>Daily balance</b>,
             and set <b>Storage capacity</b> to <i>Set manually</i>.</li>
           <li>Set <b>Tank capacity</b> to <code>500</code>&nbsp;litres. The tank is what you are
-            changing; the coverage rate is what you read back, from the <b>Demand met</b> tile in the
-            strip along the bottom of the window &mdash; or the row <b>Coverage rate C<sub>r</sub></b>
-            in the <b>Results</b> tab, which is the same figure.</li>
+            changing; the coverage rate is what you read back. It is the <b>Demand met</b> tile in
+            the strip along the bottom of the window, or the row <b>Coverage rate
+            C<sub>r</sub></b> in the <b>Results</b> tab &mdash; the same figure either way.</li>
           <li>Repeat for <code>1000</code>, <code>1500</code>, <code>2000</code>, <code>4000</code>
             and <code>10000</code>&nbsp;litres, writing the coverage rate down each time. You should
             get <b>24.7&nbsp;%, 49.5&nbsp;%, 68.8&nbsp;%, 68.8&nbsp;%, 68.8&nbsp;%,
@@ -739,9 +739,9 @@ h    rainfall depth for the time step, mm
         </ol>
         <p class="cs-principle"><b>Principle.</b> Annual rainfall totals tell you almost nothing about
           a harvesting system. What decides the tank is the longest stretch during which demand runs
-          ahead of supply, and two cities within four per cent of each other on annual depth can
-          differ by a factor of thirteen in the storage needed to bridge it &mdash; with the wetter
-          one needing the larger tank. This is why the standard&rsquo;s basic approach is
+          ahead of supply. Two cities within four per cent of each other on annual depth can differ
+          by a factor of thirteen in the storage needed to bridge it &mdash; and it is the wetter
+          one that needs the larger tank. This is why the standard&rsquo;s basic approach is
           parameterised by a <b>dry period</b> rather than by rainfall alone, and why its detailed
           approach insists on a daily series. <b>Quote the distribution, not just the total.</b></p>
       </div>
