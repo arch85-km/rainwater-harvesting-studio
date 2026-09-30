@@ -285,6 +285,53 @@ console.log('\n── 5. Tank sizing ──');
   const mono=r.sweep.every((s,i)=>i===0||s.saving>=r.sweep[i-1].saving-1e-9);
   t('demand met rises monotonically with capacity', mono, 'monotonic', 'monotonic');
   t('capacity 0 gives >0% met only from same-step inflow', r.sweep[0].saving>=0, r.sweep[0].saving, '>= 0');
+
+  /* A dry period of zero. `dryDays || 18` read it as "nothing set" and sized
+     the tank on 18 days while the panel went on printing 0 - the number on
+     screen and the number in the arithmetic were different numbers. Zero is
+     below the control's minimum of 1, so it should size on 1; only a genuinely
+     absent field falls back to 18. */
+  const m3=mk({w:11,d:8,wallH:5.2},{type:'gable',pitch:35,overhang:0.6});
+  m3.climate=C.climateFor('lon'); m3.demand.occupants=4;
+  const dd = v => { m3.system.dryDays=v; return HYD.compute(m3, GEO.build(m3)); };
+  const r0=dd(0), r1=dd(1), rU=dd(undefined);
+  t('a zero dry period sizes on one day, not on the default 18',
+    r0.dryDays===1 && near(r0.simple,r1.simple,1e-9), 'dd='+r0.dryDays+' -> '+r0.simple.toFixed(0)+' L',
+    'dd=1 -> '+r1.simple.toFixed(0)+' L');
+  t('an absent dry period still falls back to 18', rU.dryDays===18, rU.dryDays, 18);
+}
+
+console.log('\n── 5b. A loaded model is clamped to the ranges its controls offer ──');
+{
+  /* Typing cannot put the model outside these ranges - the input handler
+     clamps every edit. A file can, because it never goes through that handler,
+     and a saved model carrying dryDays 0 was how that surfaced. */
+  const clean = C.newModel(), before = JSON.stringify(clean);
+  t('a model already in range is left exactly as it is',
+    JSON.stringify(C.sanitiseModel(clean))===before, 'unchanged', 'unchanged');
+
+  const bad = C.newModel();
+  bad.system.dryDays=0; bad.system.filterCoef=5; bad.system.tariff='nonsense';
+  bad.climate.dpd=0; bad.demand.occupants=-4;
+  bad.blocks[0].w=0.5; bad.blocks[0].roof.overhang=99;
+  bad.demand.uses[0].lpd=9999;
+  C.sanitiseModel(bad);
+  const want={ dryDays:1, filterCoef:1, tariff:2.20, dpd:2, occupants:0, w:2, overhang:3, lpd:300 };
+  const got={ dryDays:bad.system.dryDays, filterCoef:bad.system.filterCoef, tariff:bad.system.tariff,
+              dpd:bad.climate.dpd, occupants:bad.demand.occupants, w:bad.blocks[0].w,
+              overhang:bad.blocks[0].roof.overhang, lpd:bad.demand.uses[0].lpd };
+  for(const k in want)
+    t('out-of-range '+k+' is pulled to '+want[k], near(got[k],want[k],1e-9), got[k], want[k]);
+
+  /* hydrate() lives inside the APP module, which needs a DOM and so is not
+     extracted. The sanitiser above is only worth anything if the load path
+     actually calls it, and that call is the one line no other assertion here
+     can see, so it is read out of the source. */
+  const src = require('fs').readFileSync(require('path').resolve(__dirname,'..','index.html'),'utf8');
+  const hyd = src.match(/function hydrate\(data\)\s*\{[\s\S]*?\n  \}/);
+  t('hydrate() returns a sanitised model', !!hyd && /return sanitiseModel\(m\);/.test(hyd[0]),
+    hyd ? (/return sanitiseModel/.test(hyd[0]) ? 'calls it' : 'returns m unsanitised') : 'no hydrate() found',
+    'return sanitiseModel(m);');
 }
 
 console.log('\n── 6. Every demo model builds and computes ──');

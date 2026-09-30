@@ -22,7 +22,7 @@ const EXPORTS = [
   "climateProvenance", "rainfallProvenanceFor",
   "MATERIALS", "MATERIAL_ORDER", "MATERIAL_ALIAS", "matKey",
   "ROOFS", "ROOF_ORDER", "CITIES", "CITY_BY_ID", "DEMOS",
-  "newModel", "newBlock", "climateFor", "sum", "MONTHS", "DAYS_IN_MONTH"
+  "newModel", "newBlock", "sanitiseModel", "climateFor", "sum", "MONTHS", "DAYS_IN_MONTH"
 ];
 
 export function extract() {

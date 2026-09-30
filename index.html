@@ -1175,6 +1175,57 @@ function newModel(over) {
   return Object.assign(m, over || {});
 }
 
+/* Every numeric field a panel exposes, with the range that panel advertises.
+
+   A model typed into the app cannot leave these ranges: the input handler
+   clamps each edit. A model READ FROM A FILE never went through that handler,
+   and nothing checked it, so whatever the file said became the model. A saved
+   file carrying `dryDays: 0` was the case that showed: the panel printed
+   "0 days" while the tank was sized on 18, because the sizing read a zero as a
+   missing value and substituted its default. Clamping on the way in means the
+   model can only ever hold something a control could have produced, so the
+   number on screen and the number in the arithmetic cannot disagree.
+
+   Roof pitch and vault rise are deliberately absent. Their limits are not
+   fixed - pitch depends on the roof type, rise on the block's depth - and
+   GEO.profile() clamps both itself. */
+const MODEL_LIMITS = {
+  climate: { annual:[0, 5000], dpd:[2, 30] },
+  demand:  { occupants:[0, 2000], irrigArea:[0, 5000], irrigMM:[0, 60],
+             irrigFrom:[0, 11], irrigTo:[0, 11] },
+  system:  { filterCoef:[0.5, 1], firstFlush:[0, 3], tank:[0, 200000],
+             dryDays:[1, 60], tariff:[0, 20] }
+};
+const BLOCK_LIMITS = { w:[2, 120], d:[2, 120], wallH:[2, 40],
+                       x:[-120, 120], z:[-120, 120], downpipes:[1, 24] };
+const ROOF_LIMITS  = { parapet:[0, 2], bays:[1, 12], ridgeRatio:[0, 1], overhang:[0, 3] };
+
+/** A number inside its range, or the default where the file gave nothing usable. */
+const fitNum = (v, lo, hi, dflt) => {
+  const n = typeof v === "boolean" ? NaN : +v;
+  return isFinite(n) ? clamp(n, lo, hi) : dflt;
+};
+
+/** Bring a loaded model inside the ranges its own controls offer. In place. */
+function sanitiseModel(m) {
+  const d = newModel(), db = newBlock();
+  for(const grp in MODEL_LIMITS){
+    if(!m[grp]) continue;
+    for(const k in MODEL_LIMITS[grp]){
+      const [lo, hi] = MODEL_LIMITS[grp][k];
+      m[grp][k] = fitNum(m[grp][k], lo, hi, d[grp][k]);
+    }
+  }
+  if(Array.isArray(m.demand && m.demand.uses))
+    for(const u of m.demand.uses) u.lpd = fitNum(u.lpd, 0, 300, 0);
+  for(const b of (m.blocks || [])){
+    for(const k in BLOCK_LIMITS) b[k] = fitNum(b[k], ...BLOCK_LIMITS[k], db[k]);
+    if(!b.roof) continue;
+    for(const k in ROOF_LIMITS) b.roof[k] = fitNum(b.roof[k], ...ROOF_LIMITS[k], db.roof[k]);
+  }
+  return m;
+}
+
 /* ═══════════════════════════ GEO ═══════════════════════════
    Turns a block into planar faces. Two families:
      profile roofs  — a (z,y) polyline extruded along X
@@ -1701,7 +1752,7 @@ const HYD = (() => {
   /* wet days per month, derived from the monthly depth and the location's
      typical depth per wet day. Used for first-flush losses and daily stepping. */
   function wetDays(model) {
-    const dpd = Math.max(2, model.climate.dpd || 8);
+    const dpd = isFinite(model.climate.dpd) ? Math.max(2, model.climate.dpd) : 8;
     return model.climate.monthly.map((mm, i) =>
       mm <= 0 ? 0 : clamp(Math.round(mm / dpd), 1, DAYS_IN_MONTH[i]));
   }
@@ -1809,7 +1860,10 @@ const HYD = (() => {
        the tank spends most of the year either empty or full. */
     const ydRatio = annualDemand > 0 ? annualInflow / annualDemand : Infinity;
     const naHalved = ydRatio < 0.5 || ydRatio > 2.0;
-    const dryDays = Math.max(1, model.system.dryDays || 18) * (naHalved ? 0.5 : 1);
+    /* Not `dryDays || 18`: that reads a zero as "nothing set" and silently
+       sizes the tank on 18 days while the panel still says 0. */
+    const dryBase = isFinite(model.system.dryDays) ? model.system.dryDays : 18;
+    const dryDays = Math.max(1, dryBase) * (naHalved ? 0.5 : 1);
     const simple = Math.min(annualInflow, annualDemand) * (dryDays / 365);
 
     /* optimisation sweep: water-saving efficiency against capacity */
@@ -3420,7 +3474,7 @@ const APP = (() => {
       m.climate.monthly = CITY_BY_ID.lon.r.slice();
     m.climate.monthly = m.climate.monthly.map(v => Math.max(0, +v || 0));
     if (!Array.isArray(m.demand.uses) || !m.demand.uses.length) m.demand.uses = base.demand.uses;
-    return m;
+    return sanitiseModel(m);
   }
 
   function loadJSON(text, label) {
@@ -3873,6 +3927,17 @@ const APP = (() => {
       setPath(t.dataset.path, t.dataset.num ? +t.value : t.value); commit(); refresh(true); return;
     }
     if (t.id === "rwc-city") { applyCity(t.value); commit(); refresh(true); return; }
+    /* The input handler leaves the field being typed in alone on purpose: a
+       half-typed "18" must not be rewritten to "1" under the cursor the moment
+       the "1" lands. The cost was that a value the clamp rejected stayed on
+       screen afterwards - type 0 into a field whose minimum is 1 and the box
+       went on reading 0 while the model, the readout and the arithmetic all
+       used 1. Editing is over by the time `change` fires, so put the model's
+       own value back and let the two agree again. */
+    if (t.matches("input[type=number][data-path], input[type=range][data-path]")) {
+      syncField(t.dataset.path, getPath(t.dataset.path));
+      commit(); return;
+    }
     if (t.matches("[data-path], [data-month], [data-use]")) commit();
   });
 
