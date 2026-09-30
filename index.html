@@ -3427,13 +3427,13 @@ const APP = (() => {
           ? `The roof surface is ${nf(surf,1)} m², within ${nf(extra,1)}% of the catchment at this pitch. Steepen it and the surface grows while the catchment does not.`
           : `This roof is horizontal in projection, so catchment and surface are identical.` },
 
-      { id:"rain", tag:"Input", title:"Rainfall  R", val:nf(R,0) + " mm/yr",
+      { id:"rain", tag:"Input", title:"Rainfall  h", val:nf(R,0) + " mm/yr",
         sub:esc(model.climate.label),
         note:`1 mm falling on 1 m² is 1 litre, so ${nf(A,1)} m² under ${nf(R,0)} mm would give ${V(A*R)} if nothing were lost.` },
 
-      { id:"losses", tag:"Input", title:"Losses  e × η", val:nf(Yc*Fc,3),
+      { id:"losses", tag:"Input", title:"Retained  e × η", val:nf(Yc*Fc,3),
         sub:`e ${nf(Yc,2)} (surface) × η ${nf(Fc,2)} (treatment)`,
-        note:`e is the surface yield coefficient from Table 2 of the standard — what the roof surface itself loses to wetting, evaporation and wind. η is the hydraulic treatment efficiency coefficient; where the manufacturer states nothing, the standard says 0.9 can be used for a system with no additional treatment. You keep ${nf(Yc*Fc*100,0)}%.` },
+        note:`e is the surface yield coefficient from Table 2 of the standard — what the roof surface itself loses to wetting, evaporation and wind. η is the hydraulic treatment efficiency coefficient; where the manufacturer states nothing, the standard says 0.9 can be used for a system with no additional treatment. Two losses are applied and no others, so the figure above is what survives them: you keep ${nf(Yc*Fc*100,0)}% and lose ${nf((1-Yc*Fc)*100,0)}%.` },
 
       { id:"yield", tag:"Harvest", title:"Annual yield  Y = A · e · h · η", val:V(res.annualInflow),
         sub:`${nf(A,1)} × ${nf(R,0)} × ${nf(Yc,2)} × ${nf(Fc,2)}`,
@@ -3669,16 +3669,15 @@ const APP = (() => {
                 = <b>${fmtVol(res.annualInflow).v} ${fmtVol(res.annualInflow).u}/yr</b></p>
               ${kv([
                 ["Non-potable demand", fmtVol(res.annualDemand).v + " " + fmtVol(res.annualDemand).u + "/yr"],
-                ["Supplied from store", fmtVol(b.totalSupplied).v + " " + fmtVol(b.totalSupplied).u],
+                ["Supplied from store, i.e. the mains displaced",
+                  fmtVol(b.totalSupplied).v + " " + fmtVol(b.totalSupplied).u + "/yr"],
                 ["Mains top-up", fmtVol(b.totalDeficit).v + " " + fmtVol(b.totalDeficit).u],
                 ["Overflow to drain", fmtVol(b.totalOverflow).v + " " + fmtVol(b.totalOverflow).u],
-                ["Water saving efficiency", fmtPct(b.saving)],
                 ["Coverage rate Cr (A.5)", fmtPct(b.saving)],
                 [(model.system.daily ? "Days" : "Months") + " fully supplied (tool\u2019s own measure)", fmtPct(b.reliability)],
                 ["Storage capacity", fmtVol(res.capacity).v + " " + fmtVol(res.capacity).u + " (" + nf(res.daysStorage,0) + " days)"],
                 ["BS basic approach A.2.1", fmtVol(res.simple).v + " " + fmtVol(res.simple).u],
-                ["Profile-optimised knee", fmtVol(res.knee).v + " " + fmtVol(res.knee).u],
-                ["Mains displaced", nf(res.mainsSaved,1) + " m³/yr"]
+                ["Profile-optimised knee", fmtVol(res.knee).v + " " + fmtVol(res.knee).u]
               ])}
             </div>
             <div class="rwc-rep-box" style="margin-top:12px"><h2>Monthly water balance</h2>
