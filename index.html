@@ -968,7 +968,7 @@ const VERSION = { number: "1.0.0", date: "2026-09-16", label: "16 September 2026
    only possible if the app tells them what it is. Held to the APA entry in
    docs/method-notes.html by test/citation.test.mjs. */
 const CITATION = {
-  author: "Al-Obaidi, K.M.",
+  author: "Al-Obaidi, K. M.",
   year:   "2026",
   title:  "Rainwater Harvesting Studio: A parametric roof and tank sizing tool",
   url:    "https://karam.me.uk/applications/rainwater-harvesting-studio/",
@@ -1145,7 +1145,11 @@ function newModel(over) {
       cityId: "lon",
       monthly: CITY_BY_ID.lon.r.slice(),
       dpd: CITY_BY_ID.lon.dpd,
-      annual: 603,
+      /* Derived, never written out: a literal here drifted away from the
+         monthly figures when the climate library was regenerated, so a new
+         model opened in Annual mode rescaled London to the stale total.
+         applyCity() already keeps this in step on every other path. */
+      annual: annualOf(CITY_BY_ID.lon.r),
       label: "London, UK",
       source: "preset",       // preset | preset-scaled | manual | open-meteo
       lat: 51.5, lon: -0.13

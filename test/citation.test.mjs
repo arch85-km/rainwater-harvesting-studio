@@ -60,6 +60,15 @@ console.log("\n── 1. The app's citation matches the method notes ──");
     const entry = norm(m[1].replace(/<a [^>]*>[\s\S]*?<\/a>/, ""))
                     .replace(/\s*$/, " " + CITATION.doiUrl);
     t("APA entry is character-identical to CITATION.apa", entry === apa, entry, apa);
+
+    /* Dropping the anchor above is what let its href drift: the entry read as
+       identical while the link a reader actually copies pointed at the version
+       DOI, which both documents' own prose tells them not to cite for the tool.
+       So the href is compared too, rather than thrown away. */
+    const href = m[1].match(/<a href="([^"]+)"/);
+    t("the APA entry's link is CITATION.doiUrl",
+      !!href && href[1] === CITATION.doiUrl,
+      href ? href[1] : "no link in the entry", CITATION.doiUrl);
   }
 
   const bib = notes.match(/url\s*=\s*\{([^}]+)\}/);
@@ -123,9 +132,12 @@ console.log("\n── 3. CITATION.cff says the same thing ──");
 
   /* Derive the APA form from the .cff's structured name and compare it with
      CITATION.author, rather than testing that it merely looks similar:
-     "Al-Obaidi" + "Karam M." must reduce to exactly "Al-Obaidi, K.M." */
+     "Al-Obaidi" + "Karam M." must reduce to exactly "Al-Obaidi, K. M."
+     APA 7 §9.8 spaces the initials, and the space is not cosmetic here — it is
+     what the entry in the method notes has always been typeset with, so
+     dropping it made the app and the document disagree. */
   const author = cff.match(/family-names:[ \t]*(.+)\n\s*given-names:[ \t]*(.+)/);
-  const initials = g => g.trim().split(/\s+/).map(w => w[0].toUpperCase() + ".").join("");
+  const initials = g => g.trim().split(/\s+/).map(w => w[0].toUpperCase() + ".").join(" ");
   const cffAuthor = author ? `${author[1].trim()}, ${initials(author[2])}` : null;
   t("the author reduces to CITATION.author", cffAuthor === CITATION.author,
     cffAuthor, CITATION.author);
@@ -199,10 +211,21 @@ console.log("\n\u2500\u2500 4. The README describes the app that ships \u2500\u2
       ver[2].trim(), VERSION.label);
   }
 
-  const upd = notes.match(/<b>Updated<\/b>\s*([^<]+)</);
-  t("the method notes' Updated line is VERSION.label",
-    !!upd && upd[1].replace(/&nbsp;/g, " ").trim() === VERSION.label,
-    upd ? upd[1].trim() : "no Updated line", VERSION.label);
+  /* The notes' own header line. It was checked as "<b>Updated</b> date" and
+     silently stopped matching when the header was restyled to carry the number
+     and the date together — an assertion that cannot fail is worse than none,
+     so this reads the line the document actually has, and splits it, so a
+     failure names which half drifted. */
+  const nver = notes.match(/<b>Version<\/b>\s*([^&<]+)&middot;\s*([^<]+)</);
+  t("the method notes state the version and release date", !!nver,
+    nver ? nver[0] : "no '<b>Version</b> N &middot; date' line", "<b>Version</b> N &middot; date");
+  if (nver) {
+    t("the method notes' version is VERSION.number", nver[1].trim() === VERSION.number,
+      nver[1].trim(), VERSION.number);
+    t("the method notes' date is VERSION.label",
+      nver[2].replace(/&nbsp;/g, " ").trim() === VERSION.label,
+      nver[2].trim(), VERSION.label);
+  }
 }
 
 console.log("\n\u2500\u2500 5. The Zenodo record says the same as the citation \u2500\u2500");
