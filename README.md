@@ -2,7 +2,7 @@
 
 **[karam.me.uk/applications/rainwater-harvesting-studio](https://karam.me.uk/applications/rainwater-harvesting-studio/)**
 
-**Version 1.0.0** — 16 September 2026
+**Version 1.1.0** — 30 September 2026
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22801122.svg)](https://doi.org/10.5281/zenodo.22801122)
 

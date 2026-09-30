@@ -6,8 +6,8 @@ authors:
     given-names: Karam M.
     orcid: "https://orcid.org/0000-0002-4379-6964"
     affiliation: "Sheffield Hallam University"
-version: "1.0.0"
-date-released: "2026-09-16"
+version: "1.1.0"
+date-released: "2026-09-30"
 doi: "10.5281/zenodo.22801122"
 identifiers:
   - type: doi
