@@ -895,7 +895,7 @@ const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
    with its values unaltered. Table 2 footnote a: "These coefficients can be used
    if no other values are available." */
 const MATERIALS = {
-  smooth:       { label:"Pitched roof, smooth (metal, glass, slate, glazed tile)", yc:0.90, col:"#8f97a0" },
+  smooth:       { label:"Pitched roof, smooth (metal, glass, slate, glazed tile, solar panels)", yc:0.90, col:"#8f97a0" },
   rough:        { label:"Pitched roof, rough (concrete tile)",                     yc:0.80, col:"#a8593f" },
   flatNoGravel: { label:"Flat roof, without gravel",                               yc:0.80, col:"#4d5257" },
   flatGravel:   { label:"Flat roof, with gravel",                                  yc:0.70, col:"#a19a8c" },
@@ -3481,7 +3481,7 @@ const APP = (() => {
 
       { id:"met", tag:"Justification", title:"Demand met", val:fmtPct(b.saving),
         sub:`${V(b.totalSupplied)} supplied of ${V(res.annualDemand)} wanted`,
-        note:`BS calls this the water saving efficiency. It is how you defend the tank size: a bigger tank raises this number until the curve flattens, and past that point it buys nothing.` },
+        note:`The standard calls this the <b>coverage rate C<sub>r</sub></b> — Formula (A.5), supplied ÷ demanded. It is how you defend the tank size: a bigger tank raises this number until the curve flattens, and past that point it buys nothing.` },
 
       { id:"mains", tag:"Benefit", title:"Mains displaced", val:nf(res.mainsSaved,1) + " m³/yr",
         sub:`≈ ${nf(res.costSaved,0)} per year at ${nf(model.system.tariff,2)}/m³`,

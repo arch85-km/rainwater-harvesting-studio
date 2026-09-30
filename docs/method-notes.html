@@ -325,7 +325,7 @@
         method, and keeps the <b>vertical component</b>. That is the area of the roof's shadow on the
         ground, not the area of the sloping surface you would tile.</p>
       <p>The standard behind the tool is <span class="cs-mono">BS EN 16941&#8209;1:2024</span>, which
-        superseded <span class="cs-mono">BS 8515:2009</span> — the code says so, and that phrase is the
+        replaced <span class="cs-mono">BS 8515:2009+A1:2013</span> — the code says so, and that phrase is the
         only place BS 8515 appears in it; nothing the tool calculates comes from the older code of
         practice.</p>
       <p>This is not a simplification the tool has chosen. <span class="cs-mono">BS EN 16941&#8209;1:2024</span>,
@@ -362,7 +362,7 @@ depth. On a 12 x 8 m block with o = 0.5 m that is 110.5 m2 against 117.0 m2.</em
       <h3>The yield equation, as implemented</h3>
       <p>The code implements Formula (1) of clause 6.1.2 directly, summed over surfaces so that blocks
         with different materials each keep their own coefficient:</p>
-      <div class="cs-formula">Y = &Sigma; ( A_i  &times;  e_i  &times;  h  &times;  &eta; )        litres
+      <div class="cs-formula">Y = &Sigma; ( A_i  &times;  e_i )  &times;  h  &times;  &eta;        litres
 
 <em>A_i  horizontal projection of collection area i, m&sup2;
 e_i  surface yield coefficient of that surface, Table 2
@@ -478,7 +478,7 @@ h    rainfall depth for the time step, mm
             available. The standard also says the coefficient of other surfaces shall be adapted.</caption>
           <thead><tr><th>Collection surface</th><th class="cs-sym">e</th></tr></thead>
           <tbody>
-            <tr><td>Pitched roof, smooth &mdash; metal, glass, slate, glazed tile</td><td class="cs-d">0.90</td></tr>
+            <tr><td>Pitched roof, smooth &mdash; metal, glass, slate, glazed tile, solar panels</td><td class="cs-d">0.90</td></tr>
             <tr><td>Pitched roof, rough &mdash; concrete tile</td><td class="cs-d">0.80</td></tr>
             <tr><td>Flat roof, without gravel</td><td class="cs-d">0.80</td></tr>
             <tr><td>Flat roof, with gravel</td><td class="cs-d">0.70</td></tr>
