@@ -371,7 +371,7 @@ h    rainfall depth for the time step, mm
 
 1 mm falling on 1 m&sup2; = 1 litre, which is where the units close.</div>
       <p>Worked, for the 12&nbsp;&times;&nbsp;8&nbsp;m gable above:
-        117.00&nbsp;m&sup2; &times; 615&nbsp;mm &times; 0.80 &times; 0.90 = <b>51&nbsp;841&nbsp;litres a year</b>, the 51.84&nbsp;m&sup3; in the table above.</p>
+        117.00&nbsp;m&sup2; &times; 615.4&nbsp;mm &times; 0.80 &times; 0.90 = <b>51&nbsp;841&nbsp;litres a year</b>, the 51.84&nbsp;m&sup3; in the table above.</p>
 
       <h3>Two losses, and only two</h3>
       <p><b>e</b>, the surface yield coefficient, is what the roof surface itself loses to wetting,
@@ -734,7 +734,7 @@ spaced evenly through the month.</div>
             <tr><td>Surface</td><td colspan="2">the eight rows of Table 2</td><td class="cs-d">pitched rough</td></tr>
             <tr><td colspan="4"><h4 style="margin:.2rem 0">Climate</h4></td></tr>
             <tr><td>Rainfall input</td><td colspan="2">preset location, twelve monthly figures, or an annual total scaled onto the current monthly shape</td><td class="cs-d">preset</td></tr>
-            <tr><td>Annual rainfall &mdash; annual mode</td><td class="cs-n">0 &ndash; 5 000 mm</td><td class="cs-n">10</td><td class="cs-d">615 mm</td></tr>
+            <tr><td>Annual rainfall &mdash; annual mode</td><td class="cs-n">0 &ndash; 5 000 mm</td><td class="cs-n">10</td><td class="cs-d">603 mm</td></tr>
             <tr><td>Monthly rainfall &mdash; monthly mode</td><td class="cs-n">0 &ndash; 2 000 mm each</td><td class="cs-n">1</td><td class="cs-d">London</td></tr>
             <tr><td>Typical depth per wet day</td><td class="cs-n">2 &ndash; 30 mm</td><td class="cs-n">1</td><td class="cs-d">by location</td></tr>
             <tr><td colspan="4"><h4 style="margin:.2rem 0">Demand</h4></td></tr>
@@ -754,6 +754,12 @@ spaced evenly through the month.</div>
           </tbody>
         </table>
       </div>
+      <p><b>The annual-mode default is not the London preset.</b> A new model carries a
+        hard-coded annual figure of 603&nbsp;mm, while the London monthly figures it also carries
+        sum to 615.4&nbsp;mm. Switching <i>Rainfall input</i> to <i>Annual</i> applies the 603 and
+        rescales the monthly shape to it, so the rainfall drops by two per cent without anything
+        on screen saying so. Type the total you want before reading any result in that mode.</p>
+
       <p><b>One control does nothing.</b> The <i>Fall</i> slider on a flat roof changes neither the
         geometry nor any result: the tool builds a flat roof as a level plane, so its surface area equals
         its catchment whatever the fall is set to. For a fall in the range the slider offers the area
@@ -807,7 +813,7 @@ spaced evenly through the month.</div>
         for a large or varied country it will sit a long way from any particular city &mdash; which is
         the point of looking. Three <em>pairs</em> among the twenty-eight share a country: Kuala Lumpur
         with Kuching, Seattle with Phoenix, Sydney with Melbourne. In the library as it currently
-        stands they differ by roughly 1&nbsp;500, 770 and 550&nbsp;mm a year, and one national number
+        stands they differ by roughly 1&nbsp;400, 820 and 480&nbsp;mm a year, and one national number
         cannot be right for both halves of any of them.</p>
       <p>So use it as a sanity check on the order of magnitude and on nothing else. <b>Nothing in the
         app is calculated from it</b>, and a city figure that differs from its national average is not
