@@ -1881,10 +1881,23 @@ const HYD = (() => {
     const bal = balance(model, inflow, demand, capacity, wd);
 
     const mainsSaved = bal.totalSupplied / 1000;                    // m3
+
+    /* On a monthly step the whole month's demand is drawn in one go against
+       whatever the store held at the end of the previous month, so a store
+       smaller than the busiest month's demand can never deliver more than about
+       one tank-full a month however often it would really refill. The coverage,
+       the overflow and the knee are then all properties of the time step rather
+       than of the tank - on the model this app opens with, 53% against 89%, and
+       a knee of 4 687 L against 852 L. Everything that reads those figures back
+       to the user has to know when they cannot be taken at face value, so the
+       test lives here with them rather than being repeated at each place. */
+    const maxMonthDemand = Math.max(...demand);
+    const stepCapped = !model.system.daily && capacity > 0 && capacity < maxMonthDemand;
+
     return {
       wd, demand, inflow, annualRain, annualInflow, annualDemand,
       simple, knee, sweep, capacity, bal, dryDays, ydRatio, naHalved,
-      maxMonthDemand: Math.max(...demand),
+      maxMonthDemand, stepCapped,
       maxSaving: best,
       daysStorage: annualDemand > 0 ? capacity / (annualDemand / 365) : 0,
       mainsSaved, costSaved: mainsSaved * model.system.tariff,
@@ -3173,7 +3186,7 @@ const APP = (() => {
             `<p class="rwc-note">Basic approach, A.2.1: the lesser of annual yield and annual demand × dry period ÷ 365. The standard's examples are <b>15</b> days (Netherlands), <b>18</b> (Ireland, UK), <b>21</b> (Germany) — choose for your location, and consider how climate change shifts it.${res.naHalved ? ` Yield ÷ demand is <b>${nf(res.ydRatio,2)}</b>, outside 0.5–2.0, so the UK National Annex NA.3 halving is applied: <b>${nf(res.dryDays,1)}</b> days used.` : ""}<br>Sized at <b>${fmtVol(res.simple).v} ${fmtVol(res.simple).u}</b>.</p>`) +
         fCheck("Daily balance (spread rain over wet days)", "system.daily") +
         `<p class="rwc-note">The balance can be stepped monthly or daily, and the choice matters more than it looks. On a <b>monthly</b> step the whole month's demand is drawn in one go against whatever the store held at the end of the previous month, so the store can never deliver more than <b>one tank-full per month</b> however often it would really refill. On a <b>daily</b> step the month's depth is spread over its wet days and the store refills between draws. Neither is the standard's detailed approach, which needs measured daily rainfall.</p>` +
-        (!S.daily && res.capacity > 0 && res.capacity < res.maxMonthDemand
+        (res.stepCapped
           ? `<p class="rwc-note rwc-warn">This store holds ${fmtVol(res.capacity).v} ${fmtVol(res.capacity).u} and the busiest month demands ${fmtVol(res.maxMonthDemand).v} ${fmtVol(res.maxMonthDemand).u}. On a monthly step that caps the supply at one tank-full a month, so the coverage shown here is far below what this tank would really achieve. Switch on the daily balance.</p>`
           : "") +
         fRange("Mains water tariff", "system.tariff", 0, 20, 0.05, "/m³", 2));
@@ -3503,6 +3516,12 @@ const APP = (() => {
     const surf = geom.surface, extra = A > 0 ? (surf / A - 1) * 100 : 0;
     const spill = res.annualInflow > 0 ? b.totalOverflow / res.annualInflow : 0;
     const V = v => { const f = fmtVol(v); return f.v + " " + f.u; };
+    /* Two of the notes below describe behaviour that a capped monthly step does
+       not have: a bigger tank does not raise the coverage much, and the spill is
+       the time step's rather than the roof's. Say so where they are read. */
+    const capped = res.stepCapped
+      ? ` <b>On this monthly step that cannot be read at face value</b> — the store is smaller than the busiest month's demand, so it is capped at about one tank-full a month. Switch on the daily balance.`
+      : "";
 
     return [
       { id:"catchment", tag:"Input", title:"Catchment area  A", val:nf(A,1) + " m²",
@@ -3535,7 +3554,7 @@ const APP = (() => {
 
       { id:"met", tag:"Justification", title:"Demand met", val:fmtPct(b.saving),
         sub:`${V(b.totalSupplied)} supplied of ${V(res.annualDemand)} wanted`,
-        note:`The standard calls this the <b>coverage rate C<sub>r</sub></b> — Formula (A.5), supplied ÷ demanded. It is how you defend the tank size: a bigger tank raises this number until the curve flattens, and past that point it buys nothing.` },
+        note:`The standard calls this the <b>coverage rate C<sub>r</sub></b> — Formula (A.5), supplied ÷ demanded. It is how you defend the tank size: a bigger tank raises this number until the curve flattens, and past that point it buys nothing.` + capped },
 
       { id:"mains", tag:"Benefit", title:"Mains displaced", val:nf(res.mainsSaved,1) + " m³/yr",
         sub:`≈ ${nf(res.costSaved,0)} per year at ${nf(model.system.tariff,2)}/m³`,
@@ -3543,9 +3562,9 @@ const APP = (() => {
 
       { id:"overflow", tag:"Diagnostic", title:"Overflow", val:V(b.totalOverflow),
         sub:`${fmtPct(spill)} of the harvest`,
-        note: spill > 0.4
+        note: (spill > 0.4
           ? `Most of the harvest is spilling. That points at demand or storage, not at the roof — a larger catchment would simply spill more.`
-          : `What the store could not hold when it was already full. A modest spill is normal and unavoidable.` }
+          : `What the store could not hold when it was already full. A modest spill is normal and unavoidable.`) + capped }
     ];
   }
 
@@ -3575,6 +3594,17 @@ const APP = (() => {
     if (res.maxSaving < 0.45)
       return { t:"Yield-limited", w:true,
         d:`There is not enough water. Even with an <b>unlimited</b> tank, this roof under this rainfall could meet only <b>${fmtPct(res.maxSaving)}</b> of the demand — ${nf(res.annualRain,0)} mm a year across ${nf(geom.catchment,1)} m² simply does not add up to ${volSet([res.annualDemand])(res.annualDemand)}. A bigger tank cannot create water. <b>Biggest lever: more catchment area, a surface with a higher yield coefficient</b> (this roof is e ${nf(geom.ycMean,2)}; smooth pitched is 0.90)<b>, or less demand.</b>` };
+
+    /* Before blaming the tank, check whether the time step is what is limiting
+       the answer. A store smaller than the busiest month's demand cannot show
+       its real coverage on a monthly step, and the knee read off that curve is
+       inflated with it: on the default model this branch used to declare the
+       tank the binding constraint at 53% and send the reader from 2 557 L to
+       4 687 L, when the daily step puts the same tank at 89% - the best any
+       tank achieves here - and the knee at 852 L, below where it already is. */
+    if (res.stepCapped)
+      return { t:"Limited by the time step, not by the design", w:true,
+        d:`This store holds <b>${V(res.capacity)}</b> and the busiest month demands <b>${V(res.maxMonthDemand)}</b>. On a monthly step the whole month is drawn in one go, so the store can never deliver more than about one tank-full a month however often it would really refill. The ${fmtPct(met)} above, the ${fmtPct(spill)} spilled and the knee at ${V(res.knee)} are all properties of that time step rather than of this design, and none of them can be quoted. <b>Switch on the daily balance</b> on the Demand tab, then read this box again.` };
 
     if (res.capacity < res.knee * 0.92 && kneePt.saving > met + 0.03)
       return { t: oversized ? "Storage-limited, on an oversized roof" : "Storage-limited", w:true,
@@ -3617,6 +3647,11 @@ const APP = (() => {
             <span class="rwc-rep-prov">${esc(rainfallProvenanceFor(model.climate))}<br>Version ${VERSION.number} · ${VERSION.label}</span><br>
             ${model.system.daily ? "daily" : "monthly"} water balance<br><b>© Karam Al-Obaidi</b></div>
         </div>
+
+        ${res.stepCapped ? `<div class="rwc-rep-box rwc-ex-warn" style="border-width:2px;margin-bottom:10px">
+          <h2>Read this before quoting anything below</h2>
+          <p class="rwc-ex-note" style="font-size:12px">The balance is stepped <b>monthly</b>, and this store (${V(res.capacity)}) is smaller than the busiest month's demand (${V(res.maxMonthDemand)}). A monthly step draws the whole month in one go, so the store can never deliver more than about one tank-full a month however often it would really refill. <b>Demand met, Overflow and the curve knee are therefore properties of the time step, not of this design.</b> Switch on the daily balance on the Demand tab and export this sheet again.</p>
+        </div>` : ""}
 
         <ol class="rwc-ex-steps">
           ${steps.map((st, i) => `<li class="rwc-ex-step${st.key ? " rwc-key" : ""}${anchorId === st.id ? " rwc-key" : ""}" id="ex-${st.id}">
@@ -3765,6 +3800,8 @@ const APP = (() => {
                 ["BS basic approach A.2.1", fmtVol(res.simple).v + " " + fmtVol(res.simple).u],
                 ["Profile-optimised knee", fmtVol(res.knee).v + " " + fmtVol(res.knee).u]
               ])}
+              ${res.stepCapped ? `<p style="font-size:10.5px;color:#b8541f;margin:6px 0 0"><b>Monthly step, store below the busiest month.</b>
+                ${fmtVol(res.capacity).v} ${fmtVol(res.capacity).u} against ${fmtVol(res.maxMonthDemand).v} ${fmtVol(res.maxMonthDemand).u}: the coverage rate, the overflow and the knee above are properties of the time step rather than of this design. Switch on the daily balance before quoting them.</p>` : ""}
             </div>
             <div class="rwc-rep-box" style="margin-top:12px"><h2>Monthly water balance</h2>
               ${svgFix(CHART.wrap(CHART.balance(res)))}

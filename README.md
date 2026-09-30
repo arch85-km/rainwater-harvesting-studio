@@ -220,7 +220,10 @@ card per step in plain English — then:
   *yield-limited* (even an unlimited tank could not meet the demand, so a bigger
   tank cannot help), *storage-limited* (naming the knee capacity and the percentage
   it would reach), or *demand-limited* (the roof collects far more than the
-  building can use), with the single biggest lever called out.
+  building can use), with the single biggest lever called out. Where the balance
+  is stepped **monthly** and the store is smaller than the busiest month's demand,
+  it says so and names nothing else: the coverage, the overflow and the knee are
+  all properties of that time step, and the sheet carries a banner saying so.
 
 Clicking a tile opens the sheet at that step.
 
@@ -445,11 +448,16 @@ Four ways in:
    Then raise the occupancy and watch the overflow collapse.
 6. **Monthly vs daily.** Load `terrace`, set the tank manually to 1 000 L and
    read the coverage rate with the daily balance off, then on: 4.6% becomes
-   59.3%. Ask which figure is the artefact, and why (see *Store operation*).
+   49.5%. Ask which figure is the artefact, and why (see *Store operation*).
 7. **Read the diagnosis.** Open **Explain** on `clim-arid`, `warehouse` and
-   `house` in turn. They come back yield-limited, storage-limited-on-an-oversized-roof,
-   and storage-limited. Ask what you would change in each case — and notice that in
-   Dubai a bigger tank is the *wrong* answer.
+   `house` in turn, as they load. Dubai comes back yield-limited — no tank can
+   create water, so a bigger one is the *wrong* answer. The other two refuse to
+   diagnose at all: they are stepped monthly with a store below the busiest
+   month, so what the sheet is measuring is the time step. Tick **Daily balance**
+   and open them again: the warehouse is demand-limited at 100% met, and the
+   house is well matched at 61%. Ask what each would have cost you if you had
+   quoted the first reading — the warehouse's was a tank four times the size,
+   for nothing.
 8. **Save two variants** of the same building and compare them in Analysis mode.
 
 Three worked exercises with the numbers to expect, written for students to follow
@@ -509,7 +517,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**379 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**387 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.

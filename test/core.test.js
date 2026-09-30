@@ -334,6 +334,47 @@ console.log('\n── 5b. A loaded model is clamped to the ranges its controls o
     'return sanitiseModel(m);');
 }
 
+console.log('\n── 5c. A monthly step that caps the store is flagged ──');
+{
+  /* On a monthly step the whole month is drawn in one go, so a store smaller
+     than the busiest month cannot show its real coverage. On the model the app
+     opens with that is 53% against the daily step's 89%, and a knee of 4 687 L
+     against 852 L - and the diagnosis read those figures straight and told the
+     reader to nearly double a tank that was already at the ceiling. */
+  const at = over => { const m=C.newModel(); Object.assign(m.system, over||{}); return HYD.compute(m, GEO.build(m)); };
+  const monthly = at(), daily = at({daily:true});
+  t('the default model on a monthly step is flagged', monthly.stepCapped === true,
+    monthly.stepCapped, true);
+  t('the same model on a daily step is not', daily.stepCapped === false, daily.stepCapped, false);
+  t('a store above the busiest month is not flagged',
+    at({tankMode:'manual', tank:20000}).stepCapped === false, at({tankMode:'manual', tank:20000}).stepCapped, false);
+  const nodem = (() => { const m=C.newModel(); m.demand.occupants=0; m.demand.irrigArea=0; return HYD.compute(m, GEO.build(m)); })();
+  t('a model with no demand is not flagged', nodem.stepCapped === false, nodem.stepCapped, false);
+
+  /* The cap, not the tank, is what holds the coverage down: give the same
+     monthly model a store bigger than any month and it reaches the daily
+     figure. This is the evidence the flag is reading the right thing. */
+  const big = at({tankMode:'manual', tank:20000});
+  const bigMet = big.bal.totalSupplied / big.bal.totalDemand;
+  const dayMet = daily.bal.totalSupplied / daily.bal.totalDemand;
+  t('lifting the store past the busiest month recovers the daily coverage',
+    Math.abs(bigMet - dayMet) < 0.02, (100*bigMet).toFixed(1)+'%', (100*dayMet).toFixed(1)+'%');
+
+  /* diagnose() and the two sheets live in the APP module, which needs a DOM.
+     The one thing no assertion here can otherwise see is that the diagnosis
+     consults the flag BEFORE it blames the tank, so it is read from source. */
+  const src = require('fs').readFileSync(require('path').resolve(__dirname,'..','index.html'),'utf8');
+  const dg = src.match(/function diagnose\(\)[\s\S]*?\n  \}/);
+  const iFlag = dg ? dg[0].indexOf('res.stepCapped') : -1;
+  const iStore = dg ? dg[0].indexOf('Storage-limited') : -1;
+  t('diagnose() checks the time step before blaming the store',
+    iFlag > -1 && iStore > -1 && iFlag < iStore,
+    iFlag < 0 ? 'stepCapped not consulted' : (iFlag < iStore ? 'before' : 'after'), 'before');
+  for(const [what, re] of [['the Explain sheet', /rwc-ex-warn[\s\S]{0,200}Read this before quoting/],
+                           ['the report sheet', /Monthly step, store below the busiest month/]])
+    t(what + ' carries the warning', re.test(src), re.test(src) ? 'present' : 'absent', 'present');
+}
+
 console.log('\n── 6. Every demo model builds and computes ──');
 for(const d of DEMOS){
   try{
