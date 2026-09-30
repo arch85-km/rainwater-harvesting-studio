@@ -376,6 +376,16 @@ console.log('\n── 5c. A monthly step that caps the store is flagged ──')
   for(const [what, re] of [['the Explain sheet', /rwc-ex-warn[\s\S]{0,200}Read this before quoting/],
                            ['the report sheet', /Monthly step, store below the busiest month/]])
     t(what + ' carries the warning', re.test(src), re.test(src) ? 'present' : 'absent', 'present');
+
+  /* "Well matched" used to end "Sizing is close to the knee at X" whatever the
+     numbers were. On the model the app opens with the store is three times the
+     knee, so it has to measure the gap before describing it. */
+  const dflt = at();
+  t('the default store is well clear of its knee, so the text must not call it close',
+    dflt.capacity / dflt.knee > 1.25, (dflt.capacity/dflt.knee).toFixed(2)+'x', '> 1.25x');
+  t('the diagnosis compares the store with the knee before describing it',
+    /kneeRatio\s*=\s*res\.knee\s*>\s*0/.test(src) && /kneeRatio > 1\.25/.test(src),
+    /kneeRatio/.test(src) ? 'measured' : 'asserted', 'measured');
 }
 
 console.log('\n── 6. Every demo model builds and computes ──');

@@ -3571,6 +3571,8 @@ const APP = (() => {
         sub:`${fmtPct(spill)} of the harvest`,
         note: (spill > 0.4
           ? `Most of the harvest is spilling. That points at demand or storage, not at the roof — a larger catchment would simply spill more.`
+          : b.totalOverflow < 1
+          ? `Nothing spilled: the demand stayed ahead of the store all year, so every drop collected was used. A roof this size cannot be what is limiting the design.`
           : `What the store could not hold when it was already full. A modest spill is normal and unavoidable.`) + capped }
     ];
   }
@@ -3625,8 +3627,18 @@ const APP = (() => {
       return { t:"Demand-limited", w:false,
         d:`${fmtPct(spill)} of the harvest spills while only ${fmtPct(met)} of demand is met — the store empties between storms and overflows during them. <b>Biggest lever: spread the demand, or raise the store</b> so more of each storm is retained.` };
 
+    /* Say what the sizing is rather than asserting it is close. A.2.1 is an
+       annual rule and the knee is read off a simulated curve, so the two part
+       company routinely - three to one on the model this app opens with, where
+       this branch used to call 2 557 L "close to" a knee of 852 L. */
+    const kneeRatio = res.knee > 0 ? res.capacity / res.knee : 1;
+    const vsKnee = kneeRatio > 1.25
+      ? `The store is <b>${nf(kneeRatio,1)}\u00d7 the curve knee</b> (${V(res.knee)}), so A.2.1 is sizing generously here: most of that coverage arrives well before ${V(res.capacity)}.`
+      : kneeRatio < 0.8
+      ? `The store is under the curve knee (${V(res.knee)}), though not far enough under to cost much coverage.`
+      : `Sizing is close to the knee at ${V(res.knee)}.`;
     return { t:"Well matched", w:false,
-      d:`Harvest, demand and store are in reasonable balance: ${fmtPct(met)} of demand met with ${fmtPct(spill)} spilled. Sizing is close to the knee at ${V(res.knee)}.` };
+      d:`Harvest, demand and store are in reasonable balance: ${fmtPct(met)} of demand met with ${fmtPct(spill)} spilled. ` + vsKnee };
   }
 
   function buildExplain(anchorId) {
