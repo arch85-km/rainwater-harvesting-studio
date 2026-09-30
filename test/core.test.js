@@ -48,8 +48,35 @@ console.log('\n── 2. Catchment is the plan projection, not the surface ─�
   const gs=GEO.build(mk({w:W,d:D,wallH:5},{type:'sawtooth',pitch:30,overhang:O,bays:4}));
   const wantS=(W+2*O)*(D+O);   // sawtooth carries its overhang on the low edge only
   t(`sawtooth catchment = ${wantS.toFixed(2)} m² (overhang on the low edge only)`, near(gs.catchment,wantS,1e-4), gs.catchment.toFixed(4), wantS.toFixed(4));
-  const gv=GEO.build(mk({w:W,d:D,wallH:5},{type:'vault',rise:4,overhang:O}));
-  t('vault surface strictly exceeds catchment', gv.surface>gv.catchment*1.05, gv.surface.toFixed(2), '> '+(gv.catchment*1.05).toFixed(2));
+  /* The vault across its whole range, not one point of it. The old profile
+     sampled the arc over z and always took the circle's upper half: right for a
+     shallow vault, a division by sqrt(1e-6) at exactly semicircular (52 163 m2
+     of surface on a 117 m2 footprint), and the wrong branch beyond it, which
+     stood the roof metres clear of its own walls. A single one-sided
+     "surface > catchment" passed through all three. */
+  {
+    const semi  = D / 2;                                      // rise at semicircular
+    const chord = 18 * 2 * semi * Math.sin(Math.PI / 36);     // 18-facet half-circumference
+    const flare = 2 * O / Math.cos(75 * Math.PI / 180);       // overhang, tangent capped at 75 deg
+    const wantSemi = (chord + flare) * (W + 2 * O);
+    let prev = 0, spike = null, offPlan = null;
+    for (let r = 0.5; r <= semi + 1e-9; r += 0.25) {
+      const g = GEO.build(mk({w:W,d:D,wallH:5},{type:'vault',rise:+r.toFixed(2),overhang:O}));
+      if (!near(g.catchment, plan, 1e-4)) offPlan = offPlan ?? r;
+      if (g.surface < prev - 1e-6 || g.surface > plan * 3) spike = spike ?? r;
+      prev = g.surface;
+    }
+    t('vault catchment is the footprint at every rise', offPlan === null,
+      offPlan === null ? 'every rise' : 'rise ' + offPlan, '(w+2o)(d+2o) throughout');
+    t('vault surface climbs with the rise and never spikes', spike === null,
+      spike === null ? 'monotonic' : 'rise ' + spike, 'monotonic, under 3x the plan');
+    const gv = GEO.build(mk({w:W,d:D,wallH:5},{type:'vault',rise:semi,overhang:O}));
+    t(`semicircular vault surface = ${wantSemi.toFixed(2)} m\u00b2`,
+      near(gv.surface, wantSemi, 1e-3), gv.surface.toFixed(4), wantSemi.toFixed(4));
+    const gt = GEO.build(mk({w:W,d:D,wallH:5},{type:'vault',rise:semi*3,overhang:O}));
+    t('a rise past semicircular clamps there', near(gt.surface, gv.surface, 1e-9),
+      gt.surface.toFixed(4), gv.surface.toFixed(4));
+  }
   const gf=GEO.build(mk({w:W,d:D,wallH:5},{type:'flat',overhang:O,pitch:2,parapet:0.6}));
   t('flat surface == catchment', near(gf.surface,gf.catchment,1e-6), gf.surface.toFixed(4), gf.catchment.toFixed(4));
 }

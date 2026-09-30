@@ -1256,15 +1256,43 @@ const GEO = (() => {
       }
 
       case "vault": {
-        const rise = clamp(R.rise, 0.3, D * 3);
+        /* A circular arc through the two springings (+/-D, h) and the crown
+           (0, h + rise), swept by ANGLE rather than sampled over z.
+
+           Over z it read y = cy + sqrt(Rad^2 - z^2), which is only ever the
+           upper half of the circle. That is the right half while the vault is
+           shallower than a semicircle. Raise it past that (rise > D) and the
+           springings sit BELOW the centre, on the lower half, so the arc came
+           back at the wrong points and the roof stood off its own walls -
+           3.3 m clear of them at rise 6 on an 8 m span, rising with the rise.
+           An angle sweep is the same arc for a minor, semicircular or major
+           vault alike, and lands on the wall head in every one. */
+        /* Semicircular is the ceiling. Raised past it the arc bulges outside
+           the footprint, so the profile stops being a function of z - and yAt()
+           below, the gable-end infill and the (w+2o)(d+2o) catchment rule all
+           assume it is one. A barrel vault rising more than half its span is a
+           different form anyway. */
+        const rise = clamp(R.rise, 0.3, D);
         const Rad = (D * D + rise * rise) / (2 * rise);
         const cy = h + rise - Rad;
-        const y = z => cy + Math.sqrt(Math.max(0, Rad * Rad - z * z));
-        const slope = D / Math.sqrt(Math.max(1e-6, Rad * Rad - D * D)); // |dy/dz| at the springing
-        if (O > 0) p.push([-D - O, y(-D) - O * slope]);
-        const N = 18;
-        for (let i = 0; i <= N; i++) { const z = -D + (2 * D * i) / N; p.push([z, y(z)]); }
-        if (O > 0) p.push([D + O, y(D) - O * slope]);
+        /* Springing angle about the centre, from +z: positive while the vault
+           is shallow, exactly zero at semicircular, negative beyond it. */
+        const a0 = Math.atan2(Rad - rise, D);
+        /* The eaves overhang follows the tangent there. That tangent turns
+           vertical as the vault approaches semicircular, and the overhang went
+           with it: at rise exactly D the old guard divided by sqrt(1e-6) and
+           hung the eaves 2 km below the building, for 52 163 m2 of roof on a
+           117 m2 footprint. Capped at the 75 deg this function already clamps
+           every pitch to, so a vault cannot flare further than a steep gable. */
+        const MAXSLOPE = Math.tan(75 * D2R);
+        const dydz = clamp(-Math.cos(a0) / Math.sin(a0), -MAXSLOPE, MAXSLOPE);
+        if (O > 0) p.push([-D - O, h + O * dydz]);
+        const N = 18, sweep = Math.PI - 2 * a0;
+        for (let i = 0; i <= N; i++) {
+          const a = Math.PI - a0 - (sweep * i) / N;
+          p.push([Rad * Math.cos(a), cy + Rad * Math.sin(a)]);
+        }
+        if (O > 0) p.push([D + O, h + O * dydz]);
         break;
       }
     }
@@ -2987,7 +3015,11 @@ const APP = (() => {
 
     let params = fRange("Pitch", "b.roof.pitch", 1, 60, 0.5, "°", 1);
     if (R.type === "flat")      params = fRange("Fall", "b.roof.pitch", 1, 10, 0.5, "°", 1) + fRange("Parapet height", "b.roof.parapet", 0, 2, 0.05, "m", 2);
-    if (R.type === "vault")     params = fRange("Rise at crown", "b.roof.rise", 0.5, 20, 0.25, "m", 2);
+    /* Capped at half the span: past that a barrel vault would bulge outside its
+       own footprint, and the geometry clamps it there anyway. A fixed 0-20 m
+       left a dead zone on every block shallower than 40 m deep. */
+    if (R.type === "vault")     params = fRange("Rise at crown", "b.roof.rise", 0.5, Math.max(0.5, b.d / 2), 0.25, "m", 2) +
+                                         `<p class="rwc-note">A barrel vault stops at semicircular — half the ${nf(b.d,1)} m span, so ${nf(b.d/2,2)} m here. Deepen the block to raise it further.</p>`;
     if (R.type === "sawtooth")  params = fRange("Pitch", "b.roof.pitch", 5, 60, 0.5, "°", 1) + fRange("Number of bays", "b.roof.bays", 1, 12, 1, "", 0);
     if (R.type === "hip")       params = fRange("Pitch", "b.roof.pitch", 5, 60, 0.5, "°", 1) + fRange("Ridge length", "b.roof.ridgeRatio", 0, 1, 0.05, "× max", 2);
     params += fRange("Eaves overhang", "b.roof.overhang", 0, 3, 0.05, "m", 2);
