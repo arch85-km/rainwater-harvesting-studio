@@ -317,9 +317,11 @@ Three answers, shown together:
 Per person per day from four editable end uses, times occupancy, plus an
 optional seasonal irrigation term; annual demand is daily × 365, as Formula (4).
 The WC and laundry defaults (25 and 15 l/person/day) sum to the 40 l/person/day
-the UK National Annex NA.1.2 recommends for toilet and washing-machine use; the
-split between them, and the cleaning and vehicle-wash figures, are the tool's
-own. Note 2 to 6.1.3 allows fewer than 365 days for commercial or public
+the UK National Annex NA.1.2 recommends for toilet and washing-machine use — a
+UK-only reduction of the 50 l/d in Note 1 to 6.1.3, so a reader working to
+EN 16941-1:2024 outside the UK has 50 as the standard's figure and should enter
+it. The split between them, and the cleaning and vehicle-wash figures, are the
+tool's own. Note 2 to 6.1.3 allows fewer than 365 days for commercial or public
 premises — the tool cannot be told that, so it overstates demand for any
 building that is not occupied all year.
 

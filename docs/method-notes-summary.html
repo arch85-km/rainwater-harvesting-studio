@@ -335,7 +335,9 @@ h    rainfall depth for the time step, mm
         has no such term, so leave it at 0 to calculate strictly to the standard.</p>
       <p>Demand is built per person per day from four end uses times occupancy, plus an optional
         seasonal irrigation term. WC flushing at 25 and laundry at 15 come to 40&nbsp;l/person/day,
-        which is exactly the BSI UK National Annex NA.1.2 figure. The split between the two is the
+        which is exactly the BSI UK National Annex NA.1.2 figure &mdash; a UK-only reduction of the
+        <b>50&nbsp;l/d</b> that Note&nbsp;1 to clause&nbsp;6.1.3 gives, so outside the UK the
+        standard&rsquo;s figure is 50 and you should type it in. The split between the two is the
         tool&rsquo;s own, though, and cleaning at 5 and vehicle wash at 2 have no source at all. Annual
         demand is daily &times; 365, as Formula&nbsp;(4). <b>The tool always uses 365</b> and gives you
         no way to say otherwise, so a school or office model overstates annual demand by every day the
