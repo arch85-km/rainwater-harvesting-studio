@@ -4155,6 +4155,13 @@ const APP = (() => {
       `<div class="rwc-menu-div"></div><div class="rwc-menu-head">This version</div>` +
       mItem("", `Version ${VERSION.number}`, `Released ${VERSION.label}`) +
       mItem('data-cite="1"', "How to cite this", CITATION.apa) +
+      /* Credits, distinct from the licence above it. The licence says what you
+         may do with this file; these say whose work is in it, and the one thing
+         in it that is not covered by that licence. */
+      `<div class="rwc-menu-div"></div><div class="rwc-menu-head">Credits</div>` +
+      mItem("", "No third-party code", "Every line in this file is this project's own. No external script, stylesheet or font is bundled and nothing loads from a CDN — the tool runs with the network off.") +
+      mItem("", "BS EN 16941-1:2024", "The yield formula, the surface coefficients and the YAS store operation are the standard's. First-flush diversion is this tool's own addition and is not part of it.") +
+      mItem("", "Open-Meteo", "Only reached if you fetch in the Climate panel. That data comes under Open-Meteo's terms, not this tool's licence: their CC BY 4.0 offer is reported to cover non-commercial use, so read their terms before any commercial use.") +
       `<div class="rwc-menu-div"></div><div class="rwc-menu-head">Licence</div>` +
       mItem("", "© Karam Al-Obaidi", "Code MIT · documentation, screenshots and exercises CC BY 4.0 · your models are yours") +
       /* The rainfall carries its own condition. WWIS requires acknowledgement
