@@ -14,8 +14,11 @@ identifiers:
     value: "10.5281/zenodo.22801122"
     description: "The concept DOI, resolving to the latest version"
   - type: doi
+    value: "10.5281/zenodo.23143962"
+    description: "The DOI for version 1.2.0"
+  - type: doi
     value: "10.5281/zenodo.23072220"
-    description: "The DOI for version 1.1.0; 1.2.0's is minted when this release is archived"
+    description: "The DOI for version 1.1.0"
   - type: doi
     value: "10.5281/zenodo.22801123"
     description: "The DOI for version 1.0.0"
