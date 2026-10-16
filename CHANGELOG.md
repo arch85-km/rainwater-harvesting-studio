@@ -29,7 +29,7 @@ The model, the yield calculation and the interface are unchanged.
 - **Changed** — the tab icon is carried inside the HTML, so a copy opened
   from disk or another domain shows the same mark.
 
-## [1.1.0](https://github.com/arch85-km/rainwater-harvesting-studio/releases/tag/v1.1.0) — 30 September 2026
+## [1.1.0](https://github.com/arch85-km/rainwater-harvesting-studio/releases/tag/v1.1.0) — 1 October 2026
 
 Version DOI [10.5281/zenodo.23072220](https://doi.org/10.5281/zenodo.23072220).
 
