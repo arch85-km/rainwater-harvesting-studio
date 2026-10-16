@@ -28,6 +28,7 @@ const require = createRequire(import.meta.url);
 const { CITATION, VERSION, CLIMATE_SOURCE } = require("./.core.js");
 const html  = readFileSync(resolve(ROOT, "index.html"), "utf8");
 const notes = readFileSync(resolve(ROOT, "docs/method-notes.html"), "utf8");
+const brief = readFileSync(resolve(ROOT, "docs/method-notes-summary.html"), "utf8");
 const pkg   = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8"));
 const cff   = readFileSync(resolve(ROOT, "CITATION.cff"), "utf8");
 const rdme  = readFileSync(resolve(ROOT, "README.md"), "utf8");
@@ -349,6 +350,31 @@ console.log("\n\u2500\u2500 6. The DOI, in every copy of the citation \u2500\u25
   /* Both DOIs, in the notes, distinguished. */
   for (const [what, doi] of [["concept", CITATION.doi], ["version", CITATION.doiVersion]])
     t(`the method notes name the ${what} DOI`, notes.includes(doi), "absent", doi);
+}
+
+console.log("\n\u2500\u2500 7. The summary notes say the same as the full notes \u2500\u2500");
+{
+  /* The short companion carries its own byline, citation and BibTeX, and is
+     the page most readers see. None of it was read, so it could fall a release
+     behind the full notes without anything turning red. */
+  const bver = brief.match(/<b>Version<\/b>\s*([^&<]+)&middot;\s*([^<]+)</);
+  t("the summary states the version and release date", !!bver,
+    bver ? bver[0] : "no '<b>Version</b> N &middot; date' line", "<b>Version</b> N &middot; date");
+  if (bver) {
+    t("the summary's version is VERSION.number", bver[1].trim() === VERSION.number,
+      bver[1].trim(), VERSION.number);
+    t("the summary's date is VERSION.label",
+      bver[2].replace(/&nbsp;/g, " ").trim() === VERSION.label,
+      bver[2].trim(), VERSION.label);
+  }
+  const bBibVer = brief.match(/version\s*=\s*\{([^}]+)\}/);
+  t("the summary's BibTeX version is VERSION.number", !!bBibVer && bBibVer[1].trim() === VERSION.number,
+    bBibVer ? bBibVer[1].trim() : "no version field", VERSION.number);
+  const bBibDoi = brief.match(/doi\s*=\s*\{([^}]+)\}/);
+  t("the summary's BibTeX carries the concept DOI", !!bBibDoi && bBibDoi[1].trim() === CITATION.doi,
+    bBibDoi ? bBibDoi[1].trim() : "no doi field", CITATION.doi);
+  for (const [what, doi] of [["concept", CITATION.doi], ["version", CITATION.doiVersion]])
+    t(`the summary names the ${what} DOI`, brief.includes(doi), "absent", doi);
 }
 
 console.log(`\n${pass ? "✓" : "✗"} ${pass} passed, ${fail} failed\n`);

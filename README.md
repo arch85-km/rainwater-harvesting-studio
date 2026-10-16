@@ -517,7 +517,7 @@ Nothing to install. Nothing to compile. Open the file, or upload it.
 npm test          # or: node test/run.mjs
 ```
 
-**390 assertions, nothing to install.** Node 18 or newer, no dependencies, no
+**397 assertions, nothing to install.** Node 18 or newer, no dependencies, no
 build step. The suite extracts the app's own modules straight out of
 `index.html` and exercises them, so it tests the file that ships rather than a
 copy of it — change the app and the tests follow automatically.
@@ -571,7 +571,10 @@ What it covers:
 - **The DOI, in every copy of it** — the concept DOI and the version DOI are one
   digit apart and both resolve, so swapping them is a silent error. Each is
   checked where it belongs, across `index.html`, `CITATION.cff`, the method
-  notes' APA entry and BibTeX block, and the README badge.
+  notes' APA entry and BibTeX block, the summary notes, and the README badge.
+- **The summary notes** — that the short companion's byline, BibTeX version and
+  DOIs match the release, so the page most readers see cannot fall a release
+  behind the full notes.
 - **The Zenodo record** — that `.zenodo.json` gives the same title, version,
   date, licence, author and ORCID as `CITATION.cff`. It is the one file whose
   mistakes become permanent, because a DOI is minted against whatever it says.
