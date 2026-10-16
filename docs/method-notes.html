@@ -291,7 +291,6 @@
 /* long addresses in the references break rather than push the page sideways on a phone */
 .cs-doc a,.cs-doc .cs-mono,.cs-doc code{overflow-wrap:anywhere;}
 /* a column of figures has its heading over the figures, not at the far edge */
-.cs-doc .cs-tbl table:has(tbody td.cs-n:nth-child(1), tbody td.cs-d:nth-child(1)) thead th:nth-child(1),
 .cs-doc .cs-tbl table:has(tbody td.cs-n:nth-child(2), tbody td.cs-d:nth-child(2)) thead th:nth-child(2),
 .cs-doc .cs-tbl table:has(tbody td.cs-n:nth-child(3), tbody td.cs-d:nth-child(3)) thead th:nth-child(3),
 .cs-doc .cs-tbl table:has(tbody td.cs-n:nth-child(4), tbody td.cs-d:nth-child(4)) thead th:nth-child(4),
@@ -299,6 +298,11 @@
 .cs-doc .cs-tbl table:has(tbody td.cs-n:nth-child(6), tbody td.cs-d:nth-child(6)) thead th:nth-child(6),
 .cs-doc .cs-tbl table:has(tbody td.cs-n:nth-child(7), tbody td.cs-d:nth-child(7)) thead th:nth-child(7),
 .cs-doc .cs-tbl table:has(tbody td.cs-n:nth-child(8), tbody td.cs-d:nth-child(8)) thead th:nth-child(8){text-align:right;}
+/* the first column names the row, so it reads from the left like the text, even when it holds a number (unless its heading is marked as a figure) */
+.cs-doc .cs-tbl table:not(:has(thead th.cs-n:first-child)) tr > :first-child{text-align:left;}
+/* the site theme stripes table rows and tints them on hover; the notes keep one even tint */
+.cs-doc .cs-tbl th,.cs-doc .cs-tbl td{background-color:transparent;}
+/* formulas are <pre>, not <div>: the site's HTML minifier leaves <pre> alone but collapses the line breaks in a <div> */
 /* no side padding of its own: the Elementor section sets the margins, so the notes line up with the blocks above them on every screen */
 .cs-doc{padding-left:0;padding-right:0;}
 /* and no width cap of its own: on a wide screen a capped, centred block starts further in than the blocks above it */
@@ -430,8 +434,8 @@
           <caption>Measured by running the tool's own <span class="cs-mono">GEO.build</span> on a
             12&nbsp;&times;&nbsp;8&nbsp;m block with a 0.5&nbsp;m overhang, London rainfall, rough
             pitched tile. Catchment and yield do not move at all.</caption>
-          <thead><tr><th>Gable pitch</th><th class="cs-sym">Catchment A</th><th class="cs-sym">Surface</th>
-            <th>Surface &divide; catchment</th><th class="cs-sym">Annual yield</th></tr></thead>
+          <thead><tr><th>Gable pitch</th><th class="cs-sym">Catchment A</th><th>Surface</th>
+            <th>Surface &divide; catchment</th><th>Annual yield</th></tr></thead>
           <tbody>
             <tr><td class="cs-n">15&deg;</td><td class="cs-n">117.00 m&sup2;</td><td class="cs-n">121.13 m&sup2;</td><td class="cs-n">1.035</td><td class="cs-d">51.84 m&sup3;</td></tr>
             <tr><td class="cs-n">25&deg;</td><td class="cs-n">117.00 m&sup2;</td><td class="cs-n">129.10 m&sup2;</td><td class="cs-n">1.103</td><td class="cs-d">51.84 m&sup3;</td></tr>
@@ -447,22 +451,22 @@
       <h4>Catchment for each roof form</h4>
       <p>With footprint <i>w</i> &times; <i>d</i> and overhang <i>o</i>, seven of the eight forms give the
         same catchment and one does not:</p>
-      <div class="cs-formula">flat, gable, hip, shed, butterfly, vault, pyramid   A = (w + 2o)(d + 2o)
+      <pre class="cs-formula">flat, gable, hip, shed, butterfly, vault, pyramid   A = (w + 2o)(d + 2o)
 sawtooth                                           A = (w + 2o)(d + o)
 <em>The sawtooth carries its overhang on the low edge only, so it loses one overhang's
-depth. On a 12 x 8 m block with o = 0.5 m that is 110.5 m2 against 117.0 m2.</em></div>
+depth. On a 12 x 8 m block with o = 0.5 m that is 110.5 m2 against 117.0 m2.</em></pre>
 
       <h3>The yield equation, as implemented</h3>
       <p>The code implements Formula (1) of clause 6.1.2 directly, summed over surfaces so that blocks
         with different materials each keep their own coefficient:</p>
-      <div class="cs-formula">Y = &Sigma; ( A_i  &times;  e_i )  &times;  h  &times;  &eta;        litres
+      <pre class="cs-formula">Y = &Sigma; ( A_i  &times;  e_i )  &times;  h  &times;  &eta;        litres
 &nbsp;
 <em>A_i  horizontal projection of collection area i, m&sup2;
 e_i  surface yield coefficient of that surface, Table 2
 h    rainfall depth for the time step, mm
 &eta;    hydraulic treatment efficiency coefficient</em>
 &nbsp;
-1 mm falling on 1 m&sup2; = 1 litre, which is where the units close.</div>
+1 mm falling on 1 m&sup2; = 1 litre, which is where the units close.</pre>
       <p>Worked, for the 12&nbsp;&times;&nbsp;8&nbsp;m gable above:
         117.00&nbsp;m&sup2; &times; 615.4&nbsp;mm &times; 0.80 &times; 0.90 = <b>51&nbsp;841&nbsp;litres a year</b>, the 51.84&nbsp;m&sup3; in the table above.</p>
 
@@ -668,11 +672,11 @@ h    rainfall depth for the time step, mm
       <p>This is the tool's sharpest departure from the standard, and it is worth stating exactly. The
         detailed approach of A.2.2 runs on measured daily rainfall over at least five years, preferably
         recent. The tool has twelve monthly totals. When you switch on the daily balance it:</p>
-      <div class="cs-formula">wet days in month = round( monthly depth / typical depth per wet day )
+      <pre class="cs-formula">wet days in month = round( monthly depth / typical depth per wet day )
                     clamped to between 1 and the days in the month
 &nbsp;
 then the month's inflow is divided equally between those wet days,
-spaced evenly through the month.</div>
+spaced evenly through the month.</pre>
       <p>So a synthetic year of identical showers stands in for a real one of downpours and dry spells.
         Real rainfall is far lumpier, which means real dry runs are longer and real spills larger than
         this tool will show. <b>Expect it to flatter a small store.</b> The depth-per-wet-day figure that
@@ -1025,7 +1029,7 @@ spaced evenly through the month.</div>
           <table>
             <caption>Coverage rate at each capacity, daily balance, everything but the city held
               fixed. Produced by driving the tool's own hydrology module.</caption>
-            <thead><tr><th>Usable capacity</th><th class="cs-sym">Kuala Lumpur</th><th class="cs-sym">Chittagong</th></tr></thead>
+            <thead><tr><th>Usable capacity</th><th>Kuala Lumpur</th><th>Chittagong</th></tr></thead>
             <tbody>
               <tr><td class="cs-n">1 500 L</td><td class="cs-n">98.4 %</td><td class="cs-d">68.3 %</td></tr>
               <tr><td class="cs-n">3 000 L</td><td class="cs-n">100 %</td><td class="cs-d">77.2 %</td></tr>
