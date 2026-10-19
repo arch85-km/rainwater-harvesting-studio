@@ -84,7 +84,7 @@
 
 /* masthead */
 .cs-doc .cs-masthead{padding:2.75rem 0 1.9rem;border-bottom:2px solid var(--cs-ink);}
-.cs-doc h1{font-family:var(--cs-fd);font-weight:600;
+.cs-doc h1,.cs-doc .cs-title{font-family:var(--cs-fd);font-weight:600;
   font-size:clamp(1.9rem,5.2vw,2.75rem);line-height:1.04;letter-spacing:-.028em;
   text-wrap:balance;margin:0 0 1.1rem;color:var(--cs-ink);}
 .cs-doc .cs-standfirst{max-width:var(--cs-measure);font-size:1.14rem;line-height:1.6;
@@ -349,7 +349,7 @@
 .cs-doc,.cs-doc.cs-auto-dark{--cs-measure:none;}
 /* the title and text as the site's own page headings and body set them */
 .cs-doc,.cs-doc.cs-auto-dark{--cs-ink:#333;--cs-ink2:#333;}
-.cs-doc h1{font-size:2em;font-weight:600;line-height:1.15;letter-spacing:0;color:#333;}
+.cs-doc h1,.cs-doc .cs-title{font-size:2em;font-weight:600;line-height:1.15;letter-spacing:0;color:#333;}
 .cs-doc .cs-standfirst{color:#333;}
 /* each ledger item reads as one block: its tag above its title, not in a side column */
 .cs-doc .cs-ledger>div{grid-template-columns:minmax(0,1fr);}
@@ -395,7 +395,7 @@
 <div class="cs-doc cs-auto-dark">
 
   <div class="cs-masthead">
-    <h1>Method Notes in Brief</h1>
+    <h2 class="cs-title">Method Notes in Brief</h2>
     <p class="cs-standfirst">The short version: what the tool calculates, which clause of
       <span class="cs-mono">BS&nbsp;EN&nbsp;16941&#8209;1:2024</span> each step comes from, and
       <strong>where it departs from that standard</strong>. The method is the standard&rsquo;s; the
